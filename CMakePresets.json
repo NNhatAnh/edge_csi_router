@@ -1,0 +1,50 @@
+{
+  "version": 3,
+  "cmakeMinimumRequired": {
+    "major": 3,
+    "minor": 21,
+    "patch": 0
+  },
+  "configurePresets": [
+    {
+      "name": "arm64-router",
+      "displayName": "ARM64 router (arm64_toolchain.cmake)",
+      "generator": "Unix Makefiles",
+      "binaryDir": "${sourceDir}/build-arm64",
+      "toolchainFile": "${sourceDir}/arm64_toolchain.cmake",
+      "cacheVariables": {
+        "BUILD_TESTING": "OFF",
+        "CMAKE_BUILD_TYPE": "Release"
+      }
+    },
+    {
+      "name": "host-tests",
+      "displayName": "Native host tests",
+      "generator": "Unix Makefiles",
+      "binaryDir": "${sourceDir}/build-host-tests",
+      "cacheVariables": {
+        "BUILD_TESTING": "ON",
+        "CMAKE_BUILD_TYPE": "Debug"
+      }
+    }
+  ],
+  "buildPresets": [
+    {
+      "name": "arm64-router",
+      "configurePreset": "arm64-router"
+    },
+    {
+      "name": "host-tests",
+      "configurePreset": "host-tests"
+    }
+  ],
+  "testPresets": [
+    {
+      "name": "host-tests",
+      "configurePreset": "host-tests",
+      "output": {
+        "outputOnFailure": true
+      }
+    }
+  ]
+}
