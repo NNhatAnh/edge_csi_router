@@ -106,13 +106,11 @@ tinh chỉnh sau khi đo dữ liệu thực. Vì baseline được dùng làm tr
 khi khởi động hoặc hiệu chuẩn lại nên để môi trường không có chuyển động trong lúc
 dashboard báo đang chờ ổn định.
 
-#### Phát hiện và hiệu chuẩn lại
+#### Phát hiện chuyển động và hiệu chuẩn lại
 
-- Khi score `> threshold_high`, bật `presence_detected` ngay và xóa bộ đếm score thấp.
-- Khi score `< threshold_low`, tăng bộ đếm; sau 15 score thấp liên tiếp thì tắt
-  `presence_detected`.
-- Khi score nằm giữa hai ngưỡng, giữ nguyên trạng thái hysteresis nhưng xóa bộ đếm
-  thấp liên tiếp. Cách này tránh tắt do một dao động ngắn quanh ngưỡng.
+- Ngưỡng cao/thấp và hysteresis mô tả **chuyển động vĩ mô**, không còn được dùng một
+  mình để kết luận có người. Một thay đổi CSI do rèm, quạt hoặc môi trường vẫn hiện trên
+  motion score, nhưng không tự bật `presence_detected`.
 - Nút **Hiệu chuẩn lại** gửi `POST /api/calibrate`. Server xóa vector tham chiếu,
   cửa sổ 30 score, ứng viên nền, hai ngưỡng và trạng thái hiện diện; capture/driver
   không bị dừng hay thay đổi. Sau đó hệ thống phải tích lũy lại cửa sổ score và chờ
@@ -124,12 +122,35 @@ hiệu chuẩn và hai ngưỡng. `motion_calibration_stable` cho biết score g
 được chấp nhận vào chuỗi ổn định hoặc baseline đã hiệu chuẩn xong; nó không khẳng
 định detector đã calibrated (trường đó là `motion_calibrated`).
 
+#### Phát hiện hiện diện khi người ngồi yên
+
+`presence_detected` được xác nhận từ tín hiệu vi chuyển động nhịp thở, không phải chỉ
+từ motion score. Detector dùng pha tương đối giữa hai antenna chain trên các tone ở
+giữa băng tần (nếu chỉ có một chain, dùng pha của chain đó), unwrap pha theo thời gian,
+loại xu hướng tuyến tính và tìm thành phần tuần hoàn trong dải `0.10–0.55 Hz`
+(`6–33 nhịp/phút`). Ước lượng chỉ hợp lệ khi cửa sổ có ít nhất 60 mẫu, kéo dài ít nhất
+15 giây, thành phần tuần hoàn giải thích ít nhất 30% năng lượng pha còn lại và ít nhất
+ba tone trong vùng trung tâm đồng thuận về tần số trong khoảng `0.03 Hz`. Khi motion score vượt
+`0.35`, mẫu đó được bỏ qua để chuyển động lớn không làm sai phép đo. Phân tích được
+cập nhật mỗi 15 frame để giới hạn tải CPU.
+
+Do đó người ngồi yên vẫn có thể được xác nhận khi nhịp thở tạo ra biến thiên pha CSI
+đủ ổn định trên nhiều tone. Rèm đung đưa có thể làm motion score tăng nhưng không đủ
+để báo hiện diện nếu không tạo ra tín hiệu pha tuần hoàn đồng thuận. Đây là xác nhận
+hiện diện theo RF, không phải nhận dạng người; vật thể chuyển động tuần hoàn trong
+cùng dải tần vẫn có thể gây nhầm và cần kiểm chứng/tinh chỉnh theo vị trí router, rèm
+và phòng thực tế. Nếu không có hai chain hoạt động, tín hiệu pha một chain thường kém
+ổn định hơn và chất lượng phát hiện có thể giảm.
+
 ### Đọc file relay vòng
 
 Mặc định daemon quét `/tmp` mỗi 50 ms để tìm file `.bin` mới nhất có tên bắt đầu bằng
 `cfr_dump_phy00_`. Nếu nhận diện được tiến trình `cfr_test_app` đang mở file đó, watcher
-đọc vị trí ghi từ `/proc/<pid>/fdinfo` để theo file ring/preallocated, kể cả khi kích
-thước file không tăng. Nếu không có writer đang mở, watcher xử lý file theo kiểu append.
+đọc vị trí ghi từ `/proc/<pid>/fdinfo`; khi vừa gắn vào file, watcher đọc dữ liệu relay
+đã có từ đầu file đến vị trí ghi hiện tại, rồi tiếp tục theo dõi các lần ghi mới. Cách
+này vẫn hoạt động với file ring/preallocated khi kích thước file không tăng và tránh
+bỏ qua toàn bộ dữ liệu đã được capture trước lúc daemon khởi động. Nếu không có writer
+đang mở, watcher xử lý file theo kiểu append.
 
 Watcher chỉ đọc relay file. Nó không thay đổi `enable_cfr`, station capture settings,
 tham số driver, cũng không khởi chạy/dừng `cfr_test_app`. Phải bật và chạy capture

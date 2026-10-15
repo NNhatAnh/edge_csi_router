@@ -2,6 +2,8 @@
 #define WEB_SERVER_HPP
 
 #include "csi_parser.hpp"
+#include "motion.hpp"
+#include "breath.hpp"
 
 #include <atomic>
 #include <condition_variable>
@@ -39,6 +41,7 @@ private:
     std::mutex data_mutex_;
     std::condition_variable data_changed_;
     MotionDetector motion_detector_;
+    BreathDetector breath_detector_;
     CSIData latest_frame_;
     uint64_t sequence_ = 0;
     bool has_frame_ = false;

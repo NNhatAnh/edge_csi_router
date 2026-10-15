@@ -16,60 +16,62 @@
 
 namespace
 {
-constexpr size_t kMaximumClientWorkers = 16;
+    constexpr size_t kMaximumClientWorkers = 16;
 
-bool sendAll(int socket_fd, const std::string &data)
-{
-    size_t sent = 0;
-    while (sent < data.size())
+    bool sendAll(int socket_fd, const std::string &data)
     {
-        const ssize_t result = send(socket_fd, data.data() + sent, data.size() - sent, MSG_NOSIGNAL);
-        if (result < 0)
+        size_t sent = 0;
+        while (sent < data.size())
         {
-            if (errno == EINTR)
-                continue;
-            return false;
+            const ssize_t result = send(socket_fd, data.data() + sent, data.size() - sent, MSG_NOSIGNAL);
+            if (result < 0)
+            {
+                if (errno == EINTR)
+                    continue;
+                return false;
+            }
+            if (result == 0)
+                return false;
+            sent += static_cast<size_t>(result);
         }
-        if (result == 0)
-            return false;
-        sent += static_cast<size_t>(result);
+        return true;
     }
-    return true;
-}
 
-int createListener(int port, int backlog)
-{
-    const int socket_fd = socket(AF_INET, SOCK_STREAM, 0);
-    if (socket_fd < 0)
-        return -1;
-
-    int reuse = 1;
-    setsockopt(socket_fd, SOL_SOCKET, SO_REUSEADDR, &reuse, sizeof(reuse));
-
-    sockaddr_in address{};
-    address.sin_family = AF_INET;
-    address.sin_addr.s_addr = htonl(INADDR_ANY);
-    address.sin_port = htons(static_cast<uint16_t>(port));
-    if (bind(socket_fd, reinterpret_cast<sockaddr *>(&address), sizeof(address)) < 0 ||
-        listen(socket_fd, backlog) < 0)
+    int createListener(int port, int backlog)
     {
-        const int saved_errno = errno;
-        close(socket_fd);
-        errno = saved_errno;
-        return -1;
-    }
-    return socket_fd;
-}
+        const int socket_fd = socket(AF_INET, SOCK_STREAM, 0);
+        if (socket_fd < 0)
+            return -1;
 
-std::string httpResponse(const std::string &status, const std::string &content_type, const std::string &body)
-{
-    return "HTTP/1.1 " + status + "\r\n"
-           "Content-Type: " + content_type + "\r\n"
-           "Content-Length: " + std::to_string(body.size()) + "\r\n"
-           "Cache-Control: no-store\r\n"
-           "Connection: close\r\n\r\n" +
-           body;
-}
+        int reuse = 1;
+        setsockopt(socket_fd, SOL_SOCKET, SO_REUSEADDR, &reuse, sizeof(reuse));
+
+        sockaddr_in address{};
+        address.sin_family = AF_INET;
+        address.sin_addr.s_addr = htonl(INADDR_ANY);
+        address.sin_port = htons(static_cast<uint16_t>(port));
+        if (bind(socket_fd, reinterpret_cast<sockaddr *>(&address), sizeof(address)) < 0 ||
+            listen(socket_fd, backlog) < 0)
+        {
+            const int saved_errno = errno;
+            close(socket_fd);
+            errno = saved_errno;
+            return -1;
+        }
+        return socket_fd;
+    }
+
+    std::string httpResponse(const std::string &status, const std::string &content_type, const std::string &body)
+    {
+        return "HTTP/1.1 " + status + "\r\n"
+                                      "Content-Type: " +
+               content_type + "\r\n"
+                              "Content-Length: " +
+               std::to_string(body.size()) + "\r\n"
+                                             "Cache-Control: no-store\r\n"
+                                             "Connection: close\r\n\r\n" +
+               body;
+    }
 }
 
 WebServer::WebServer(int web_port, int ingest_port, std::string web_root)
@@ -164,19 +166,20 @@ void WebServer::stop()
 
     {
         std::unique_lock<std::mutex> lock(workers_mutex_);
-        workers_changed_.wait(lock, [this] { return active_workers_ == 0; });
+        workers_changed_.wait(lock, [this]
+                              { return active_workers_ == 0; });
     }
 }
 
 void WebServer::publish(const CSIData &frame)
 {
-    {
-        std::lock_guard<std::mutex> lock(data_mutex_);
-        latest_frame_ = frame;
-        motion_detector_.update(latest_frame_);
-        has_frame_ = true;
-        ++sequence_;
-    }
+    std::lock_guard<std::mutex> lock(data_mutex_);
+    latest_frame_ = frame;
+    motion_detector_.update(latest_frame_);
+    breath_detector_.update(latest_frame_);
+    latest_frame_.presence_detected = latest_frame_.breath_valid;
+    has_frame_ = true;
+    ++sequence_;
     data_changed_.notify_all();
 }
 
@@ -284,7 +287,8 @@ void WebServer::startClientWorker(int client_fd, bool web_client)
 
     try
     {
-        std::thread worker([this, client_fd, web_client] {
+        std::thread worker([this, client_fd, web_client]
+                           {
             try
             {
                 if (web_client)
@@ -308,8 +312,7 @@ void WebServer::startClientWorker(int client_fd, bool web_client)
                 clients_.erase(client_fd);
                 --active_workers_;
             }
-            workers_changed_.notify_all();
-        });
+            workers_changed_.notify_all(); });
         worker.detach();
     }
     catch (const std::exception &error)
@@ -464,9 +467,8 @@ void WebServer::handleEventStream(int client_fd)
         bool has_frame = false;
         {
             std::unique_lock<std::mutex> lock(data_mutex_);
-            data_changed_.wait_for(lock, std::chrono::seconds(15), [this, last_sequence] {
-                return !is_running_ || sequence_ != last_sequence;
-            });
+            data_changed_.wait_for(lock, std::chrono::seconds(15), [this, last_sequence]
+                                   { return !is_running_ || sequence_ != last_sequence; });
             if (!is_running_)
                 break;
             has_frame = has_frame_;
@@ -478,8 +480,9 @@ void WebServer::handleEventStream(int client_fd)
         if (has_frame && current_sequence != last_sequence)
         {
             const std::string event = "id: " + std::to_string(current_sequence) + "\n"
-                                      "event: csi\n"
-                                      "data: " + frame.toJson() + "\n\n";
+                                                                                  "event: csi\n"
+                                                                                  "data: " +
+                                      frame.toJson() + "\n\n";
             if (!sendAll(client_fd, event))
                 break;
             last_sequence = current_sequence;
