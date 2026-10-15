@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#080d19">
+    <title>Edge CSI | Wi-Fi Sensing</title>
+    <link rel="stylesheet" href="/style.css">
+</head>
+
+<body>
+    <div class="app-shell">
+        <aside class="sidebar">
+            <a class="brand" href="/" aria-label="Edge CSI trang chủ">
+                <span class="brand-mark"><span></span><span></span><span></span></span>
+                <span><strong>EDGE CSI</strong><small>WIRELESS SENSING</small></span>
+            </a>
+            <div class="sidebar-label">WORKSPACE</div>
+            <nav class="tabs" aria-label="Signal views">
+                <button class="tab-btn active" data-view="overview"><span class="nav-icon">◉</span>Tổng quan</button>
+                <button class="tab-btn" data-view="amplitude"><span class="nav-icon">⌁</span>Biên độ CSI</button>
+                <button class="tab-btn" data-view="phase"><span class="nav-icon">∠</span>Pha CSI</button>
+                <button class="tab-btn" data-view="iq"><span class="nav-icon">⠿</span>Chòm sao I/Q</button>
+                <button class="tab-btn" data-view="chains"><span class="nav-icon">≋</span>So sánh antenna</button>
+                <button class="tab-btn" data-view="packet"><span class="nav-icon">▤</span>Thông tin gói</button>
+            </nav>
+            <div class="sidebar-bottom">
+                <div class="source-indicator"><span class="source-dot"></span><span>ATH12K · CFR RELAY</span></div>
+                <p>Edge processing<br>Local network only</p>
+            </div>
+        </aside>
+
+        <main class="main-content">
+            <header class="topbar">
+                <div>
+                    <div class="eyebrow">ROUTER TELEMETRY <span>/</span> CSI MONITOR</div>
+                    <h1 id="page-title">Tổng quan tín hiệu</h1>
+                </div>
+                <div class="topbar-actions">
+                    <button class="calibrate-btn" id="calibrate-button" type="button">Hiệu chuẩn lại</button>
+                    <div class="connection">
+                        <span id="status-dot" class="status-dot"></span>
+                        <span><strong id="status">ĐANG KẾT NỐI</strong><small id="last-update">Chưa nhận frame</small></span>
+                    </div>
+                </div>
+            </header>
+
+            <section class="metric-grid" aria-label="CSI metrics">
+                <article class="metric-card">
+                    <div class="metric-heading"><span>SUBCARRIERS</span><span class="metric-symbol cyan">⌁</span></div>
+                    <div class="metric-value" id="sc-count">—</div>
+                    <div class="metric-caption" id="sc-caption">Chờ dữ liệu CSI</div>
+                </article>
+                <article class="metric-card">
+                    <div class="metric-heading"><span>ANTENNA CHAINS</span><span class="metric-symbol violet">≋</span></div>
+                    <div class="metric-value" id="chain-count">—</div>
+                    <div class="metric-caption" id="nss-caption">Spatial streams —</div>
+                </article>
+                <article class="metric-card">
+                    <div class="metric-heading"><span>MOTION SCORE</span><span class="metric-symbol orange">⌁</span></div>
+                    <div class="metric-value" id="motion-value">—</div>
+                    <div class="metric-caption" id="motion-caption">Chờ đủ frame để tính tương quan</div>
+                </article>
+                <article class="metric-card">
+                    <div class="metric-heading"><span>PRESENCE DETECTION</span><span class="metric-symbol orange">◉</span></div>
+                    <div class="metric-value presence-value" id="presence-value">CHỜ CSI</div>
+                    <div class="metric-caption" id="presence-caption">Chưa hiệu chuẩn nền</div>
+                </article>
+                <article class="metric-card">
+                    <div class="metric-heading"><span>FRAME RATE</span><span class="metric-symbol green">↗</span></div>
+                    <div class="metric-value"><span id="frame-rate">—</span><small>Hz</small></div>
+                    <div class="metric-caption">Tốc độ nhận gần nhất</div>
+                </article>
+            </section>
+
+            <section class="panel chart-panel" id="chart-panel">
+                <div class="panel-heading">
+                    <div>
+                        <div class="eyebrow" id="chart-kicker">LIVE SIGNAL</div>
+                        <h2 id="chart-title">Hoạt động chuyển động</h2>
+                    </div>
+                    <label class="chain-control" id="chain-control">
+                        <span>CHAIN</span>
+                        <select id="chain-select" aria-label="Chọn antenna chain"></select>
+                    </label>
+                </div>
+                <div class="chart-wrap">
+                    <canvas id="signal-chart" aria-label="Biểu đồ CSI"></canvas>
+                    <div class="chart-empty" id="chart-empty">
+                        <span class="empty-pulse"></span>
+                        <strong>Đang chờ dữ liệu CSI</strong>
+                        <small>Kết nối relay stream trên router để bắt đầu quan sát</small>
+                    </div>
+                </div>
+                <div class="chart-legend" id="chart-legend"></div>
+            </section>
+
+            <section class="lower-grid">
+                <article class="panel detail-panel">
+                    <div class="panel-heading compact">
+                        <div><div class="eyebrow">CAPTURE CONTEXT</div><h2>Frame hiện tại</h2></div>
+                        <span id="frame-id" class="frame-badge">NO FRAME</span>
+                    </div>
+                    <div class="detail-list">
+                        <div><span>Chip TSF</span><strong id="chip-tsf">—</strong></div>
+                        <div><span>PHY PPDU ID</span><strong id="ppdu-id">—</strong></div>
+                        <div><span>Channel bandwidth code</span><strong id="bandwidth">—</strong></div>
+                        <div><span>AP MAC (freeze TLV)</span><strong id="ap-mac">—</strong></div>
+                    </div>
+                </article>
+                <article class="panel note-panel">
+                    <div class="eyebrow">SIGNAL NOTES</div>
+                    <h2>Đọc dữ liệu chính xác</h2>
+                    <p>Motion score là 1 trừ tương quan Pearson giữa vector biên độ hai frame, làm mượt bằng median 30 mẫu. Nền chỉ được hiệu chuẩn sau 50 score ổn định liên tiếp (≤ 0,1; độ lệch chuẩn ≤ 0,01; bước giữa score ≤ 0,02). Bấm “Hiệu chuẩn lại” để xóa baseline và bắt đầu lấy nền mới.</p>
+                    <p>Biên độ là giá trị I/Q thô, chưa quy đổi sang dBm. Dùng toàn bộ tone CFR hiện có vì mapping LLTF 64-tone của ESP32 không tương ứng trực tiếp với relay Qualcomm.</p>
+                </article>
+            </section>
+
+            <footer><span>EDGE CSI DASHBOARD</span><span>DATA STAYS ON YOUR ROUTER</span></footer>
+        </main>
+    </div>
+    <script src="/script.js"></script>
+</body>
+
+</html>

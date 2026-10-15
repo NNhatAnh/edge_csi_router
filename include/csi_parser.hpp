@@ -3,7 +3,6 @@
 
 #include <cstddef>
 #include <cstdint>
-#include <deque>
 #include <string>
 #include <vector>
 
@@ -27,6 +26,8 @@ struct CSIData
     uint16_t amplitude_gain_ratio[5]{};
     std::string ap_mac;
     std::vector<CSIChain> chains;
+
+    // Macro-motion
     float motion_score = 0.0f;
     float motion_threshold_high = 0.0f;
     float motion_threshold_low = 0.0f;
@@ -36,6 +37,11 @@ struct CSIData
     bool motion_ready = false;
     bool motion_calibrated = false;
     bool presence_detected = false;
+
+    // Breath (Micro-motion)
+    float breath_bpm = 0.0f;
+    float breath_wave = 0.0f;
+    bool breath_valid = false;
 
     size_t tonesPerChain() const;
     std::string toJson() const;
@@ -49,28 +55,7 @@ public:
 
 private:
     std::vector<uint8_t> pending_;
-
     bool decodeRecord(const uint8_t *record, size_t size, CSIData &frame);
-};
-
-class MotionDetector
-{
-public:
-    void update(CSIData &frame);
-    void reset();
-
-private:
-    std::vector<float> previous_amplitudes_;
-    std::deque<float> motion_window_;
-    std::deque<float> calibration_candidate_;
-    size_t low_motion_frames_ = 0;
-    float motion_threshold_high_ = 0.0f;
-    float motion_threshold_low_ = 0.0f;
-    bool motion_calibrated_ = false;
-    bool calibration_sample_stable_ = false;
-    bool presence_detected_ = false;
-
-    void resetCalibration();
 };
 
 #endif

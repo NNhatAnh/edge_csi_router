@@ -135,16 +135,14 @@ function acceptFrame(frame) {
     }
     const presenceValue = document.getElementById('presence-value');
     const presenceCaption = document.getElementById('presence-caption');
-    if (!frame.motion_ready || !frame.motion_calibrated) {
-        presenceValue.textContent = 'HIỆU CHUẨN';
-        presenceCaption.textContent = !frame.motion_ready
-            ? 'Đang tích lũy cửa sổ tín hiệu'
-            : frame.motion_calibration_stable
-                ? `Đang lấy nền ổn định ${frame.motion_calibration_frames || 0}/50`
-                : `Tín hiệu chưa ổn định · ${frame.motion_calibration_frames || 0}/50`;
+    if (frame.breath_valid) {
+        presenceValue.textContent = 'CÓ HIỆN DIỆN';
+        presenceCaption.textContent = `Vi chuyển động tuần hoàn · khoảng ${Number(frame.breath_bpm).toFixed(1)} nhịp/phút`;
     } else {
-        presenceValue.textContent = frame.presence_detected ? 'CÓ CHUYỂN ĐỘNG' : 'YÊN TĨNH';
-        presenceCaption.textContent = 'Bật khi vượt ngưỡng cao · tắt sau 15 frame thấp';
+        presenceValue.textContent = 'CHƯA XÁC NHẬN';
+        presenceCaption.textContent = frame.motion_ready && frame.motion_score > 0.35
+            ? 'Chuyển động lớn · chờ tín hiệu ổn định để xác nhận'
+            : 'Đang tìm nhịp thở ổn định trên tín hiệu pha CSI';
     }
     document.getElementById('frame-rate').textContent = frameRate.toFixed(1);
     document.getElementById('chip-tsf').textContent = frame.chip_tsf_us ? `${Number(frame.chip_tsf_us).toLocaleString()} µs` : '—';
