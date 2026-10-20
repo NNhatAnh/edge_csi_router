@@ -12,66 +12,165 @@
 <body>
     <div class="app-shell">
         <aside class="sidebar">
-            <a class="brand" href="/" aria-label="Edge CSI trang chủ">
+            <a class="brand" href="/" aria-label="Edge CSI">
                 <span class="brand-mark"><span></span><span></span><span></span></span>
-                <span><strong>EDGE CSI</strong><small>WIRELESS SENSING</small></span>
+                <span><strong>EDGE CSI</strong><small data-i18n="brand_sub">WIRELESS SENSING</small></span>
             </a>
-            <div class="sidebar-label">WORKSPACE</div>
+            <div class="sidebar-label" data-i18n="nav_workspace">WORKSPACE</div>
             <nav class="tabs" aria-label="Signal views">
-                <button class="tab-btn active" data-view="overview"><span class="nav-icon">◉</span>Tổng quan</button>
-                <button class="tab-btn" data-view="amplitude"><span class="nav-icon">⌁</span>Biên độ CSI</button>
-                <button class="tab-btn" data-view="phase"><span class="nav-icon">∠</span>Pha CSI</button>
-                <button class="tab-btn" data-view="iq"><span class="nav-icon">⠿</span>Chòm sao I/Q</button>
-                <button class="tab-btn" data-view="chains"><span class="nav-icon">≋</span>So sánh antenna</button>
-                <button class="tab-btn" data-view="packet"><span class="nav-icon">▤</span>Thông tin gói</button>
+                <button class="tab-btn active" data-view="overview"><span class="nav-icon">◉</span><span data-i18n="tab_overview">Tổng quan</span></button>
+                <button class="tab-btn" data-view="breath"><span class="nav-icon">∿</span><span data-i18n="tab_breath">Dạng sóng thở</span></button>
+                <button class="tab-btn" data-view="amplitude"><span class="nav-icon">⌁</span><span data-i18n="tab_amplitude">Biên độ CSI</span></button>
+                <button class="tab-btn" data-view="phase"><span class="nav-icon">∠</span><span data-i18n="tab_phase">Pha CSI</span></button>
+                <button class="tab-btn" data-view="iq"><span class="nav-icon">⠿</span><span data-i18n="tab_iq">Chòm sao I/Q</span></button>
+                <button class="tab-btn" data-view="chains"><span class="nav-icon">≋</span><span data-i18n="tab_chains">So sánh antenna</span></button>
+                <button class="tab-btn" data-view="packet"><span class="nav-icon">▤</span><span data-i18n="tab_packet">Thông tin gói</span></button>
             </nav>
             <div class="sidebar-bottom">
                 <div class="source-indicator"><span class="source-dot"></span><span>ATH12K · CFR RELAY</span></div>
-                <p>Edge processing<br>Local network only</p>
+                <p data-i18n="sidebar_footer">Edge processing<br>Local network only</p>
             </div>
         </aside>
 
         <main class="main-content">
             <header class="topbar">
                 <div>
-                    <div class="eyebrow">ROUTER TELEMETRY <span>/</span> CSI MONITOR</div>
+                    <div class="eyebrow" data-i18n="topbar_eyebrow">ROUTER TELEMETRY <span>/</span> CSI MONITOR</div>
                     <h1 id="page-title">Tổng quan tín hiệu</h1>
                 </div>
                 <div class="topbar-actions">
-                    <button class="calibrate-btn" id="calibrate-button" type="button">Hiệu chuẩn lại</button>
+                    <div class="lang-switch" id="lang-switch" aria-label="Language">
+                        <button type="button" class="lang-btn active" data-lang="vi">VI</button>
+                        <button type="button" class="lang-btn" data-lang="en">EN</button>
+                    </div>
+                    <button class="calibrate-btn" id="calibrate-button" type="button" data-i18n="btn_calibrate">Hiệu chuẩn lại</button>
                     <div class="connection">
                         <span id="status-dot" class="status-dot"></span>
-                        <span><strong id="status">ĐANG KẾT NỐI</strong><small id="last-update">Chưa nhận frame</small></span>
+                        <span><strong id="status" data-i18n="status_connecting">ĐANG KẾT NỐI</strong><small id="last-update">Chưa nhận frame</small></span>
                     </div>
                 </div>
             </header>
 
             <section class="metric-grid" aria-label="CSI metrics">
                 <article class="metric-card">
-                    <div class="metric-heading"><span>SUBCARRIERS</span><span class="metric-symbol cyan">⌁</span></div>
+                    <div class="metric-heading"><span data-i18n="metric_sc">SUBCARRIERS</span><span class="metric-symbol cyan">⌁</span></div>
                     <div class="metric-value" id="sc-count">—</div>
-                    <div class="metric-caption" id="sc-caption">Chờ dữ liệu CSI</div>
+                    <div class="metric-caption" id="sc-caption" data-i18n="caption_waiting_csi">Chờ dữ liệu CSI</div>
                 </article>
                 <article class="metric-card">
-                    <div class="metric-heading"><span>ANTENNA CHAINS</span><span class="metric-symbol violet">≋</span></div>
+                    <div class="metric-heading"><span data-i18n="metric_chains">ANTENNA CHAINS</span><span class="metric-symbol violet">≋</span></div>
                     <div class="metric-value" id="chain-count">—</div>
                     <div class="metric-caption" id="nss-caption">Spatial streams —</div>
                 </article>
                 <article class="metric-card">
-                    <div class="metric-heading"><span>MOTION SCORE</span><span class="metric-symbol orange">⌁</span></div>
+                    <div class="metric-heading"><span data-i18n="metric_motion">MOTION SCORE</span><span class="metric-symbol orange">⌁</span></div>
                     <div class="metric-value" id="motion-value">—</div>
                     <div class="metric-caption" id="motion-caption">Chờ đủ frame để tính tương quan</div>
                 </article>
                 <article class="metric-card">
-                    <div class="metric-heading"><span>PRESENCE DETECTION</span><span class="metric-symbol orange">◉</span></div>
+                    <div class="metric-heading"><span data-i18n="metric_presence">PRESENCE DETECTION</span><span class="metric-symbol orange">◉</span></div>
                     <div class="metric-value presence-value" id="presence-value">CHỜ CSI</div>
                     <div class="metric-caption" id="presence-caption">Chưa hiệu chuẩn nền</div>
                 </article>
                 <article class="metric-card">
-                    <div class="metric-heading"><span>FRAME RATE</span><span class="metric-symbol green">↗</span></div>
+                    <div class="metric-heading"><span data-i18n="metric_framerate">FRAME RATE</span><span class="metric-symbol green">↗</span></div>
                     <div class="metric-value"><span id="frame-rate">—</span><small>Hz</small></div>
-                    <div class="metric-caption">Tốc độ nhận gần nhất</div>
+                    <div class="metric-caption" data-i18n="caption_framerate">Tốc độ nhận gần nhất</div>
                 </article>
+            </section>
+
+            <!-- Bảng điều khiển Ping Giữ Nhịp Vô Tuyến (Active Probing) -->
+            <section class="panel prober-panel" id="prober-panel">
+                <div class="prober-header">
+                    <div class="prober-title-wrap">
+                        <span class="prober-badge" data-i18n="prober_badge">HƯỚNG 1 · ACTIVE PROBING</span>
+                        <h2 data-i18n="prober_title">Ping Giữ Nhịp Vô Tuyến (Device Keep-alive)</h2>
+                        <p class="prober-desc" data-i18n="prober_desc">Router tự động phát gói tin thăm dò (ARP / UDP) để kích thích gói phản hồi từ điện thoại, duy trì luồng CSI liên tục ngay cả khi người dùng không chạm vào máy.</p>
+                    </div>
+                    <div class="prober-toggle-wrap">
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="prober-toggle">
+                            <span class="toggle-slider"></span>
+                        </label>
+                        <span id="prober-toggle-label" class="toggle-status" data-i18n="prober_off">Đang tắt</span>
+                    </div>
+                </div>
+
+                <!-- Thanh điều khiển: Chế độ, Chu kỳ phát và Telemetry -->
+                <div class="prober-control-bar">
+                    <div class="control-bar-group">
+                        <span class="prober-control-title" data-i18n="prober_mode_label">Chế độ thu:</span>
+                        <div class="mode-chips">
+                            <button type="button" class="mode-chip active" id="mode-single-btn" data-mode="single">
+                                <span class="chip-dot"></span><span data-i18n="mode_single">Đơn thiết bị (Single Device)</span>
+                            </button>
+                            <button type="button" class="mode-chip" id="mode-multi-btn" data-mode="multi">
+                                <span class="chip-dot"></span><span data-i18n="mode_multi">Đa thiết bị (Multi-Device)</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="control-bar-group">
+                        <label for="prober-interval" class="prober-control-title" data-i18n="interval_label">Chu kỳ phát (Interval):</label>
+                        <div class="interval-input-wrap">
+                            <input type="number" id="prober-interval" min="10" max="2000" step="5" value="50">
+                            <span class="input-unit">ms</span>
+                            <span class="rate-badge" id="prober-rate-badge">20.0 Hz</span>
+                        </div>
+                        <div class="preset-pills" id="prober-presets">
+                            <button type="button" class="preset-pill" data-ms="20">20ms (50Hz)</button>
+                            <button type="button" class="preset-pill active" data-ms="50">50ms (20Hz)</button>
+                            <button type="button" class="preset-pill" data-ms="100">100ms (10Hz)</button>
+                            <button type="button" class="preset-pill" data-ms="200">200ms (5Hz)</button>
+                        </div>
+                    </div>
+
+                    <div class="control-bar-group control-bar-actions">
+                        <button type="button" class="apply-prober-btn" id="prober-apply-btn" data-i18n="apply_btn">Áp dụng</button>
+                        <div class="prober-telemetry">
+                            <div><small data-i18n="stat_sent">Đã gửi</small><strong id="prober-packets-count">0 gói</strong></div>
+                            <div><small data-i18n="stat_status">Trạng thái</small><span id="prober-status-badge" class="badge-idle" data-i18n="prober_idle">Tạm dừng</span></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Bảng danh sách thiết bị chia theo Card Wi-Fi (chuẩn theo router script checkwifi) -->
+                <div class="prober-stations-section">
+                    <div class="stations-section-header">
+                        <div class="section-title-wrap">
+                            <h3 data-i18n="cards_section_title">Danh Sách Thiết Bị Kết Nối Theo Card Wi-Fi</h3>
+                            <span class="selection-summary-badge" id="prober-selection-badge">Đang chọn: Tự động</span>
+                        </div>
+                        <div class="stations-quick-actions">
+                            <button type="button" class="quick-action-pill active" id="quick-auto-btn" data-i18n="auto_strongest_btn">
+                                Tự động chọn sóng mạnh nhất
+                            </button>
+                            <button type="button" class="quick-action-pill" id="quick-manual-toggle" data-i18n="manual_ip_btn">
+                                Nhập IP thủ công
+                            </button>
+                            <div class="manual-ip-input-wrap" id="manual-ip-wrap" hidden>
+                                <input type="text" id="prober-ip-custom" placeholder="Ví dụ: 192.168.10.238" spellcheck="false">
+                            </div>
+                            <button type="button" class="scan-refresh-btn" id="prober-refresh-btn" title="Quét lại thiết bị Wi-Fi">
+                                <span class="refresh-icon">↻</span> <span data-i18n="refresh_btn">Quét lại</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Thanh thao tác chọn nhanh cho chế độ Đa thiết bị -->
+                    <div class="multi-actions-bar" id="multi-actions-bar" hidden>
+                        <button type="button" class="mini-btn" id="multi-select-all" data-i18n="select_all">Chọn tất cả</button>
+                        <button type="button" class="mini-btn" id="multi-deselect-all" data-i18n="deselect_all">Bỏ chọn</button>
+                        <span class="multi-count" id="multi-count">Đã chọn: 0</span>
+                    </div>
+
+                    <!-- Container hiển thị các bảng theo từng Card Wi-Fi -->
+                    <div class="prober-cards-container" id="prober-cards-container">
+                        <div class="empty-client-notice" data-i18n="searching_wifi_clients">
+                            Đang tải thông tin Card Wi-Fi và thiết bị kết nối...
+                        </div>
+                    </div>
+                </div>
             </section>
 
             <section class="panel chart-panel" id="chart-panel">
@@ -81,7 +180,7 @@
                         <h2 id="chart-title">Hoạt động chuyển động</h2>
                     </div>
                     <label class="chain-control" id="chain-control">
-                        <span>CHAIN</span>
+                        <span data-i18n="label_chain">CHAIN</span>
                         <select id="chain-select" aria-label="Chọn antenna chain"></select>
                     </label>
                 </div>
@@ -89,8 +188,8 @@
                     <canvas id="signal-chart" aria-label="Biểu đồ CSI"></canvas>
                     <div class="chart-empty" id="chart-empty">
                         <span class="empty-pulse"></span>
-                        <strong>Đang chờ dữ liệu CSI</strong>
-                        <small>Kết nối relay stream trên router để bắt đầu quan sát</small>
+                        <strong data-i18n="chart_empty_title">Đang chờ dữ liệu CSI</strong>
+                        <small data-i18n="chart_empty_desc">Kết nối relay stream trên router để bắt đầu quan sát</small>
                     </div>
                 </div>
                 <div class="chart-legend" id="chart-legend"></div>
@@ -99,25 +198,25 @@
             <section class="lower-grid">
                 <article class="panel detail-panel">
                     <div class="panel-heading compact">
-                        <div><div class="eyebrow">CAPTURE CONTEXT</div><h2>Frame hiện tại</h2></div>
+                        <div><div class="eyebrow" data-i18n="ctx_eyebrow">CAPTURE CONTEXT</div><h2 data-i18n="ctx_title">Frame hiện tại</h2></div>
                         <span id="frame-id" class="frame-badge">NO FRAME</span>
                     </div>
                     <div class="detail-list">
                         <div><span>Chip TSF</span><strong id="chip-tsf">—</strong></div>
                         <div><span>PHY PPDU ID</span><strong id="ppdu-id">—</strong></div>
-                        <div><span>Channel bandwidth code</span><strong id="bandwidth">—</strong></div>
+                        <div><span data-i18n="ctx_bw">Channel bandwidth code</span><strong id="bandwidth">—</strong></div>
                         <div><span>AP MAC (freeze TLV)</span><strong id="ap-mac">—</strong></div>
                     </div>
                 </article>
                 <article class="panel note-panel">
-                    <div class="eyebrow">SIGNAL NOTES</div>
-                    <h2>Đọc dữ liệu chính xác</h2>
-                    <p>Motion score là 1 trừ tương quan Pearson giữa vector biên độ hai frame, làm mượt bằng median 30 mẫu. Nền chỉ được hiệu chuẩn sau 50 score ổn định liên tiếp (≤ 0,1; độ lệch chuẩn ≤ 0,01; bước giữa score ≤ 0,02). Bấm “Hiệu chuẩn lại” để xóa baseline và bắt đầu lấy nền mới.</p>
-                    <p>Biên độ là giá trị I/Q thô, chưa quy đổi sang dBm. Dùng toàn bộ tone CFR hiện có vì mapping LLTF 64-tone của ESP32 không tương ứng trực tiếp với relay Qualcomm.</p>
+                    <div class="eyebrow" data-i18n="note_eyebrow">SIGNAL NOTES</div>
+                    <h2 data-i18n="note_title">Đọc dữ liệu chính xác</h2>
+                    <p data-i18n="note_p1">Motion score là 1 trừ tương quan Pearson giữa vector biên độ hai frame, làm mượt bằng median 30 mẫu. Nền chỉ được hiệu chuẩn sau 40 score ổn định liên tiếp (≤ 0,40; độ lệch chuẩn ≤ 0,035). Bấm “Hiệu chuẩn lại” để xóa baseline và bắt đầu lấy nền mới.</p>
+                    <p data-i18n="note_p2">Biên độ là giá trị I/Q thô, chưa quy đổi sang dBm. Tính năng Active Probing duy trì xung nhịp liên tục 20-50 Hz kể cả khi người dùng không dùng mạng.</p>
                 </article>
             </section>
 
-            <footer><span>EDGE CSI DASHBOARD</span><span>DATA STAYS ON YOUR ROUTER</span></footer>
+            <footer><span data-i18n="footer_title">EDGE CSI DASHBOARD</span><span data-i18n="footer_right">DATA STAYS ON YOUR ROUTER</span></footer>
         </main>
     </div>
     <script src="/script.js"></script>

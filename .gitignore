@@ -32,7 +32,7 @@ CMakeUserPresets.json
 # 2. Build Directories & CMake
 # ==========================================
 build/
-Build/
+Build*/
 bin/
 bin-int/
 out/

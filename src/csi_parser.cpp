@@ -5,87 +5,78 @@
 #include <cstddef>
 #include <cstdio>
 #include <iomanip>
-#include <numeric>
 #include <sstream>
-#include <utility>
 
-namespace
-{
-    constexpr uint8_t kRelayMagic[] = {0xaf, 0xbe, 0xad, 0xde};
-    constexpr uint8_t kCfrMagic[] = {0xba, 0x00, 0xde, 0xc0};
-    constexpr uint8_t kRelayEndMagic[] = {0xad, 0xde, 0xaf, 0xbe};
-    constexpr size_t kRelayHeaderSize = 22;
-    constexpr size_t kMinimumCfrHeaderSize = 90;
-    constexpr size_t kMaximumMetadataSize = 4096;
-    constexpr size_t kMaximumCfrHeaderSize = 4096;
-    constexpr size_t kMaximumPayloadSize = 16 * 1024 * 1024;
-    constexpr size_t kMaximumPendingSize = 32 * 1024 * 1024;
+namespace {
+constexpr uint8_t kRelayMagic[] = {0xaf, 0xbe, 0xad, 0xde};
+constexpr uint8_t kCfrMagic[] = {0xba, 0x00, 0xde, 0xc0};
+constexpr uint8_t kRelayEndMagic[] = {0xad, 0xde, 0xaf, 0xbe};
+constexpr size_t kRelayHeaderSize = 22;
+constexpr size_t kMinimumCfrHeaderSize = 90;
+constexpr size_t kMaximumMetadataSize = 4096;
+constexpr size_t kMaximumCfrHeaderSize = 4096;
+constexpr size_t kMaximumPayloadSize = 16 * 1024 * 1024;
+constexpr size_t kMaximumPendingSize = 32 * 1024 * 1024;
 
-    uint16_t readU16(const uint8_t *data)
-    {
-        return static_cast<uint16_t>(data[0]) |
-               (static_cast<uint16_t>(data[1]) << 8);
-    }
+uint16_t readU16(const uint8_t *data) {
+    return static_cast<uint16_t>(data[0]) |
+           (static_cast<uint16_t>(data[1]) << 8);
+}
 
-    uint32_t readU32(const uint8_t *data)
-    {
-        return static_cast<uint32_t>(data[0]) |
-               (static_cast<uint32_t>(data[1]) << 8) |
-               (static_cast<uint32_t>(data[2]) << 16) |
-               (static_cast<uint32_t>(data[3]) << 24);
-    }
+uint32_t readU32(const uint8_t *data) {
+    return static_cast<uint32_t>(data[0]) |
+           (static_cast<uint32_t>(data[1]) << 8) |
+           (static_cast<uint32_t>(data[2]) << 16) |
+           (static_cast<uint32_t>(data[3]) << 24);
+}
 
-    uint64_t readU64(const uint8_t *data)
-    {
-        return static_cast<uint64_t>(readU32(data)) |
-               (static_cast<uint64_t>(readU32(data + 4)) << 32);
-    }
+uint64_t readU64(const uint8_t *data) {
+    return static_cast<uint64_t>(readU32(data)) |
+           (static_cast<uint64_t>(readU32(data + 4)) << 32);
+}
 
-    size_t findMagic(const std::vector<uint8_t> &data, const uint8_t *magic, size_t from)
-    {
-        if (data.size() < 4 || from > data.size() - 4)
-            return std::string::npos;
-
-        for (size_t i = from; i + 4 <= data.size(); ++i)
-        {
-            if (std::equal(magic, magic + 4, data.begin() + static_cast<std::ptrdiff_t>(i)))
-                return i;
-        }
+size_t findMagic(const std::vector<uint8_t> &data, const uint8_t *magic,
+                 size_t from) {
+    if (data.size() < 4 || from > data.size() - 4)
         return std::string::npos;
-    }
 
-    void appendFloatArray(std::ostringstream &json, const std::vector<float> &values)
-    {
-        json << '[';
-        for (size_t i = 0; i < values.size(); ++i)
-        {
-            if (i != 0)
-                json << ',';
-            json << values[i];
-        }
-        json << ']';
+    for (size_t i = from; i + 4 <= data.size(); ++i) {
+        if (std::equal(magic, magic + 4,
+                       data.begin() + static_cast<std::ptrdiff_t>(i)))
+            return i;
     }
+    return std::string::npos;
+}
 
-    void appendIntArray(std::ostringstream &json, const std::vector<int16_t> &values)
-    {
-        json << '[';
-        for (size_t i = 0; i < values.size(); ++i)
-        {
-            if (i != 0)
-                json << ',';
-            json << values[i];
-        }
-        json << ']';
+void appendFloatArray(std::ostringstream &json,
+                      const std::vector<float> &values) {
+    json << '[';
+    for (size_t i = 0; i < values.size(); ++i) {
+        if (i != 0)
+            json << ',';
+        // Giới hạn 1 chữ số thập phân cho mảng hàng nghìn phần tử để giảm mạnh kích thước JSON
+        json << std::fixed << std::setprecision(1) << values[i];
     }
+    json << std::defaultfloat << ']';
+}
+
+void appendIntArray(std::ostringstream &json,
+                    const std::vector<int16_t> &values) {
+    json << '[';
+    for (size_t i = 0; i < values.size(); ++i) {
+        if (i != 0)
+            json << ',';
+        json << values[i];
+    }
+    json << ']';
+}
 } // namespace
 
-size_t CSIData::tonesPerChain() const
-{
+size_t CSIData::tonesPerChain() const {
     return chains.empty() ? 0 : chains.front().amplitudes.size();
 }
 
-std::string CSIData::toJson() const
-{
+std::string CSIData::toJson() const {
     std::ostringstream json;
     json << std::setprecision(7)
          << "{\"has_data\":true,\"timestamp_ns\":" << timestamp_ns
@@ -102,25 +93,32 @@ std::string CSIData::toJson() const
          << ",\"motion_window_samples\":" << motion_window_samples
          << ",\"motion_calibrated\":" << (motion_calibrated ? "true" : "false")
          << ",\"motion_calibration_frames\":" << motion_calibration_frames
-         << ",\"motion_calibration_stable\":" << (motion_calibration_stable ? "true" : "false")
+         << ",\"motion_calibration_stable\":"
+         << (motion_calibration_stable ? "true" : "false")
          << ",\"motion_threshold_high\":" << motion_threshold_high
          << ",\"motion_threshold_low\":" << motion_threshold_low
          << ",\"presence_detected\":" << (presence_detected ? "true" : "false")
          << ",\"breath_bpm\":" << breath_bpm
          << ",\"breath_wave\":" << breath_wave
+         << ",\"breath_quality\":" << breath_quality
+         << ",\"breath_phase_span\":" << breath_phase_span
+         << ",\"breath_asymmetry\":" << breath_asymmetry
+         << ",\"breath_rrv\":" << breath_rrv
+         << ",\"breath_regularity\":" << breath_regularity
          << ",\"breath_valid\":" << (breath_valid ? "true" : "false")
+         << ",\"is_human_presence\":" << (is_human_presence ? "true" : "false")
+         << ",\"is_sleeping\":" << (is_sleeping ? "true" : "false")
+         << ",\"presence_status\":\"" << presence_status << "\""
          << ",\"ap_mac\":\"" << ap_mac << "\",\"amplitude_gain_ratio\":[";
 
-    for (size_t i = 0; i < 5; ++i)
-    {
+    for (size_t i = 0; i < 5; ++i) {
         if (i != 0)
             json << ',';
         json << amplitude_gain_ratio[i];
     }
 
     json << "],\"chains\":[";
-    for (size_t i = 0; i < chains.size(); ++i)
-    {
+    for (size_t i = 0; i < chains.size(); ++i) {
         if (i != 0)
             json << ',';
         json << "{\"i\":";
@@ -137,44 +135,44 @@ std::string CSIData::toJson() const
     return json.str();
 }
 
-bool CSIParser::feed(const uint8_t *data, size_t size, std::vector<CSIData> &frames)
-{
+bool CSIParser::feed(const uint8_t *data, size_t size,
+                     std::vector<CSIData> &frames) {
     frames.clear();
     if (data == nullptr && size != 0)
         return false;
-    if (size > kMaximumPendingSize || pending_.size() > kMaximumPendingSize - size)
-    {
+    if (size > kMaximumPendingSize ||
+        pending_.size() > kMaximumPendingSize - size) {
         reset();
         return false;
     }
     if (size != 0)
         pending_.insert(pending_.end(), data, data + size);
 
-    while (true)
-    {
+    while (true) {
         const size_t relay_start = findMagic(pending_, kRelayMagic, 0);
-        if (relay_start == std::string::npos)
-        {
+        if (relay_start == std::string::npos) {
             if (pending_.size() > 3)
                 pending_.erase(pending_.begin(), pending_.end() - 3);
             break;
         }
         if (relay_start != 0)
-            pending_.erase(pending_.begin(), pending_.begin() + static_cast<std::ptrdiff_t>(relay_start));
+            pending_.erase(pending_.begin(),
+                           pending_.begin() +
+                               static_cast<std::ptrdiff_t>(relay_start));
         if (pending_.size() < kRelayHeaderSize)
             break;
 
         const uint32_t metadata_size = readU32(pending_.data() + 10);
-        if (metadata_size > kMaximumMetadataSize)
-        {
+        if (metadata_size > kMaximumMetadataSize) {
             pending_.erase(pending_.begin());
             continue;
         }
         const size_t cfr_offset = kRelayHeaderSize + metadata_size;
         if (pending_.size() < cfr_offset + 12)
             break;
-        if (!std::equal(kCfrMagic, kCfrMagic + 4, pending_.begin() + static_cast<std::ptrdiff_t>(cfr_offset)))
-        {
+        if (!std::equal(kCfrMagic, kCfrMagic + 4,
+                        pending_.begin() +
+                            static_cast<std::ptrdiff_t>(cfr_offset))) {
             pending_.erase(pending_.begin());
             continue;
         }
@@ -183,24 +181,23 @@ bool CSIParser::feed(const uint8_t *data, size_t size, std::vector<CSIData> &fra
         const size_t cfr_header_size = static_cast<size_t>(cfr_header[7]) * 4;
         const uint32_t payload_size = readU32(cfr_header + 8);
         if (cfr_header_size < kMinimumCfrHeaderSize ||
-            cfr_header_size > kMaximumCfrHeaderSize ||
-            payload_size == 0 || payload_size > kMaximumPayloadSize)
-        {
+            cfr_header_size > kMaximumCfrHeaderSize || payload_size == 0 ||
+            payload_size > kMaximumPayloadSize) {
             pending_.erase(pending_.begin());
             continue;
         }
 
-        const size_t record_size = cfr_offset + cfr_header_size + payload_size + 4;
-        if (record_size > kMaximumPendingSize)
-        {
+        const size_t record_size =
+            cfr_offset + cfr_header_size + payload_size + 4;
+        if (record_size > kMaximumPendingSize) {
             pending_.erase(pending_.begin());
             continue;
         }
         if (pending_.size() < record_size)
             break;
         if (!std::equal(kRelayEndMagic, kRelayEndMagic + 4,
-                        pending_.begin() + static_cast<std::ptrdiff_t>(record_size - 4)))
-        {
+                        pending_.begin() +
+                            static_cast<std::ptrdiff_t>(record_size - 4))) {
             pending_.erase(pending_.begin());
             continue;
         }
@@ -209,25 +206,23 @@ bool CSIParser::feed(const uint8_t *data, size_t size, std::vector<CSIData> &fra
         if (decodeRecord(pending_.data(), record_size, frame))
             frames.push_back(std::move(frame));
 
-        pending_.erase(pending_.begin(), pending_.begin() + static_cast<std::ptrdiff_t>(record_size));
+        pending_.erase(pending_.begin(),
+                       pending_.begin() +
+                           static_cast<std::ptrdiff_t>(record_size));
     }
     return true;
 }
 
-void CSIParser::reset()
-{
-    pending_.clear();
-}
+void CSIParser::reset() { pending_.clear(); }
 
-bool CSIParser::decodeRecord(const uint8_t *record, size_t size, CSIData &frame)
-{
+bool CSIParser::decodeRecord(const uint8_t *record, size_t size,
+                             CSIData &frame) {
     if (size < kRelayHeaderSize + kMinimumCfrHeaderSize + 4)
         return false;
 
     const uint32_t metadata_size = readU32(record + 10);
     const size_t cfr_offset = kRelayHeaderSize + metadata_size;
-    if (metadata_size > kMaximumMetadataSize ||
-        cfr_offset > size ||
+    if (metadata_size > kMaximumMetadataSize || cfr_offset > size ||
         size - cfr_offset < kMinimumCfrHeaderSize + 4)
         return false;
 
@@ -238,8 +233,8 @@ bool CSIParser::decodeRecord(const uint8_t *record, size_t size, CSIData &frame)
     if (cfr_header_size < kMinimumCfrHeaderSize ||
         cfr_header_size > size - cfr_offset - 4 ||
         payload_size > size - cfr_offset - cfr_header_size - 4 ||
-        chain_count == 0 || chain_count > 8 ||
-        payload_size == 0 || payload_size % (4 * chain_count) != 0)
+        chain_count == 0 || chain_count > 8 || payload_size == 0 ||
+        payload_size % (4 * chain_count) != 0)
         return false;
 
     frame.timestamp_ns = readU64(record + 14);
@@ -263,24 +258,26 @@ bool CSIParser::decodeRecord(const uint8_t *record, size_t size, CSIData &frame)
     const uint8_t *payload = cfr_header + cfr_header_size;
     frame.chains.resize(frame.num_chains);
 
-    for (size_t chain_idx = 0; chain_idx < frame.num_chains; ++chain_idx)
-    {
+    for (size_t chain_idx = 0; chain_idx < frame.num_chains; ++chain_idx) {
         auto &chain = frame.chains[chain_idx];
         chain.i.resize(raw_tones);
         chain.q.resize(raw_tones);
         chain.amplitudes.resize(raw_tones);
         chain.phases.resize(raw_tones);
 
-        for (size_t tone = 0; tone < raw_tones; ++tone)
-        {
+        for (size_t tone = 0; tone < raw_tones; ++tone) {
             const size_t byte_idx = (chain_idx * raw_tones + tone) * 4;
-            const int16_t ival = static_cast<int16_t>(readU16(payload + byte_idx));
-            const int16_t qval = static_cast<int16_t>(readU16(payload + byte_idx + 2));
+            const int16_t ival =
+                static_cast<int16_t>(readU16(payload + byte_idx));
+            const int16_t qval =
+                static_cast<int16_t>(readU16(payload + byte_idx + 2));
 
             chain.i[tone] = ival;
             chain.q[tone] = qval;
-            chain.amplitudes[tone] = std::sqrt(static_cast<float>(ival * ival + qval * qval));
-            chain.phases[tone] = std::atan2(static_cast<float>(qval), static_cast<float>(ival));
+            chain.amplitudes[tone] =
+                std::sqrt(static_cast<float>(ival * ival + qval * qval));
+            chain.phases[tone] =
+                std::atan2(static_cast<float>(qval), static_cast<float>(ival));
         }
     }
     return true;

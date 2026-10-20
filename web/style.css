@@ -213,6 +213,39 @@ select {
     gap: 9px;
 }
 
+/* Language Switcher */
+.lang-switch {
+    display: inline-flex;
+    align-items: center;
+    background: #0d1522;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 2px;
+    gap: 2px;
+}
+
+.lang-btn {
+    padding: 4px 8px;
+    border: none;
+    border-radius: 4px;
+    background: transparent;
+    color: #7d8ea6;
+    font-family: "DM Mono", monospace;
+    font-size: 9px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+.lang-btn:hover {
+    color: var(--text);
+}
+
+.lang-btn.active {
+    background: rgba(75, 226, 208, 0.16);
+    color: var(--cyan);
+}
+
 .calibrate-btn {
     min-height: 40px;
     padding: 0 13px;
@@ -605,4 +638,732 @@ footer {
     h1 { font-size: 19px; }
     .chart-wrap { height: 235px; }
     footer { font-size: 7px; }
+}
+
+/* ==========================================================================
+   Active Prober Control Panel (Hướng 1: Ping Giữ Nhịp Vô Tuyến)
+   ========================================================================== */
+.prober-panel {
+    margin-top: 14px;
+    padding: 16px 20px;
+    background: linear-gradient(135deg, rgba(16, 26, 43, 0.95), rgba(12, 19, 32, 0.98));
+    border: 1px solid rgba(75, 226, 208, 0.2);
+    border-radius: var(--radius);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
+}
+
+.prober-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+    padding-bottom: 14px;
+    border-bottom: 1px solid rgba(131, 152, 185, 0.12);
+}
+
+.prober-badge {
+    display: inline-block;
+    padding: 3px 7px;
+    margin-bottom: 5px;
+    border-radius: 4px;
+    background: rgba(75, 226, 208, 0.12);
+    color: var(--cyan);
+    font-family: "DM Mono", monospace;
+    font-size: 8px;
+    font-weight: 500;
+    letter-spacing: 0.08em;
+}
+
+.prober-title-wrap h2 {
+    margin: 0 0 4px;
+    font-size: 14px;
+    font-weight: 600;
+    color: #e4edf8;
+}
+
+.prober-desc {
+    margin: 0;
+    font-size: 10px;
+    color: #8c9cb3;
+    line-height: 1.5;
+    max-width: 680px;
+}
+
+.prober-toggle-wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 6px;
+}
+
+.toggle-switch {
+    position: relative;
+    display: inline-block;
+    width: 44px;
+    height: 24px;
+}
+
+.toggle-switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.toggle-slider {
+    position: absolute;
+    cursor: pointer;
+    inset: 0;
+    background-color: #202c3d;
+    transition: 0.3s;
+    border-radius: 24px;
+    border: 1px solid rgba(131, 152, 185, 0.2);
+}
+
+.toggle-slider:before {
+    position: absolute;
+    content: "";
+    height: 16px;
+    width: 16px;
+    left: 3px;
+    bottom: 3px;
+    background-color: #8fa0b7;
+    transition: 0.3s;
+    border-radius: 50%;
+}
+
+.toggle-switch input:checked + .toggle-slider {
+    background-color: rgba(75, 226, 208, 0.25);
+    border-color: var(--cyan);
+}
+
+.toggle-switch input:checked + .toggle-slider:before {
+    transform: translateX(20px);
+    background-color: var(--cyan);
+    box-shadow: 0 0 10px var(--cyan);
+}
+
+.toggle-status {
+    font-family: "DM Mono", monospace;
+    font-size: 9px;
+    color: #8c9cb3;
+}
+
+.toggle-status.active {
+    color: var(--cyan);
+    font-weight: 600;
+}
+
+/* Control Bar: Mode, Interval, Telemetry */
+.prober-control-bar {
+    display: grid;
+    grid-template-columns: 1fr 1.3fr 1fr;
+    gap: 16px;
+    margin-top: 14px;
+    padding-bottom: 14px;
+    border-bottom: 1px solid rgba(131, 152, 185, 0.1);
+    align-items: flex-start;
+}
+
+.control-bar-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.prober-control-title {
+    font-size: 10px;
+    font-weight: 500;
+    color: #a4b3c7;
+    font-family: "DM Mono", monospace;
+}
+
+.mode-chips {
+    display: inline-flex;
+    gap: 8px;
+}
+
+.mode-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 12px;
+    background: #0d1522;
+    border: 1px solid rgba(131, 152, 185, 0.2);
+    border-radius: 20px;
+    color: #8c9cb3;
+    font-family: "DM Mono", monospace;
+    font-size: 9px;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+.mode-chip .chip-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #4e6079;
+}
+
+.mode-chip.active {
+    background: rgba(75, 226, 208, 0.12);
+    border-color: var(--cyan);
+    color: var(--cyan);
+}
+
+.mode-chip.active .chip-dot {
+    background: var(--cyan);
+    box-shadow: 0 0 6px var(--cyan);
+}
+
+.interval-input-wrap {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.interval-input-wrap input {
+    width: 80px;
+    padding: 6px 10px;
+    background: #0c1421;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--cyan);
+    font-family: "DM Mono", monospace;
+    font-size: 13px;
+    font-weight: bold;
+    outline: none;
+    transition: border-color 0.2s;
+}
+
+.interval-input-wrap input:focus {
+    border-color: var(--cyan);
+}
+
+.input-unit {
+    color: #8c9cb3;
+    font-family: "DM Mono", monospace;
+    font-size: 10px;
+}
+
+.rate-badge {
+    padding: 3px 8px;
+    border-radius: 4px;
+    background: rgba(169, 140, 255, 0.12);
+    color: #a98cff;
+    font-family: "DM Mono", monospace;
+    font-size: 9px;
+    font-weight: 600;
+}
+
+.preset-pills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+    margin-top: 2px;
+}
+
+.preset-pill {
+    padding: 3px 8px;
+    border: 1px solid rgba(131, 152, 185, 0.15);
+    border-radius: 4px;
+    background: #0c1421;
+    color: #8fa0b7;
+    font-family: "DM Mono", monospace;
+    font-size: 8px;
+    cursor: pointer;
+    transition: 0.15s;
+}
+
+.preset-pill:hover {
+    border-color: rgba(75, 226, 208, 0.4);
+    color: var(--cyan);
+}
+
+.preset-pill.active {
+    background: rgba(75, 226, 208, 0.12);
+    border-color: var(--cyan);
+    color: var(--cyan);
+    font-weight: bold;
+}
+
+.control-bar-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.apply-prober-btn {
+    padding: 7px 14px;
+    border: 1px solid var(--cyan);
+    border-radius: 6px;
+    background: rgba(75, 226, 208, 0.15);
+    color: var(--cyan);
+    font-family: "DM Mono", monospace;
+    font-size: 10px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: 0.2s;
+    text-align: center;
+}
+
+.apply-prober-btn:hover {
+    background: var(--cyan);
+    color: #080d19;
+    box-shadow: 0 0 12px rgba(75, 226, 208, 0.4);
+}
+
+.prober-telemetry {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 6px 10px;
+    border-radius: 6px;
+    background: rgba(12, 20, 33, 0.6);
+    border: 1px solid rgba(131, 152, 185, 0.08);
+    font-family: "DM Mono", monospace;
+}
+
+.prober-telemetry small {
+    display: block;
+    color: #718099;
+    font-size: 7px;
+    text-transform: uppercase;
+}
+
+.prober-telemetry strong {
+    color: #d7e0ee;
+    font-size: 10px;
+}
+
+.badge-idle {
+    color: #8c9cb3;
+    font-size: 9px;
+}
+
+.badge-active {
+    color: #4be2d0;
+    font-size: 9px;
+    font-weight: bold;
+    text-shadow: 0 0 8px rgba(75, 226, 208, 0.5);
+}
+
+/* ==========================================================================
+   Danh sách thiết bị kết nối theo Card Wi-Fi (chuẩn checkwifi)
+   ========================================================================== */
+.prober-stations-section {
+    margin-top: 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.stations-section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.section-title-wrap {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.section-icon {
+    font-size: 14px;
+}
+
+.section-title-wrap h3 {
+    margin: 0;
+    font-size: 12px;
+    font-weight: 600;
+    color: #e4edf8;
+}
+
+.selection-summary-badge {
+    padding: 2px 8px;
+    border-radius: 12px;
+    background: rgba(75, 226, 208, 0.1);
+    border: 1px solid rgba(75, 226, 208, 0.25);
+    color: var(--cyan);
+    font-family: "DM Mono", monospace;
+    font-size: 8px;
+    font-weight: 500;
+}
+
+.stations-quick-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.quick-action-pill {
+    padding: 4px 10px;
+    background: #0d1522;
+    border: 1px solid rgba(131, 152, 185, 0.2);
+    border-radius: 16px;
+    color: #8fa0b7;
+    font-family: "DM Mono", monospace;
+    font-size: 8px;
+    cursor: pointer;
+    transition: 0.2s;
+    user-select: none;
+}
+
+.quick-action-pill:hover {
+    color: var(--cyan);
+    border-color: rgba(75, 226, 208, 0.4);
+}
+
+.quick-action-pill.active {
+    background: rgba(75, 226, 208, 0.12);
+    border-color: var(--cyan);
+    color: var(--cyan);
+    font-weight: 600;
+}
+
+.manual-ip-input-wrap {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.manual-ip-input-wrap input {
+    width: 140px;
+    padding: 3px 8px;
+    background: #080e18;
+    border: 1px solid var(--cyan);
+    border-radius: 4px;
+    color: var(--cyan);
+    font-family: "DM Mono", monospace;
+    font-size: 9px;
+    outline: none;
+}
+
+.scan-refresh-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 10px;
+    background: #0d1522;
+    border: 1px solid rgba(131, 152, 185, 0.2);
+    border-radius: 16px;
+    color: #8fa0b7;
+    font-family: "DM Mono", monospace;
+    font-size: 8px;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+.scan-refresh-btn:hover {
+    color: var(--cyan);
+    border-color: var(--cyan);
+}
+
+.multi-actions-bar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 12px;
+    background: rgba(13, 21, 34, 0.6);
+    border-radius: 6px;
+    border: 1px solid rgba(131, 152, 185, 0.1);
+}
+
+.mini-btn {
+    padding: 2px 8px;
+    background: #0a111c;
+    border: 1px solid rgba(131, 152, 185, 0.25);
+    border-radius: 4px;
+    color: #8fa0b7;
+    font-family: "DM Mono", monospace;
+    font-size: 8px;
+    cursor: pointer;
+    transition: 0.15s;
+}
+
+.mini-btn:hover {
+    color: var(--cyan);
+    border-color: var(--cyan);
+}
+
+.multi-count {
+    margin-left: auto;
+    font-family: "DM Mono", monospace;
+    font-size: 9px;
+    color: var(--cyan);
+}
+
+/* Wi-Fi Cards Container */
+.prober-cards-container {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.wifi-card-panel {
+    background: rgba(10, 16, 26, 0.7);
+    border: 1px solid rgba(131, 152, 185, 0.14);
+    border-radius: 8px;
+    overflow: hidden;
+    transition: border-color 0.2s;
+}
+
+.wifi-card-panel:hover {
+    border-color: rgba(75, 226, 208, 0.25);
+}
+
+.wifi-card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 14px;
+    background: rgba(16, 26, 43, 0.85);
+    border-bottom: 1px solid rgba(131, 152, 185, 0.1);
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.wifi-card-info-left {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.card-radio-svg {
+    color: var(--cyan);
+    display: inline-block;
+    vertical-align: middle;
+}
+
+.card-dev-badge {
+    font-family: "DM Mono", monospace;
+    font-size: 10px;
+    font-weight: 700;
+    color: #e4edf8;
+    letter-spacing: 0.04em;
+}
+
+.band-tag-5g {
+    padding: 2px 6px;
+    border-radius: 4px;
+    background: rgba(169, 140, 255, 0.15);
+    border: 1px solid rgba(169, 140, 255, 0.3);
+    color: #c4b5fd;
+    font-family: "DM Mono", monospace;
+    font-size: 8px;
+    font-weight: 600;
+}
+
+.band-tag-2g {
+    padding: 2px 6px;
+    border-radius: 4px;
+    background: rgba(255, 184, 107, 0.15);
+    border: 1px solid rgba(255, 184, 107, 0.3);
+    color: #ffb86b;
+    font-family: "DM Mono", monospace;
+    font-size: 8px;
+    font-weight: 600;
+}
+
+.band-tag-generic {
+    padding: 2px 6px;
+    border-radius: 4px;
+    background: rgba(75, 226, 208, 0.12);
+    border: 1px solid rgba(75, 226, 208, 0.25);
+    color: var(--cyan);
+    font-family: "DM Mono", monospace;
+    font-size: 8px;
+}
+
+.card-ssid-badge {
+    padding: 2px 7px;
+    border-radius: 4px;
+    background: rgba(13, 21, 34, 0.8);
+    border: 1px solid rgba(131, 152, 185, 0.12);
+    color: #9ab0ca;
+    font-family: "DM Mono", monospace;
+    font-size: 8px;
+}
+
+.wifi-card-info-right {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.card-count-badge {
+    font-family: "DM Mono", monospace;
+    font-size: 8px;
+    padding: 2px 7px;
+    border-radius: 10px;
+    background: rgba(13, 21, 34, 0.7);
+    color: #7d8ea6;
+}
+
+.card-count-badge.has-stations {
+    color: #4be2d0;
+    background: rgba(75, 226, 208, 0.1);
+    border: 1px solid rgba(75, 226, 208, 0.2);
+}
+
+.card-bulk-btn {
+    padding: 2px 7px;
+    background: #0d1522;
+    border: 1px solid rgba(131, 152, 185, 0.2);
+    border-radius: 4px;
+    color: #8fa0b7;
+    font-family: "DM Mono", monospace;
+    font-size: 7px;
+    cursor: pointer;
+    transition: 0.15s;
+}
+
+.card-bulk-btn:hover {
+    color: var(--cyan);
+    border-color: var(--cyan);
+}
+
+/* Station Table */
+.wifi-station-table-wrap {
+    overflow-x: auto;
+}
+
+.wifi-station-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-family: "DM Mono", monospace;
+    font-size: 9px;
+    text-align: left;
+}
+
+.wifi-station-table th {
+    padding: 7px 12px;
+    background: rgba(12, 19, 32, 0.6);
+    color: #718099;
+    font-size: 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    border-bottom: 1px solid rgba(131, 152, 185, 0.08);
+    white-space: nowrap;
+}
+
+.wifi-station-table td {
+    padding: 7px 12px;
+    border-bottom: 1px solid rgba(131, 152, 185, 0.05);
+    color: #c4d1e2;
+    vertical-align: middle;
+    white-space: nowrap;
+}
+
+.wifi-station-row {
+    cursor: pointer;
+    transition: background 0.15s;
+}
+
+.wifi-station-row:hover {
+    background: rgba(75, 226, 208, 0.04);
+}
+
+.wifi-station-row.selected-row {
+    background: rgba(75, 226, 208, 0.09);
+}
+
+.wifi-station-row.selected-row td:first-child {
+    border-left: 2px solid var(--cyan);
+}
+
+.wifi-station-table input[type="radio"],
+.wifi-station-table input[type="checkbox"] {
+    accent-color: var(--cyan);
+    cursor: pointer;
+    width: 13px;
+    height: 13px;
+    margin: 0;
+}
+
+.device-name-cell {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-weight: 600;
+    color: #e4edf8;
+}
+
+.device-name-text {
+    font-size: 10px;
+    font-weight: 600;
+    color: #e4edf8;
+    letter-spacing: 0.02em;
+}
+
+.ip-badge {
+    padding: 2px 6px;
+    border-radius: 4px;
+    background: rgba(13, 21, 34, 0.85);
+    border: 1px solid rgba(75, 226, 208, 0.2);
+    color: #4be2d0;
+    font-weight: 500;
+}
+
+.ip-badge.unassigned {
+    background: rgba(13, 21, 34, 0.4);
+    border-color: rgba(131, 152, 185, 0.1);
+    color: #63738a;
+}
+
+.mac-badge {
+    color: #92a3bb;
+    font-size: 8.5px;
+}
+
+.signal-cell {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.signal-indicator-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #4be2d0;
+    box-shadow: 0 0 5px #4be2d0;
+}
+
+.signal-indicator-dot.fair {
+    background: #ffb86b;
+    box-shadow: 0 0 5px #ffb86b;
+}
+
+.signal-indicator-dot.poor {
+    background: #ff7f9d;
+    box-shadow: 0 0 5px #ff7f9d;
+}
+
+.card-empty-row td,
+.card-empty-cell {
+    padding: 16px;
+    text-align: center;
+    color: #63738a;
+    font-size: 9px;
+    font-style: italic;
+}
+
+.empty-client-notice {
+    padding: 16px;
+    text-align: center;
+    color: #6c7c94;
+    font-size: 9px;
+    font-family: "DM Mono", monospace;
+}
+
+@media (max-width: 950px) {
+    .prober-control-bar {
+        grid-template-columns: 1fr;
+        gap: 12px;
+    }
 }

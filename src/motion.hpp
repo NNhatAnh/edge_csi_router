@@ -5,13 +5,12 @@
 #include <deque>
 #include <vector>
 
-class MotionDetector
-{
-public:
+class MotionDetector {
+  public:
     void update(CSIData &frame);
     void reset();
 
-private:
+  private:
     std::vector<float> previous_amplitudes_;
     std::deque<float> motion_window_;
     std::deque<float> calibration_candidate_;

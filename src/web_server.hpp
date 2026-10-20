@@ -1,9 +1,10 @@
 #ifndef WEB_SERVER_HPP
 #define WEB_SERVER_HPP
 
+#include "breath.hpp"
 #include "csi_parser.hpp"
 #include "motion.hpp"
-#include "breath.hpp"
+#include "prober.hpp"
 
 #include <atomic>
 #include <condition_variable>
@@ -11,22 +12,22 @@
 #include <string>
 #include <thread>
 #include <unordered_set>
-#include <vector>
 
-class WebServer
-{
-public:
-    WebServer(int web_port, int ingest_port, std::string web_root);
+class WebServer {
+  public:
+    WebServer(int web_port, int ingest_port, std::string web_root,
+              ActiveProber *prober = nullptr);
     ~WebServer();
 
     bool start();
     void stop();
     void publish(const CSIData &frame);
 
-private:
+  private:
     int web_port_;
     int ingest_port_;
     std::string web_root_;
+    ActiveProber *prober_ = nullptr;
     std::atomic<int> web_fd_;
     std::atomic<int> ingest_fd_;
     std::atomic<bool> is_running_;
@@ -52,6 +53,8 @@ private:
     void handleWebClient(int client_fd);
     void handleIngestClient(int client_fd);
     void handleEventStream(int client_fd);
+    void handleProberApi(int client_fd, const std::string &method,
+                         const std::string &body);
     void startClientWorker(int client_fd, bool web_client);
 
     std::string readFile(const std::string &filepath) const;
