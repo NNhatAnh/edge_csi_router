@@ -1,0 +1,188 @@
+{
+ "created": "2026-10-21T08:42:52+0700",
+ "bw": 2,
+ "board": "192.168.4.1",
+ "chains": 3,
+ "group": "recording_id",
+ "classes": [
+  "no_wave",
+  "wave"
+ ],
+ "feature_set": "inv_ratio",
+ "evaluation": "leave-one-recording_id-out; model cuối fit trên toàn bộ dữ liệu",
+ "baseline_source": [
+  {
+   "recording_id": "20261020-152046_4-1_wave_S1_P1",
+   "baseline": "no_wave khác",
+   "windows": 160
+  },
+  {
+   "recording_id": "20261020-152209_4-1_no_wave_S1_P1",
+   "baseline": "no_wave khác",
+   "windows": 100
+  },
+  {
+   "recording_id": "20261020-152701_4-1_no_wave_S1_P1",
+   "baseline": "no_wave khác",
+   "windows": 110
+  },
+  {
+   "recording_id": "20261020-152845_4-1_wave_S1_P1",
+   "baseline": "no_wave khác",
+   "windows": 160
+  },
+  {
+   "recording_id": "20261020-164644_4-1_wave_S1_P1",
+   "baseline": "no_wave khác",
+   "windows": 160
+  },
+  {
+   "recording_id": "20261020-171141_4-1_no_wave_S1_P1",
+   "baseline": "no_wave khác",
+   "windows": 110
+  }
+ ],
+ "recordings": 6,
+ "windows": 312,
+ "recordings_by_class": {
+  "wave": 3,
+  "no_wave": 3
+ },
+ "recordings_by_board": {
+  "192.168.4.1": 6
+ },
+ "loro_recording_accuracy": 0.5,
+ "loro_window_accuracy": 0.38782051282051283,
+ "loro_window_confusion": [
+  [
+   54,
+   106
+  ],
+  [
+   85,
+   67
+  ]
+ ],
+ "loro_per_recording": [
+  [
+   "20261020-152046_4-1_wave_S1_P1",
+   "wave",
+   0.497
+  ],
+  [
+   "20261020-152209_4-1_no_wave_S1_P1",
+   "no_wave",
+   0.463
+  ],
+  [
+   "20261020-152701_4-1_no_wave_S1_P1",
+   "no_wave",
+   0.489
+  ],
+  [
+   "20261020-152845_4-1_wave_S1_P1",
+   "wave",
+   0.354
+  ],
+  [
+   "20261020-164644_4-1_wave_S1_P1",
+   "wave",
+   0.658
+  ],
+  [
+   "20261020-171141_4-1_no_wave_S1_P1",
+   "no_wave",
+   0.854
+  ]
+ ],
+ "nuisance_by_class": {},
+ "top_features": [
+  [
+   "nb_inv_ratio_hf_02",
+   0.334
+  ],
+  [
+   "inv_ratio_hfrac_02",
+   0.2973
+  ],
+  [
+   "nb_inv_ratio_hf_01",
+   0.2047
+  ],
+  [
+   "inv_ratio_hfrac_01",
+   0.164
+  ]
+ ],
+ "qc": [
+  {
+   "recording_id": "20261020-152046_4-1_wave_S1_P1",
+   "records": 1581,
+   "kept": 1579,
+   "bw80_fraction": 1.0,
+   "windows": 52
+  },
+  {
+   "recording_id": "20261020-152209_4-1_no_wave_S1_P1",
+   "records": 1492,
+   "kept": 1492,
+   "bw80_fraction": 1.0,
+   "windows": 60
+  },
+  {
+   "recording_id": "20261020-152701_4-1_no_wave_S1_P1",
+   "records": 1582,
+   "kept": 1582,
+   "bw80_fraction": 1.0,
+   "windows": 50
+  },
+  {
+   "recording_id": "20261020-152845_4-1_wave_S1_P1",
+   "records": 1394,
+   "kept": 1393,
+   "bw80_fraction": 1.0,
+   "windows": 49
+  },
+  {
+   "recording_id": "20261020-164644_4-1_wave_S1_P1",
+   "records": 1567,
+   "kept": 1566,
+   "bw80_fraction": 1.0,
+   "windows": 51
+  },
+  {
+   "recording_id": "20261020-171141_4-1_no_wave_S1_P1",
+   "records": 1425,
+   "kept": 1425,
+   "bw80_fraction": 1.0,
+   "windows": 50
+  }
+ ],
+ "preprocessing": {
+  "requested_columns": [
+   "nb_inv_ratio_hf_01",
+   "nb_inv_ratio_hf_02",
+   "inv_ratio_hfrac_01",
+   "inv_ratio_hfrac_02"
+  ],
+  "train_imputation_medians": [
+   1.791127409279039,
+   2.1146485399363613,
+   1.2697576296671444,
+   1.2428387725970023
+  ],
+  "kept_columns": [
+   "nb_inv_ratio_hf_01",
+   "nb_inv_ratio_hf_02",
+   "inv_ratio_hfrac_01",
+   "inv_ratio_hfrac_02"
+  ],
+  "dropped_near_constant_columns": []
+ },
+ "c_parity": {
+  "status": "PASS",
+  "windows_checked": 312,
+  "probability_max_error": 0.0,
+  "scope": "host compiler parity only"
+ }
+}

@@ -1,0 +1,35 @@
+# môi trường + build
+.venv/
+__pycache__/
+*.pyc
+router/build/
+models/*/csi_rf_model.so
+
+# dữ liệu thu (lớn, có MAC thiết bị) — tạo lại bằng collector
+data/raw/
+data/trash/
+data/localization/
+
+# phần mềm Qualcomm trong kit (firmware, module kernel, zip gốc) — không phát tán công khai
+*.zip
+kit/*/firmware/
+kit/*/driver_patch/modules/
+kit/*/toolchain/
+
+# tài liệu nội bộ / ghi chú phân tích — không công khai
+*.md
+docs/
+*.pdf
+*.doc
+*.docx
+*.tex
+kit/*/measurements/
+
+# bí mật / cấu hình cá nhân
+.*/
+.env
+.env.*
+*.key
+*.pem
+*.p12
+id_rsa*

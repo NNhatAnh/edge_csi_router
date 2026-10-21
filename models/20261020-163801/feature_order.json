@@ -1,0 +1,20 @@
+[
+ "nb_inv_std_c0",
+ "nb_inv_step_c0",
+ "nb_inv_tone_p90_c0",
+ "nb_inv_tone_conc_c0",
+ "nb_inv_std_c1",
+ "nb_inv_step_c1",
+ "nb_inv_tone_p90_c1",
+ "nb_inv_tone_conc_c1",
+ "nb_inv_std_c2",
+ "nb_inv_step_c2",
+ "nb_inv_tone_p90_c2",
+ "nb_inv_tone_conc_c2",
+ "nb_inv_ratio_step_01",
+ "nb_inv_ratio_std_01",
+ "nb_inv_ratio_amp_01",
+ "nb_inv_ratio_step_02",
+ "nb_inv_ratio_std_02",
+ "nb_inv_ratio_amp_02"
+]

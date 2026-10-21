@@ -1,0 +1,7 @@
+# .venv cho sensing/ (phân tích, train) và router/ (cross-compile bằng zig). Phiên bản đã dùng 2026-10-20.
+numpy==2.5.4
+pandas==3.0.6
+scipy==1.18.1
+scikit-learn==1.9.1
+matplotlib==3.11.2
+ziglang==0.17.0

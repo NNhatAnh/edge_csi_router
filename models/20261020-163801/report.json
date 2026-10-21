@@ -1,0 +1,220 @@
+{
+ "created": "2026-10-20T16:38:01+0700",
+ "bw": 2,
+ "board": "192.168.4.1",
+ "chains": 3,
+ "group": "recording_id",
+ "classes": [
+  "no_wave",
+  "wave"
+ ],
+ "feature_set": "inv_nb",
+ "evaluation": "leave-one-recording_id-out; model cuối fit trên toàn bộ dữ liệu",
+ "baseline_source": [
+  {
+   "recording_id": "20261020-152046_4-1_wave_S1_P1",
+   "baseline": "no_wave khác",
+   "windows": 110
+  },
+  {
+   "recording_id": "20261020-152209_4-1_no_wave_S1_P1",
+   "baseline": "no_wave khác",
+   "windows": 50
+  },
+  {
+   "recording_id": "20261020-152701_4-1_no_wave_S1_P1",
+   "baseline": "no_wave khác",
+   "windows": 60
+  },
+  {
+   "recording_id": "20261020-152845_4-1_wave_S1_P1",
+   "baseline": "no_wave khác",
+   "windows": 110
+  }
+ ],
+ "recordings": 4,
+ "windows": 211,
+ "recordings_by_class": {
+  "wave": 2,
+  "no_wave": 2
+ },
+ "recordings_by_board": {
+  "192.168.4.1": 4
+ },
+ "loro_recording_accuracy": 0.0,
+ "loro_window_accuracy": 0.12322274881516587,
+ "loro_window_confusion": [
+  [
+   22,
+   88
+  ],
+  [
+   97,
+   4
+  ]
+ ],
+ "loro_per_recording": [
+  [
+   "20261020-152046_4-1_wave_S1_P1",
+   "wave",
+   0.065
+  ],
+  [
+   "20261020-152209_4-1_no_wave_S1_P1",
+   "no_wave",
+   0.648
+  ],
+  [
+   "20261020-152701_4-1_no_wave_S1_P1",
+   "no_wave",
+   0.847
+  ],
+  [
+   "20261020-152845_4-1_wave_S1_P1",
+   "wave",
+   0.071
+  ]
+ ],
+ "nuisance_by_class": {},
+ "top_features": [
+  [
+   "nb_inv_tone_p90_c1",
+   0.272
+  ],
+  [
+   "nb_inv_std_c1",
+   0.2453
+  ],
+  [
+   "nb_inv_step_c2",
+   0.1584
+  ],
+  [
+   "nb_inv_ratio_step_02",
+   0.0938
+  ],
+  [
+   "nb_inv_ratio_amp_01",
+   0.0527
+  ],
+  [
+   "nb_inv_ratio_std_01",
+   0.0397
+  ],
+  [
+   "nb_inv_std_c2",
+   0.0364
+  ],
+  [
+   "nb_inv_ratio_amp_02",
+   0.032
+  ],
+  [
+   "nb_inv_ratio_std_02",
+   0.02
+  ],
+  [
+   "nb_inv_std_c0",
+   0.0139
+  ]
+ ],
+ "qc": [
+  {
+   "recording_id": "20261020-152046_4-1_wave_S1_P1",
+   "records": 1581,
+   "kept": 1579,
+   "bw80_fraction": 1.0,
+   "windows": 52
+  },
+  {
+   "recording_id": "20261020-152209_4-1_no_wave_S1_P1",
+   "records": 1492,
+   "kept": 1492,
+   "bw80_fraction": 1.0,
+   "windows": 60
+  },
+  {
+   "recording_id": "20261020-152701_4-1_no_wave_S1_P1",
+   "records": 1582,
+   "kept": 1582,
+   "bw80_fraction": 1.0,
+   "windows": 50
+  },
+  {
+   "recording_id": "20261020-152845_4-1_wave_S1_P1",
+   "records": 1394,
+   "kept": 1393,
+   "bw80_fraction": 1.0,
+   "windows": 49
+  }
+ ],
+ "preprocessing": {
+  "requested_columns": [
+   "nb_inv_std_c0",
+   "nb_inv_step_c0",
+   "nb_inv_tone_p90_c0",
+   "nb_inv_tone_conc_c0",
+   "nb_inv_std_c1",
+   "nb_inv_step_c1",
+   "nb_inv_tone_p90_c1",
+   "nb_inv_tone_conc_c1",
+   "nb_inv_std_c2",
+   "nb_inv_step_c2",
+   "nb_inv_tone_p90_c2",
+   "nb_inv_tone_conc_c2",
+   "nb_inv_ratio_step_01",
+   "nb_inv_ratio_std_01",
+   "nb_inv_ratio_amp_01",
+   "nb_inv_ratio_step_02",
+   "nb_inv_ratio_std_02",
+   "nb_inv_ratio_amp_02"
+  ],
+  "train_imputation_medians": [
+   0.2793370223811196,
+   0.3200439777509192,
+   0.3530487865608002,
+   -0.010162539713505767,
+   0.3830568541350804,
+   0.4332249954223206,
+   0.40626390691218023,
+   0.004714718236597542,
+   0.45647496398267007,
+   0.43648482223535867,
+   0.4834516547764462,
+   -0.01615598433066746,
+   0.3507662899232957,
+   0.33728135945796106,
+   0.28535527890998313,
+   0.40672338621562876,
+   0.4966522223683176,
+   0.40220333635120864
+  ],
+  "kept_columns": [
+   "nb_inv_std_c0",
+   "nb_inv_step_c0",
+   "nb_inv_tone_p90_c0",
+   "nb_inv_tone_conc_c0",
+   "nb_inv_std_c1",
+   "nb_inv_step_c1",
+   "nb_inv_tone_p90_c1",
+   "nb_inv_tone_conc_c1",
+   "nb_inv_std_c2",
+   "nb_inv_step_c2",
+   "nb_inv_tone_p90_c2",
+   "nb_inv_tone_conc_c2",
+   "nb_inv_ratio_step_01",
+   "nb_inv_ratio_std_01",
+   "nb_inv_ratio_amp_01",
+   "nb_inv_ratio_step_02",
+   "nb_inv_ratio_std_02",
+   "nb_inv_ratio_amp_02"
+  ],
+  "dropped_near_constant_columns": []
+ },
+ "c_parity": {
+  "status": "PASS",
+  "windows_checked": 211,
+  "probability_max_error": 0.0,
+  "scope": "host compiler parity only"
+ }
+}

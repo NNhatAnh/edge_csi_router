@@ -1,0 +1,524 @@
+diff -ru a/drivers/net/wireless/ath/ath12k/cfr.c b/drivers/net/wireless/ath/ath12k/cfr.c
+--- a/drivers/net/wireless/ath/ath12k/cfr.c	2026-10-01 15:08:55.499543400 +0700
++++ b/drivers/net/wireless/ath/ath12k/cfr.c	2026-10-01 15:10:30.044453100 +0700
+@@ -5,6 +5,7 @@
+  */
+ 
+ #include <linux/relay.h>
++#include <asm/unaligned.h>
+ #include "core.h"
+ #include "debug.h"
+ 
+@@ -111,6 +112,377 @@
+ 	relay_flush(cfr->rfs_cfr_capture);
+ }
+ 
++/* cfr_rxmeta (RDP499 CSI probe, 2026-10-01): per-packet metadata for each CSI record.
++ * r8-00065 leaves every Rx field of WMI_PEER_CFR_CAPTURE_EVENT at 0 and never sends the
++ * phase TLV, but the PHY still describes the captured ACK in the Rx monitor status TLVs,
++ * and the DMA header's phy_ppdu_id names that PPDU. wifi8/dp_mon2.c hands every PHY TLV of
++ * interest to ath12k_cfr_rx_phy_tlv() while CFR is enabled on the pdev; a PPDU that carried
++ * PHYRX_LOCATION is kept in a small ring per pdev.
++ *   bit 0: fill cfr_enh_metadata of the relay record from the ring (matched by ppdu id)
++ *   bit 1: also write that PPDU's raw TLVs to the relay as their own record
++ *          (u32 magic 0xCF4E7A01, u16 ppdu id, u8 pdev, u8 n, u64 host ns, u32 bytes,
++ *           n x {u16 tag, u16 len, data padded to 4}, u32 0xBEAFDEAD)
++ *   bit 2: one ATH12K_DBG_CFR summary line per kept PPDU
++ * Field positions come from data, not from QTI definitions (none for QCN9625 in this tree):
++ * Router_App/router_cfr_probe_rdp499/RDP499_CSI_METADATA_GUIDE.md section 5.
++ */
++static uint ath12k_cfr_rxmeta = 3;
++module_param_named(cfr_rxmeta, ath12k_cfr_rxmeta, uint, 0644);
++MODULE_PARM_DESC(cfr_rxmeta, "CFR Rx PHY metadata: bit0 fill relay header, bit1 raw TLV records, bit2 log line");
++
++static ulong ath12k_cfr_rxmeta_kept;
++static ulong ath12k_cfr_rxmeta_hit;
++static ulong ath12k_cfr_rxmeta_miss;
++module_param_named(cfr_rxmeta_kept, ath12k_cfr_rxmeta_kept, ulong, 0444);
++module_param_named(cfr_rxmeta_hit, ath12k_cfr_rxmeta_hit, ulong, 0444);
++module_param_named(cfr_rxmeta_miss, ath12k_cfr_rxmeta_miss, ulong, 0444);
++
++#define CFR_RXMETA_MAGIC		0xCF4E7A01
++#define CFR_RXMETA_SLOTS		16
++#define CFR_RXMETA_TABLES		4
++#define CFR_RXMETA_RAW_MAX		1024
++#define CFR_RXMETA_TLV_MAX		8
++#define CFR_RXMETA_TX_FRESH_MS		100
++
++#define CFR_TLV_RSSI_LEGACY		132
++#define CFR_TLV_PKT_END			135
++#define CFR_TLV_L_SIG_A			139
++#define CFR_TLV_OTHER_RX_INFO		157
++#define CFR_TLV_CMN_USER_INFO		158
++#define CFR_TLV_LOCATION		456
++#define CFR_TLV_RSSI_LEGACY_PART2	643
++
++struct cfr_rxmeta_entry {
++	u16 ppdu_id;
++	u8 ntlv;
++	bool valid;
++	bool has_location;
++	u64 host_ts;
++	u16 tag[CFR_RXMETA_TLV_MAX];
++	u16 len[CFR_RXMETA_TLV_MAX];
++	u16 off[CFR_RXMETA_TLV_MAX];
++	u16 used;
++	u8 raw[CFR_RXMETA_RAW_MAX];
++};
++
++struct cfr_rxmeta_table {
++	struct ath12k *ar;
++	struct cfr_rxmeta_entry stage;
++	struct cfr_rxmeta_entry ring[CFR_RXMETA_SLOTS];
++	u32 head;
++	/* last WMI_PEER_CFR_CAPTURE_EVENT of this pdev: it names the peer even with status 0 */
++	struct ath12k_cfr_peer_tx_param last_tx;
++	unsigned long last_tx_jiffies;
++	bool last_tx_valid;
++};
++
++struct cfr_rxmeta_rec_hdr {
++	u32 magic;
++	u16 ppdu_id;
++	u8 pdev_idx;
++	u8 ntlv;
++	u64 host_ts_ns;
++	u32 tlv_bytes;
++} __packed;
++
++struct cfr_rxmeta_fields {
++	bool rssi, pkt_end, loc, lsig;
++	u8 rssi_comb;
++	u8 chain_rssi[2][4];
++	u8 agc[3];
++	u8 chain_mask;
++	s16 cfo;
++	u64 rx_start;
++	u64 rx_end;
++	u16 lsig_word;
++};
++
++static struct cfr_rxmeta_table s_cfr_rxmeta[CFR_RXMETA_TABLES];
++static u8 s_cfr_rxmeta_rec[sizeof(struct cfr_rxmeta_rec_hdr) +
++			   CFR_RXMETA_TLV_MAX * 4 + CFR_RXMETA_RAW_MAX];
++/* protects s_cfr_rxmeta and s_cfr_rxmeta_rec; never taken together with lut_lock in
++ * the other order (the Rx path does not take lut_lock)
++ */
++static DEFINE_SPINLOCK(s_cfr_rxmeta_lock);
++
++static struct cfr_rxmeta_table *cfr_rxmeta_table_get(struct ath12k *ar, bool create)
++{
++	int i, free_idx = -1;
++
++	for (i = 0; i < CFR_RXMETA_TABLES; i++) {
++		if (s_cfr_rxmeta[i].ar == ar)
++			return &s_cfr_rxmeta[i];
++		if (!s_cfr_rxmeta[i].ar && free_idx < 0)
++			free_idx = i;
++	}
++	if (!create || free_idx < 0)
++		return NULL;
++
++	memset(&s_cfr_rxmeta[free_idx], 0, sizeof(s_cfr_rxmeta[free_idx]));
++	s_cfr_rxmeta[free_idx].ar = ar;
++	return &s_cfr_rxmeta[free_idx];
++}
++
++static void cfr_rxmeta_forget(struct ath12k *ar)
++{
++	struct cfr_rxmeta_table *t;
++
++	spin_lock_bh(&s_cfr_rxmeta_lock);
++	t = cfr_rxmeta_table_get(ar, false);
++	if (t)
++		t->ar = NULL;
++	spin_unlock_bh(&s_cfr_rxmeta_lock);
++}
++
++static const u8 *cfr_rxmeta_tlv(const struct cfr_rxmeta_entry *e, u16 tag, u16 min_len)
++{
++	int i;
++
++	for (i = 0; i < e->ntlv; i++)
++		if (e->tag[i] == tag && e->len[i] >= min_len)
++			return e->raw + e->off[i];
++	return NULL;
++}
++
++static void cfr_rxmeta_decode(const struct cfr_rxmeta_entry *e,
++			      struct cfr_rxmeta_fields *f)
++{
++	const u8 *p;
++	int c;
++
++	memset(f, 0, sizeof(*f));
++
++	/* PHYRX_RSSI_LEGACY: combined RSSI (dB over NF) = info1 bits 15:8, info1 at byte 36 */
++	p = cfr_rxmeta_tlv(e, CFR_TLV_RSSI_LEGACY, 38);
++	if (p) {
++		f->rssi = true;
++		f->rssi_comb = p[37];
++	}
++
++	/* PHYRX_PKT_END: rx end/start (u64, 960 MHz ticks) at 4/12; per-chain rows of
++	 * per-20 MHz RSSI at 24 and 40 (0x80 = invalid). Only two rows are filled here.
++	 */
++	p = cfr_rxmeta_tlv(e, CFR_TLV_PKT_END, 56);
++	if (p) {
++		f->pkt_end = true;
++		f->rx_end = get_unaligned_le64(p + 4);
++		f->rx_start = get_unaligned_le64(p + 12);
++		memcpy(f->chain_rssi[0], p + 24, 4);
++		memcpy(f->chain_rssi[1], p + 40, 4);
++	}
++
++	/* PHYRX_LOCATION: chain mask at 2, CFO (s16, raw) at 16, per-chain AGC gain at 32 + 2c */
++	p = cfr_rxmeta_tlv(e, CFR_TLV_LOCATION, 38);
++	if (p) {
++		f->loc = true;
++		f->chain_mask = p[2];
++		f->cfo = (s16)get_unaligned_le16(p + 16);
++		for (c = 0; c < 3; c++)
++			f->agc[c] = p[32 + 2 * c];
++	}
++
++	/* PHYRX_L_SIG_A: rate code bits 3:0 */
++	p = cfr_rxmeta_tlv(e, CFR_TLV_L_SIG_A, 2);
++	if (p) {
++		f->lsig = true;
++		f->lsig_word = get_unaligned_le16(p);
++	}
++}
++
++/* called with s_cfr_rxmeta_lock held */
++static void cfr_rxmeta_relay(struct ath12k *ar, const struct cfr_rxmeta_entry *e)
++{
++	struct cfr_rxmeta_rec_hdr *h = (struct cfr_rxmeta_rec_hdr *)s_cfr_rxmeta_rec;
++	u32 end_magic = ATH12K_CFR_END_MAGIC;
++	u8 *p = s_cfr_rxmeta_rec + sizeof(*h);
++	int i;
++
++	for (i = 0; i < e->ntlv; i++) {
++		put_unaligned_le16(e->tag[i], p);
++		put_unaligned_le16(e->len[i], p + 2);
++		memcpy(p + 4, e->raw + e->off[i], e->len[i]);
++		memset(p + 4 + e->len[i], 0, ALIGN(e->len[i], 4) - e->len[i]);
++		p += 4 + ALIGN(e->len[i], 4);
++	}
++
++	h->magic = CFR_RXMETA_MAGIC;
++	h->ppdu_id = e->ppdu_id;
++	h->pdev_idx = ar->pdev_idx;
++	h->ntlv = e->ntlv;
++	h->host_ts_ns = e->host_ts;
++	h->tlv_bytes = p - (s_cfr_rxmeta_rec + sizeof(*h));
++
++	ath12k_cfr_rfs_write(ar, s_cfr_rxmeta_rec, p - s_cfr_rxmeta_rec, NULL, 0,
++			     &end_magic, sizeof(end_magic));
++}
++
++static void cfr_rxmeta_log(struct ath12k *ar, const struct cfr_rxmeta_entry *e)
++{
++	struct cfr_rxmeta_fields f;
++
++	cfr_rxmeta_decode(e, &f);
++	ath12k_dbg(ar->ab, ATH12K_DBG_CFR,
++		   "cfr_rxmeta ppdu %u rssi_comb %u rssi_ch0 %*phN rssi_ch1 %*phN agc %u/%u/%u cfo %d mask 0x%02x rx_start %llu rx_end %llu lsig 0x%04x\n",
++		   e->ppdu_id, f.rssi_comb, 4, f.chain_rssi[0], 4, f.chain_rssi[1],
++		   f.agc[0], f.agc[1], f.agc[2], f.cfo, f.chain_mask,
++		   f.rx_start, f.rx_end, f.lsig_word);
++}
++
++void ath12k_cfr_rx_phy_tlv(struct ath12k *ar, u16 ppdu_id, u16 tag,
++			   const void *data, u16 len)
++{
++	struct cfr_rxmeta_table *t;
++	struct cfr_rxmeta_entry *st, *e;
++	u16 room;
++
++	if (!ar || !ath12k_cfr_rxmeta || !READ_ONCE(ar->cfr.cfr_enabled))
++		return;
++
++	switch (tag) {
++	case CFR_TLV_RSSI_LEGACY:
++	case CFR_TLV_RSSI_LEGACY_PART2:
++	case CFR_TLV_L_SIG_A:
++	case CFR_TLV_CMN_USER_INFO:
++	case CFR_TLV_LOCATION:
++	case CFR_TLV_OTHER_RX_INFO:
++	case CFR_TLV_PKT_END:
++		break;
++	default:
++		return;
++	}
++
++	spin_lock_bh(&s_cfr_rxmeta_lock);
++	t = cfr_rxmeta_table_get(ar, true);
++	if (!t)
++		goto out;
++
++	st = &t->stage;
++	if (!st->valid || st->ppdu_id != ppdu_id) {
++		st->valid = true;
++		st->ppdu_id = ppdu_id;
++		st->ntlv = 0;
++		st->used = 0;
++		st->has_location = false;
++	}
++	if (tag == CFR_TLV_LOCATION)
++		st->has_location = true;
++
++	room = CFR_RXMETA_RAW_MAX - st->used;
++	if (st->ntlv < CFR_RXMETA_TLV_MAX && ALIGN(len, 4) <= room) {
++		st->tag[st->ntlv] = tag;
++		st->len[st->ntlv] = len;
++		st->off[st->ntlv] = st->used;
++		memcpy(st->raw + st->used, data, len);
++		st->used += ALIGN(len, 4);
++		st->ntlv++;
++	}
++
++	/* PHYRX_PKT_END is the last PHY TLV of a PPDU */
++	if (tag != CFR_TLV_PKT_END)
++		goto out;
++
++	if (st->has_location) {
++		st->host_ts = ktime_to_ns(ktime_get_real());
++		e = &t->ring[t->head % CFR_RXMETA_SLOTS];
++		memcpy(e, st, offsetof(struct cfr_rxmeta_entry, raw) + st->used);
++		t->head++;
++		ath12k_cfr_rxmeta_kept++;
++		if (ath12k_cfr_rxmeta & BIT(1))
++			cfr_rxmeta_relay(ar, e);
++		if (ath12k_cfr_rxmeta & BIT(2))
++			cfr_rxmeta_log(ar, e);
++	}
++	st->valid = false;
++out:
++	spin_unlock_bh(&s_cfr_rxmeta_lock);
++}
++EXPORT_SYMBOL(ath12k_cfr_rx_phy_tlv);
++
++static void cfr_rxmeta_note_tx(struct ath12k *ar,
++			       const struct ath12k_cfr_peer_tx_param *params)
++{
++	struct cfr_rxmeta_table *t;
++
++	spin_lock_bh(&s_cfr_rxmeta_lock);
++	t = cfr_rxmeta_table_get(ar, true);
++	if (t) {
++		t->last_tx = *params;
++		t->last_tx_jiffies = jiffies;
++		t->last_tx_valid = true;
++	}
++	spin_unlock_bh(&s_cfr_rxmeta_lock);
++}
++
++/* the WMI event that arrived just before this DMA buffer, if any (it carries the peer
++ * MAC, primary/center frequency, phy mode and capture bw even when its status is 0)
++ */
++static bool cfr_rxmeta_recent_tx(struct ath12k *ar,
++				 struct ath12k_cfr_peer_tx_param *out)
++{
++	struct cfr_rxmeta_table *t;
++	bool ok = false;
++
++	spin_lock_bh(&s_cfr_rxmeta_lock);
++	t = cfr_rxmeta_table_get(ar, false);
++	if (t && t->last_tx_valid &&
++	    time_before(jiffies, t->last_tx_jiffies +
++			msecs_to_jiffies(CFR_RXMETA_TX_FRESH_MS))) {
++		*out = t->last_tx;
++		ok = true;
++	}
++	spin_unlock_bh(&s_cfr_rxmeta_lock);
++	return ok;
++}
++
++/* Fill the relay header's empty fields from the kept PPDU with the DMA header's id.
++ * chain_rssi[c] packs PHYRX_PKT_END row c, columns 0-3 (one dB byte per 20 MHz, 0x80 =
++ * invalid); agc_gain[c] and cfo_measurement (raw, sign-extended) come from
++ * PHYRX_LOCATION; rx_start_ts is the low 32 bits of the 960 MHz rx start; mcs_rate is the
++ * L-SIG rate code.
++ */
++static void ath12k_cfr_fill_rxmeta(struct ath12k *ar,
++				   struct ath12k_cfr_look_up_table *lut)
++{
++	struct cfr_enh_metadata *m = &lut->header.meta_enh;
++	const struct cfr_rxmeta_entry *e = NULL;
++	struct cfr_rxmeta_table *t;
++	struct cfr_rxmeta_fields f;
++	int i, c;
++
++	if (!(ath12k_cfr_rxmeta & BIT(0)))
++		return;
++
++	spin_lock_bh(&s_cfr_rxmeta_lock);
++	t = cfr_rxmeta_table_get(ar, false);
++	for (i = 0; t && i < CFR_RXMETA_SLOTS; i++) {
++		if (t->ring[i].valid && t->ring[i].ppdu_id == lut->dbr_ppdu_id) {
++			e = &t->ring[i];
++			break;
++		}
++	}
++	if (!e) {
++		ath12k_cfr_rxmeta_miss++;
++		spin_unlock_bh(&s_cfr_rxmeta_lock);
++		return;
++	}
++	cfr_rxmeta_decode(e, &f);
++	ath12k_cfr_rxmeta_hit++;
++	spin_unlock_bh(&s_cfr_rxmeta_lock);
++
++	if (f.pkt_end) {
++		for (c = 0; c < 2; c++)
++			m->chain_rssi[c] = get_unaligned_le32(f.chain_rssi[c]);
++		m->rx_start_ts = lower_32_bits(f.rx_start);
++	}
++	if (f.loc) {
++		for (c = 0; c < 3; c++)
++			m->agc_gain[c] = f.agc[c];
++		m->cfo_measurement = (u32)(s32)f.cfo;
++	}
++	if (f.lsig)
++		m->mcs_rate = f.lsig_word & 0xf;
++}
++
+ static void ath12k_cfr_free_pending_dbr_events(struct ath12k *ar)
+ {
+ 	struct ath12k_cfr *cfr = &ar->cfr;
+@@ -369,11 +741,16 @@
+ 	lut->dbr_tstamp = jiffies;
+ 
+ 	if (ath12k_cfr_dbr_only) {
+-		struct ath12k_cfr_peer_tx_param no_tx = {0};
++		struct ath12k_cfr_peer_tx_param tx = {0};
+ 
++		/* the WMI event of this capture names the peer and channel even with status 0 */
++		cfr_rxmeta_recent_tx(ar, &tx);
+ 		if (ab->hw_params->hw_ops->fill_cfr_hdr_info)
+ 			ab->hw_params->hw_ops->fill_cfr_hdr_info(ar, &lut->header,
+-								 &no_tx);
++								 &tx);
++		/* status 1 = the DMA payload arrived (the WMI capture bit is always clear) */
++		lut->header.meta_enh.status = 1;
++		ath12k_cfr_fill_rxmeta(ar, lut);
+ 		ath12k_cfr_rfs_write(ar, &lut->header,
+ 				     sizeof(struct ath12k_csi_cfr_header),
+ 				     lut->data, lut->data_len,
+@@ -441,6 +818,8 @@
+ 	cfr = &ar->cfr;
+ 	rcu_read_unlock();
+ 
++	cfr_rxmeta_note_tx(ar, params);
++
+ 	if (WMI_CFR_CAPTURE_STATUS_PEER_PS & params->status) {
+ 		ath12k_dbg(ab, ATH12K_DBG_CFR,
+ 			   "CFR capture failed as peer %pM is in powersave",
+@@ -506,6 +885,7 @@
+ 
+ 	ab->hw_params->hw_ops->fill_cfr_hdr_info(ar, header, params);
+ 	header->meta_enh.puncture_bitmap = arvif->chanctx.def.punctured;
++	ath12k_cfr_fill_rxmeta(ar, lut);
+ 
+ 	status = ath12k_cfr_correlate_and_relay(ar, lut,
+ 						ATH12K_CORRELATE_TX_EVENT);
+@@ -874,6 +1254,7 @@
+ 		spin_unlock_bh(&cfr->lut_lock);
+ 
+ 		ar->cfr.cfr_enabled = 0;
++		cfr_rxmeta_forget(ar);
+ 		ath12k_cfr_debug_unregister(ar);
+ 		ath12k_cfr_ring_free(ar);
+ 	}
+diff -ru a/drivers/net/wireless/ath/ath12k/cfr.h b/drivers/net/wireless/ath/ath12k/cfr.h
+--- a/drivers/net/wireless/ath/ath12k/cfr.h	2026-10-01 15:08:55.623857600 +0700
++++ b/drivers/net/wireless/ath/ath12k/cfr.h	2026-10-01 15:10:30.055097000 +0700
+@@ -784,6 +784,8 @@
+ int ath12k_cfr_parse_enh_dma_hdr(struct ath12k *ar, u8 *data,
+ 				 struct ath12k_cfr_look_up_table *lut,
+ 				 u32 *length);
++void ath12k_cfr_rx_phy_tlv(struct ath12k *ar, u16 ppdu_id, u16 tag,
++			   const void *data, u16 len);
+ 
+ #else
+ static inline int ath12k_cfr_init(struct ath12k_base *ab)
+@@ -836,5 +838,10 @@
+ {
+ 	return 0;
+ }
++
++static inline void ath12k_cfr_rx_phy_tlv(struct ath12k *ar, u16 ppdu_id, u16 tag,
++					 const void *data, u16 len)
++{
++}
+ #endif /* CPTCFG_ATH12K_CFR */
+ #endif /* ATH12K_CFR_H */
+diff -ru a/drivers/net/wireless/ath/ath12k/wifi8/dp_mon2.c b/drivers/net/wireless/ath/ath12k/wifi8/dp_mon2.c
+--- a/drivers/net/wireless/ath/ath12k/wifi8/dp_mon2.c	2026-10-01 15:08:55.877384500 +0700
++++ b/drivers/net/wireless/ath/ath12k/wifi8/dp_mon2.c	2026-10-01 15:10:30.066997500 +0700
+@@ -16,6 +16,7 @@
+ #include "dp_mon2.h"
+ #include "../trace.h"
+ #include "../ath12k_notif.h"
++#include "../cfr.h"
+ 
+ const struct ath12k_dp_arch_mon_ops ath12k_wifi8_dp_arch_mon_dual_ring_ops = {
+ 	.rx_srng_setup = ath12k_dp_mon_rx_srng_setup,
+@@ -540,6 +541,24 @@
+ 								 &pmon->mon_ppdu_info,
+ 								 &tlv_parsed_hdr);
+ 
++		/* CFR Rx metadata (cfr.c cfr_rxmeta): the PHY TLVs of the PPDU a CSI capture
++		 * was measured on; ath12k_cfr_rx_phy_tlv() returns at once unless CFR is on
++		 */
++		switch (tlv_tag) {
++		case HAL_PHYRX_RSSI_LEGACY:
++		case HAL_PHYRX_RSSI_LEGACY_PART2:
++		case HAL_PHYRX_L_SIG_A:
++		case HAL_PHYRX_COMMON_USER_INFO:
++		case HAL_PHYRX_LOCATION:
++		case HAL_PHYRX_OTHER_RECEIVE_INFO:
++		case HAL_PHYRX_PKT_END:
++			ath12k_cfr_rx_phy_tlv(dp_pdev->ar, pmon->mon_ppdu_info.ppdu_id,
++					      tlv_tag, ptr, tlv_len);
++			break;
++		default:
++			break;
++		}
++
+ 		ret = ath12k_wifi8_dp_mon_rx_parse_dest_tlv(dp_pdev, pmon,
+ 							    hal_status,
+ 							    &tlv_parsed_hdr,
+diff -ru a/drivers/net/wireless/ath/ath12k/wifi8/hal_mon.c b/drivers/net/wireless/ath/ath12k/wifi8/hal_mon.c
+--- a/drivers/net/wireless/ath/ath12k/wifi8/hal_mon.c	2026-10-01 15:08:56.015056000 +0700
++++ b/drivers/net/wireless/ath/ath12k/wifi8/hal_mon.c	2026-10-01 15:10:30.068504100 +0700
+@@ -2953,9 +2953,13 @@
+ 		ppdu_info->rx_duration =
+ 			u32_get_bits(info[0],
+ 				     HAL_RX_PPDU_END_DURATION_INFO1_RX_PPDU_DURATION);
+-		ppdu_info->tsft = __le32_to_cpu(ppdu_rx_duration->info1);
++		/* TSF of the PPDU end: wb_timestamp at 0/4. tsft used to be built from info1/
++		 * info0 (duration and antenna), so radiotap carried a constant there
++		 * (seen on the RDP499, 2026-10-01).
++		 */
++		ppdu_info->tsft = __le32_to_cpu(ppdu_rx_duration->wb_timestamp_upper_32);
+ 		ppdu_info->tsft = (ppdu_info->tsft << 32) |
+-				   __le32_to_cpu(ppdu_rx_duration->info0);
++				   __le32_to_cpu(ppdu_rx_duration->wb_timestamp_lower_32);
+ 		break;
+ 	}
+ 	case HAL_RX_MPDU_START: {
+diff -ru a/drivers/net/wireless/ath/ath12k/wmi.h b/drivers/net/wireless/ath/ath12k/wmi.h
+--- a/drivers/net/wireless/ath/ath12k/wmi.h	2026-10-01 15:08:55.747905400 +0700
++++ b/drivers/net/wireless/ath/ath12k/wmi.h	2026-10-01 15:10:30.056606500 +0700
+@@ -10434,7 +10434,8 @@
+ #define WMI_CFR_CAPTURE_STATUS_PEER_PS BIT(30)
+ #define WMI_CFR_PEER_CAPTURE_STATUS BIT(31)
+ 
+-#define WMI_CFR_CORRELATION_INFO2_BUF_ADDR_HIGH GENMASK(3, 0)
++/* bits 43:32 of the CFR DMA address (was GENMASK(3, 0), i.e. 36-bit addresses only) */
++#define WMI_CFR_CORRELATION_INFO2_BUF_ADDR_HIGH GENMASK(11, 0)
+ #define WMI_CFR_CORRELATION_INFO2_PPDU_ID GENMASK(31, 16)
+ 
+ #define WMI_CFR_CFO_MEASUREMENT_VALID BIT(0)

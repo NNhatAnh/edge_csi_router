@@ -1,0 +1,74 @@
+#!/bin/sh /etc/rc.common
+# /etc/init.d/wlan_fw_overlay -- 2026-10-05. Boot the RDP499's QCN9625 on a WLAN firmware other
+# than the one in its flash volume (wifi_fw, r8-00065), without writing that volume.
+#
+# The image in /root/wlan_fw/fw.img (a release squashfs such as WLAN.WBO.1.0/.../9625.wlanfw.eval/
+# wifi_fw_qcn9625_squashfs.img) is loop-mounted over /lib/firmware/IPQ5210/WIFI_FW after
+# wifi_fw_mount (S00) has mounted the flash volume there, and before /etc/init.d/boot (S10)
+# runs kmodloader, which loads ath12k. The driver reads its firmware through the symlinks in
+# /lib/firmware/ath12k/QCN9625/hw1.0/; caldata comes from elsewhere and is not affected.
+#
+# Flags in /root/wlan_fw:
+#   ENABLED   every boot runs fw.img (the normal state)
+#   PENDING   written before an fw.img boot, removed once the radio runs fw.img with an SSID up.
+#             Found at boot = the previous fw.img boot never came up: this boot runs the FLASH
+#             firmware and ENABLED is renamed to DISABLED_AFTER_FAILURE (manual re-enable).
+#             A spontaneous reboot inside the first minutes therefore also falls back.
+#
+#   touch /root/wlan_fw/ENABLED    enable       rm /root/wlan_fw/ENABLED   back to flash firmware
+#   /etc/init.d/wlan_fw_overlay status
+START=05
+D=/root/wlan_fw
+FW=/lib/firmware/IPQ5210/WIFI_FW
+log() { echo "wlan_fw_overlay: $*" > /dev/kmsg; echo "$(date -u +%FT%TZ) $*" >> $D/boot.log; }
+version() { grep -a -o 'QC_IMAGE_VERSION_STRING=[A-Za-z0-9._-]*' "$1" 2>/dev/null | head -1 | cut -d= -f2; }
+
+confirm() {
+	# runs detached: the driver must report the overlay's build and the radio must beacon
+	want=$(cat $D/VERSION)
+	i=0
+	while [ $i -lt 300 ]; do
+		run=$(dmesg | grep -o 'fw_build_id QC_IMAGE_VERSION_STRING=[A-Za-z0-9._-]*' | tail -1 | cut -d= -f2)
+		n=$(iw dev 2>/dev/null | grep -c ssid)
+		[ "$run" = "$want" ] && [ "$n" -ge 1 ] && break
+		sleep 5; i=$((i+5))
+	done
+	if [ "$run" = "$want" ] && [ "$n" -ge 1 ]; then
+		rm -f $D/PENDING; sync
+		log "$want up after ${i}s, $n SSID(s)"
+	else
+		log "NOT up after ${i}s (running '$run', $n SSIDs): PENDING kept, next boot uses the flash firmware"
+	fi
+}
+
+boot() {
+	if [ -e $D/PENDING ]; then
+		rm -f $D/PENDING
+		[ -e $D/ENABLED ] && mv $D/ENABLED $D/DISABLED_AFTER_FAILURE
+		sync
+		log "previous boot on fw.img did not confirm: FLASH firmware this boot, ENABLED -> DISABLED_AFTER_FAILURE"
+		return 0
+	fi
+	[ -e $D/ENABLED ] || return 0
+	( cd $D && md5sum -c MD5SUMS ) >/dev/null 2>&1 || { log "md5 mismatch in $D: FLASH firmware"; return 0; }
+	mountpoint -q $FW || { log "$FW not mounted by wifi_fw_mount: FLASH firmware"; return 0; }
+	touch $D/PENDING; sync
+	mount -t squashfs -o ro,loop $D/fw.img $FW || { log "loop mount failed: FLASH firmware"; rm -f $D/PENDING; return 0; }
+	if [ "$(version $FW/qcn9625/amss.bin)" != "$(cat $D/VERSION)" ]; then
+		umount $FW; rm -f $D/PENDING; sync
+		log "fw.img is not $(cat $D/VERSION): unmounted, FLASH firmware"
+		return 0
+	fi
+	log "$(cat $D/VERSION) mounted over $FW for this boot"
+	( confirm ) </dev/null >/dev/null 2>&1 &
+}
+
+status() {
+	echo "flags: $(cd $D 2>/dev/null && ls ENABLED PENDING DISABLED_AFTER_FAILURE 2>/dev/null | tr '\n' ' ')"
+	echo "image: $(cat $D/VERSION 2>/dev/null) $(cut -c1-8 $D/MD5SUMS 2>/dev/null)"
+	echo "mounts on $FW: $(awk -v d=$FW '$2 == d {printf "%s ", $1}' /proc/mounts)"
+	echo "active: $(version $FW/qcn9625/amss.bin)"
+	echo "running: $(dmesg | grep -o 'fw_build_id QC_IMAGE_VERSION_STRING=[A-Za-z0-9._-]*' | tail -1 | cut -d= -f2)"
+	tail -3 $D/boot.log 2>/dev/null
+}
+EXTRA_COMMANDS="status"

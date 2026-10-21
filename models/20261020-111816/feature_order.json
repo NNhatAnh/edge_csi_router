@@ -1,0 +1,11 @@
+[
+ "motion_std_c0",
+ "motion_step_c0",
+ "motion_std_c1",
+ "motion_step_c1",
+ "motion_std_c2",
+ "motion_step_c2",
+ "motion_c0_log_power",
+ "motion_c1_log_power",
+ "motion_c2_log_power"
+]

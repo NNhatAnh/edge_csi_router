@@ -1,0 +1,5 @@
+1f636cdce671d7d520f0d7e66e93de9d  drivers/net/wireless/ath/ath12k/cfr.c
+1f3edd4083f517d0b00bbd146439e757  drivers/net/wireless/ath/ath12k/cfr.h
+337a61a84b75aabb65040cfb6aa8e6a0  drivers/net/wireless/ath/ath12k/wmi.h
+efec201cd3ccbe5deb7ccaab98201e25  drivers/net/wireless/ath/ath12k/wifi8/dp_mon2.c
+854c64d36783d078e2c2d4326c4f4318  drivers/net/wireless/ath/ath12k/wifi8/hal_mon.c

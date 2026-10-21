@@ -1,0 +1,193 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CSI Collector</title>
+<style>
+  :root { --bg:#fff; --fg:#1d1d1f; --muted:#6e6e73; --line:#d2d2d7; --accent:#0a66c2;
+          --pass:#1a7f37; --warn:#9a6700; --fail:#cf222e; --row:#f6f8fa; }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg:#161618; --fg:#f2f2f7; --muted:#98989f; --line:#38383c; --accent:#4c9bff;
+            --pass:#3fb950; --warn:#d29922; --fail:#f85149; --row:#1f1f23; } }
+  body { background:var(--bg); color:var(--fg); font:15px/1.4 system-ui, sans-serif; margin:0 auto;
+         max-width:1100px; padding:16px; }
+  h1 { font-size:20px; margin:0 0 12px; }
+  fieldset { border:1px solid var(--line); border-radius:8px; margin:0 0 16px; padding:12px; }
+  .grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(190px, 1fr)); gap:10px; }
+  label { display:flex; flex-direction:column; font-size:13px; color:var(--muted); gap:3px; }
+  input, select, button { font:inherit; padding:7px 9px; border:1px solid var(--line); border-radius:6px;
+                          background:var(--bg); color:var(--fg); }
+  .labels { display:flex; gap:8px; flex-wrap:wrap; margin:12px 0; }
+  .labels label { flex-direction:row; align-items:center; gap:6px; font-size:16px; color:var(--fg);
+                  border:1px solid var(--line); border-radius:6px; padding:8px 12px; cursor:pointer; }
+  .labels input:checked + span { font-weight:600; color:var(--accent); }
+  #go { background:var(--accent); color:#fff; border:0; padding:10px 22px; font-size:16px; cursor:pointer; }
+  #go:disabled { opacity:.5; cursor:default; }
+  #status { margin-left:12px; font-size:16px; }
+  #stations { margin-top:8px; font-size:13px; } .pick { font-size:13px; padding:4px 8px; margin:2px; }
+  #big { font-size:64px; font-weight:700; text-align:center; min-height:0; }
+  pre { background:var(--row); padding:8px; border-radius:6px; overflow-x:auto; font-size:12px; margin:8px 0 0; }
+  .PASS { color:var(--pass); } .WARN { color:var(--warn); } .FAIL, .err { color:var(--fail); }
+  .tablewrap { overflow-x:auto; }
+  table { border-collapse:collapse; width:100%; font-size:13px; }
+  th, td { text-align:left; padding:6px; border-bottom:1px solid var(--line); white-space:nowrap; }
+  .del { padding:3px 10px; color:var(--fail); cursor:pointer; }
+  tr.excluded td { color:var(--muted); text-decoration:line-through; }
+  tr.excluded td:last-child, tr.excluded td:nth-child(3) { text-decoration:none; }
+</style>
+</head>
+<body>
+<h1>Thu &amp; gán nhãn CSI — vẫy tay</h1>
+
+<fieldset>
+  <div class="grid">
+    <label>Router <select id="board"><option value="192.168.11.1">11.1 — RDP499 (3 chain)</option>
+      <option value="192.168.4.1">4.1 — RDP488 (5 chain)</option></select></label>
+    <label>MAC station <input id="sta" value="ea:99:22:57:83:6e"></label>
+    <label>IP station (keep-awake) <input id="sta_ip" value="192.168.11.169"></label>
+    <label>Chu kỳ (ms) <input id="period_ms" type="number" value="50" min="20" max="1000"></label>
+    <label>Băng thông CSI <select id="bw"><option value="2">80 MHz (BW=2)</option>
+      <option value="0">20 MHz (BW=0, chỉ 1 khối)</option></select></label>
+    <label>Thời lượng (s) <input id="secs" type="number" value="60" min="5" max="600"></label>
+    <label>Người <input id="person" placeholder="vd. tuan"></label>
+    <label>Vị trí <input id="position" placeholder="vd. P1"></label>
+    <label>Khoảng cách <input id="distance" placeholder="vd. 2m"></label>
+    <label>Phiên <input id="session" placeholder="vd. S1"></label>
+    <label>Phòng <input id="room" placeholder="vd. R1 (đổi phòng / dời router = phòng mới)"></label>
+    <label>Ghi chú <input id="note"></label>
+  </div>
+  <div class="labels" id="labels">
+    <label><input type="radio" name="label" value="wave" checked><span>wave — vẫy tay</span></label>
+    <label><input type="radio" name="label" value="no_wave"><span>no_wave — có người, không vẫy</span></label>
+    <label><input type="radio" name="label" value="empty"><span>empty — phòng trống</span></label>
+    <label><input type="radio" name="label" value="calib"><span>calib — phòng YÊN 30–60 s, đầu mỗi phiên (đo nền)</span></label>
+    <label><input type="radio" name="label" value="test"><span>test (tự loại)</span></label>
+  </div>
+  <button id="find" type="button">Tìm station</button>
+  <button id="go">Bắt đầu thu</button><span id="status"></span>
+  <div id="stations"></div>
+  <div id="big"></div>
+  <div id="last"></div>
+</fieldset>
+
+<h2 style="font-size:16px">Các lượt thu</h2>
+<div class="tablewrap"><table>
+  <thead><tr><th>Recording</th><th>Nhãn</th><th>Loại</th><th>Router</th><th>BW</th><th>Giây</th><th>Rate/s</th><th>Người</th><th>Vị trí</th>
+    <th>Khoảng cách</th><th>Phiên</th><th>Ghi chú</th><th>Đổi nhãn</th><th></th></tr></thead>
+  <tbody id="rows"></tbody>
+</table></div>
+
+<script>
+const $ = id => document.getElementById(id);
+const FIELDS = ["board","sta","sta_ip","period_ms","bw","secs","person","position","distance","session","room","note"];
+const LABELS = ["wave","no_wave","empty","calib","test"];
+const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+
+try { const saved = JSON.parse(localStorage.getItem("form") || "{}");
+      FIELDS.forEach(k => { if (saved[k] !== undefined && k !== "period_ms") $(k).value = saved[k]; }); } catch (e) {}
+
+async function api(path, body) {
+  const r = await fetch(path, body ? {method:"POST", headers:{"Content-Type":"application/json"},
+                                      body:JSON.stringify(body)} : {});
+  const j = await r.json();
+  if (!r.ok) throw new Error(j.error || r.status);
+  return j;
+}
+
+function qualityHtml(rec) {
+  if (rec.error) return `<pre class="err">${esc(rec.error)}</pre>`;
+  const q = (rec.quality || []).map(l => `<span class="${l.split(/\s/)[0]}">${esc(l)}</span>`).join("\n");
+  return `<div><b>${esc(rec.recording_id)}</b> — ${rec.rate_per_s ?? "?"} record/s, exit ${rec.exit_code}` +
+         `${rec.exclude ? " (bị loại)" : ""}</div><pre>${q || "không có quality report: xem capture.log"}</pre>`;
+}
+
+async function refresh() {
+  const rows = await api("/api/recordings");
+  $("rows").innerHTML = rows.map(r => `<tr class="${r.exclude ? "excluded" : ""}">
+    <td>${esc(r.recording_id)}</td><td>${esc(r.label)}</td>
+    <td><input type="checkbox" ${r.exclude ? "checked" : ""} data-id="${esc(r.recording_id)}" class="ex"></td>
+    <td>${esc((r.board || "").split(".").slice(-2).join("."))}</td><td>${r.bw === 2 ? 80 : 20}</td><td>${esc(r.secs)}</td><td>${esc(r.rate_per_s)}</td><td>${esc(r.person)}</td><td>${esc(r.position)}</td><td>${esc(r.distance)}</td>
+    <td>${esc(r.session)}</td><td>${esc(r.note)}</td>
+    <td><select data-id="${esc(r.recording_id)}" class="lb">${LABELS.map(l =>
+      `<option ${l === r.label ? "selected" : ""}>${l}</option>`).join("")}</select></td>
+    <td><button class="del" data-id="${esc(r.recording_id)}">Xóa</button></td></tr>`).join("");
+}
+
+$("rows").addEventListener("click", async e => {
+  if (!e.target.classList.contains("del")) return;
+  const id = e.target.dataset.id;
+  if (!armed(e.target, "Chắc chắn?")) return;
+  try { await api("/api/delete", {recording_id:id}); $("status").textContent = `đã chuyển ${id} vào data/trash/`; }
+  catch (err) { showErr(err.message); }
+  refresh();
+});
+
+$("rows").addEventListener("change", async e => {
+  const id = e.target.dataset.id;
+  try {
+    if (e.target.classList.contains("ex")) await api("/api/label", {recording_id:id, exclude:e.target.checked});
+    if (e.target.classList.contains("lb")) await api("/api/label", {recording_id:id, label:e.target.value});
+  } catch (err) { showErr(err.message); }
+  refresh();
+});
+
+// confirm()/alert() không hiện trong khung trình duyệt nhúng (confirm trả false ngay) → xác nhận bằng bấm 2 lần.
+function armed(btn, ask) {
+  if (btn.dataset.armed) return true;
+  const text = btn.textContent;
+  btn.dataset.armed = 1; btn.textContent = ask;
+  setTimeout(() => { delete btn.dataset.armed; btn.textContent = text; }, 3000);
+  return false;
+}
+const showErr = msg => { $("status").innerHTML = `<span class="err">${esc(msg)}</span>`; };
+
+// 4.1 mất ~50 % request: 50 ms chỉ ~9 CSI/s → mặc định 20 ms; 11.1 giữ 50 ms (ghi chú dự án)
+const PERIOD_BY_BOARD = {"192.168.11.1": 50, "192.168.4.1": 20};
+$("board").addEventListener("change", () => { $("period_ms").value = PERIOD_BY_BOARD[$("board").value] ?? 50; });
+$("period_ms").value = PERIOD_BY_BOARD[$("board").value] ?? 50;  // không khôi phục chu kỳ cũ từ localStorage (lượt 4.1 15:01–15:12 bị 50 ms)
+
+$("find").onclick = async () => {
+  $("find").disabled = true; $("stations").textContent = "đang quét router…";
+  try {
+    const r = await api(`/api/stations?board=${$("board").value}`);
+    if (r.error) throw new Error(r.error);
+    if (!r.stations.length) { $("stations").textContent = `không có station nào trên ${r.ap_if}`; return; }
+    const pick = s => { $("sta").value = s.mac; $("sta_ip").value = s.ip || ""; };
+    if (r.stations.length === 1) pick(r.stations[0]);
+    $("stations").innerHTML = r.stations.map((s, i) => `<button type="button" data-i="${i}" class="pick">
+      ${esc(s.mac)} ${esc(s.ip || "(chưa có IP)")} · ${s.signal_dbm ?? "?"} dBm · ngủ ${s.inactive_ms ?? "?"} ms</button>`).join(" ");
+    document.querySelectorAll(".pick").forEach(b => b.onclick = () => pick(r.stations[+b.dataset.i]));
+  } catch (err) { $("stations").innerHTML = `<span class="err">${esc(err.message)}</span>`; }
+  finally { $("find").disabled = false; }
+};
+
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+
+$("go").onclick = async () => {
+  const body = Object.fromEntries(FIELDS.map(k => [k, $(k).value]));
+  body.label = document.querySelector("input[name=label]:checked").value;
+  if (!["test","calib"].includes(body.label) && +body.secs < 60 && !armed($("go"), `Chỉ ${body.secs} s (cần ≥ 60) — bấm lại để vẫn thu`)) return;
+  try { localStorage.setItem("form", JSON.stringify(body)); } catch (e) {}
+  $("go").disabled = true; $("last").innerHTML = "";
+  try {
+    for (let i = 3; i > 0; i--) { $("big").textContent = i; await sleep(1000); }
+    await api("/api/capture", body);
+    $("big").textContent = body.label === "wave" ? "VẪY TAY" : body.label.toUpperCase();
+    for (;;) {
+      const s = await api("/api/status");
+      const left = Math.max(0, Math.round(s.secs - (Date.now()/1000 - s.started)));
+      $("status").textContent = s.busy ? (left > 0 ? `đang thu… còn ${left} s` : "đang giải mã…") : "";
+      if (!s.busy) { $("last").innerHTML = qualityHtml(s.last || {}); break; }
+      await sleep(1000);
+    }
+  } catch (err) { $("status").innerHTML = `<span class="err">${esc(err.message)}</span>`; }
+  $("big").textContent = ""; $("go").disabled = false;
+  refresh();
+};
+
+refresh();
+api("/api/status").then(s => { if (s.busy) $("status").textContent = "đang có lượt thu khác…"; });
+</script>
+</body>
+</html>

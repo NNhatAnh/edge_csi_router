@@ -1,0 +1,122 @@
+diff -ru b/drivers/net/wireless/ath/ath12k/cfr.c c/drivers/net/wireless/ath/ath12k/cfr.c
+--- b/drivers/net/wireless/ath/ath12k/cfr.c	2026-10-01 15:10:30.044453100 +0700
++++ c/drivers/net/wireless/ath/ath12k/cfr.c	2026-10-01 15:32:18.302111900 +0700
+@@ -174,6 +174,12 @@
+ 	struct ath12k_cfr_peer_tx_param last_tx;
+ 	unsigned long last_tx_jiffies;
+ 	bool last_tx_valid;
++	/* the peer whose capture was last enabled through debugfs, with its vdev's channel:
++	 * used when the firmware sends no WMI event for a capture (periodic mode sends one
++	 * for roughly a third of them on r8-00065) and exactly one peer is enabled
++	 */
++	struct ath12k_cfr_peer_tx_param req_tx;
++	bool req_valid;
+ };
+ 
+ struct cfr_rxmeta_rec_hdr {
+@@ -413,14 +419,41 @@
+ 	spin_unlock_bh(&s_cfr_rxmeta_lock);
+ }
+ 
++void ath12k_cfr_rxmeta_note_peer(struct ath12k *ar, const u8 *addr, bool enable,
++				 u32 bw, u32 prim_mhz, u32 cf1_mhz, u32 cf2_mhz)
++{
++	struct cfr_rxmeta_table *t;
++
++	spin_lock_bh(&s_cfr_rxmeta_lock);
++	t = cfr_rxmeta_table_get(ar, enable);
++	if (!t)
++		goto out;
++	if (enable) {
++		memset(&t->req_tx, 0, sizeof(t->req_tx));
++		ether_addr_copy(t->req_tx.peer_mac_addr, addr);
++		t->req_tx.bandwidth = bw;
++		t->req_tx.primary_20mhz_chan = prim_mhz;
++		t->req_tx.band_center_freq1 = cf1_mhz;
++		t->req_tx.band_center_freq2 = cf2_mhz;
++		t->req_valid = true;
++	} else if (t->req_valid && ether_addr_equal(t->req_tx.peer_mac_addr, addr)) {
++		t->req_valid = false;
++	}
++out:
++	spin_unlock_bh(&s_cfr_rxmeta_lock);
++}
++
+ /* the WMI event that arrived just before this DMA buffer, if any (it carries the peer
+- * MAC, primary/center frequency, phy mode and capture bw even when its status is 0)
++ * MAC, primary/center frequency, phy mode and capture bw even when its status is 0).
++ * Without one, the peer of the last capture request, but only while exactly one peer
++ * has capture enabled on this pdev: with two, a record cannot be attributed.
++ * Returns 2 = WMI event, 1 = request, 0 = nothing.
+  */
+-static bool cfr_rxmeta_recent_tx(struct ath12k *ar,
+-				 struct ath12k_cfr_peer_tx_param *out)
++static int cfr_rxmeta_recent_tx(struct ath12k *ar,
++				struct ath12k_cfr_peer_tx_param *out)
+ {
+ 	struct cfr_rxmeta_table *t;
+-	bool ok = false;
++	int src = 0;
+ 
+ 	spin_lock_bh(&s_cfr_rxmeta_lock);
+ 	t = cfr_rxmeta_table_get(ar, false);
+@@ -428,10 +461,13 @@
+ 	    time_before(jiffies, t->last_tx_jiffies +
+ 			msecs_to_jiffies(CFR_RXMETA_TX_FRESH_MS))) {
+ 		*out = t->last_tx;
+-		ok = true;
++		src = 2;
++	} else if (t && t->req_valid && READ_ONCE(ar->cfr.cfr_enabled_peer_cnt) == 1) {
++		*out = t->req_tx;
++		src = 1;
+ 	}
+ 	spin_unlock_bh(&s_cfr_rxmeta_lock);
+-	return ok;
++	return src;
+ }
+ 
+ /* Fill the relay header's empty fields from the kept PPDU with the DMA header's id.
+diff -ru b/drivers/net/wireless/ath/ath12k/cfr.h c/drivers/net/wireless/ath/ath12k/cfr.h
+--- b/drivers/net/wireless/ath/ath12k/cfr.h	2026-10-01 15:10:30.055097000 +0700
++++ c/drivers/net/wireless/ath/ath12k/cfr.h	2026-10-01 15:32:18.311021600 +0700
+@@ -786,6 +786,8 @@
+ 				 u32 *length);
+ void ath12k_cfr_rx_phy_tlv(struct ath12k *ar, u16 ppdu_id, u16 tag,
+ 			   const void *data, u16 len);
++void ath12k_cfr_rxmeta_note_peer(struct ath12k *ar, const u8 *addr, bool enable,
++				 u32 bw, u32 prim_mhz, u32 cf1_mhz, u32 cf2_mhz);
+ 
+ #else
+ static inline int ath12k_cfr_init(struct ath12k_base *ab)
+@@ -843,5 +845,11 @@
+ 					 const void *data, u16 len)
+ {
+ }
++
++static inline void ath12k_cfr_rxmeta_note_peer(struct ath12k *ar, const u8 *addr,
++					       bool enable, u32 bw, u32 prim_mhz,
++					       u32 cf1_mhz, u32 cf2_mhz)
++{
++}
+ #endif /* CPTCFG_ATH12K_CFR */
+ #endif /* ATH12K_CFR_H */
+diff -ru b/drivers/net/wireless/ath/ath12k/debugfs_sta.c c/drivers/net/wireless/ath/ath12k/debugfs_sta.c
+--- b/drivers/net/wireless/ath/ath12k/debugfs_sta.c	2026-10-01 15:32:18.177567300 +0700
++++ c/drivers/net/wireless/ath/ath12k/debugfs_sta.c	2026-10-01 15:32:18.312021200 +0700
+@@ -1439,6 +1439,16 @@
+ 	}
+ 	ret = count;
+ 
++	/* lets cfr_dbr_only name the peer of records that arrive without a WMI event */
++	{
++		struct cfg80211_chan_def *def = &arsta->arvif->chanctx.def;
++
++		ath12k_cfr_rxmeta_note_peer(ar, link_sta->addr, cfr_capture_enable,
++					    cfr_capture_bw,
++					    def->chan ? def->chan->center_freq : 0,
++					    def->center_freq1, def->center_freq2);
++	}
++
+ 	spin_lock_bh(&ar->cfr.lock);
+ 	cfr = &ar->cfr;
+ 	if (cfr_capture_enable &&

@@ -1,0 +1,129 @@
+diff -ru c/drivers/net/wireless/ath/ath12k/cfr.c d/drivers/net/wireless/ath/ath12k/cfr.c
+--- c/drivers/net/wireless/ath/ath12k/cfr.c	2026-10-01 15:32:18.302111900 +0700
++++ d/drivers/net/wireless/ath/ath12k/cfr.c	2026-10-01 15:50:40.476914200 +0700
+@@ -420,7 +420,8 @@
+ }
+ 
+ void ath12k_cfr_rxmeta_note_peer(struct ath12k *ar, const u8 *addr, bool enable,
+-				 u32 bw, u32 prim_mhz, u32 cf1_mhz, u32 cf2_mhz)
++				 u32 vdev_id, u32 bw, u32 prim_mhz, u32 cf1_mhz,
++				 u32 cf2_mhz)
+ {
+ 	struct cfr_rxmeta_table *t;
+ 
+@@ -431,6 +432,7 @@
+ 	if (enable) {
+ 		memset(&t->req_tx, 0, sizeof(t->req_tx));
+ 		ether_addr_copy(t->req_tx.peer_mac_addr, addr);
++		t->req_tx.vdev_id = vdev_id;
+ 		t->req_tx.bandwidth = bw;
+ 		t->req_tx.primary_20mhz_chan = prim_mhz;
+ 		t->req_tx.band_center_freq1 = cf1_mhz;
+@@ -470,11 +472,38 @@
+ 	return src;
+ }
+ 
++/* The channel of the capture's vdev as it is now (the DMA buffer arrives ~1 ms after the
++ * capture). Called with lut_lock held: the lookup is RCU-only (iterate_active_interfaces_
++ * atomic). Returns the puncture bitmap, or -1 when the vdev is gone.
++ */
++static int cfr_rxmeta_chan_now(struct ath12k *ar, struct ath12k_cfr_peer_tx_param *tx)
++{
++	struct ath12k_link_vif *arvif;
++	struct cfg80211_chan_def *def;
++	int punct = -1;
++
++	rcu_read_lock();
++	arvif = ath12k_mac_get_arvif_by_vdev_id(ar->ab, tx->vdev_id);
++	if (arvif && arvif->ar == ar) {
++		def = &arvif->chanctx.def;
++		if (def->chan) {
++			tx->primary_20mhz_chan = def->chan->center_freq;
++			tx->band_center_freq1 = def->center_freq1;
++			tx->band_center_freq2 = def->center_freq2;
++			punct = def->punctured;
++		}
++	}
++	rcu_read_unlock();
++	return punct;
++}
++
+ /* Fill the relay header's empty fields from the kept PPDU with the DMA header's id.
+  * chain_rssi[c] packs PHYRX_PKT_END row c, columns 0-3 (one dB byte per 20 MHz, 0x80 =
+  * invalid); agc_gain[c] and cfo_measurement (raw, sign-extended) come from
+  * PHYRX_LOCATION; rx_start_ts is the low 32 bits of the 960 MHz rx start; mcs_rate is the
+- * L-SIG rate code.
++ * L-SIG rate code. chain_rssi[HOST_MAX_CHAINS - 1] carries the combined RSSI (dB over NF)
++ * in its low byte, tagged 0xC0 in bits 31:24 so that it cannot be mistaken for an unfilled 0
++ * (cfr_enh_metadata has no field of its own for it, and the last slot is never a chain here).
+  */
+ static void ath12k_cfr_fill_rxmeta(struct ath12k *ar,
+ 				   struct ath12k_cfr_look_up_table *lut)
+@@ -517,6 +546,8 @@
+ 	}
+ 	if (f.lsig)
+ 		m->mcs_rate = f.lsig_word & 0xf;
++	if (f.rssi)
++		m->chain_rssi[HOST_MAX_CHAINS - 1] = 0xC0000000 | f.rssi_comb;
+ }
+ 
+ static void ath12k_cfr_free_pending_dbr_events(struct ath12k *ar)
+@@ -778,12 +809,20 @@
+ 
+ 	if (ath12k_cfr_dbr_only) {
+ 		struct ath12k_cfr_peer_tx_param tx = {0};
++		int punct = -1, src;
+ 
+-		/* the WMI event of this capture names the peer and channel even with status 0 */
+-		cfr_rxmeta_recent_tx(ar, &tx);
++		/* the WMI event of this capture names the peer and channel even with status 0;
++		 * without one, the capture request does (0004). The channel is re-read from the
++		 * vdev now unless the firmware's own event reported it (vdev 0 is a valid id).
++		 */
++		src = cfr_rxmeta_recent_tx(ar, &tx);
++		if (src == 1 || (src == 2 && !tx.band_center_freq1))
++			punct = cfr_rxmeta_chan_now(ar, &tx);
+ 		if (ab->hw_params->hw_ops->fill_cfr_hdr_info)
+ 			ab->hw_params->hw_ops->fill_cfr_hdr_info(ar, &lut->header,
+ 								 &tx);
++		if (punct >= 0)
++			lut->header.meta_enh.puncture_bitmap = punct;
+ 		/* status 1 = the DMA payload arrived (the WMI capture bit is always clear) */
+ 		lut->header.meta_enh.status = 1;
+ 		ath12k_cfr_fill_rxmeta(ar, lut);
+diff -ru c/drivers/net/wireless/ath/ath12k/cfr.h d/drivers/net/wireless/ath/ath12k/cfr.h
+--- c/drivers/net/wireless/ath/ath12k/cfr.h	2026-10-01 15:32:18.311021600 +0700
++++ d/drivers/net/wireless/ath/ath12k/cfr.h	2026-10-01 15:50:40.485340300 +0700
+@@ -787,7 +787,8 @@
+ void ath12k_cfr_rx_phy_tlv(struct ath12k *ar, u16 ppdu_id, u16 tag,
+ 			   const void *data, u16 len);
+ void ath12k_cfr_rxmeta_note_peer(struct ath12k *ar, const u8 *addr, bool enable,
+-				 u32 bw, u32 prim_mhz, u32 cf1_mhz, u32 cf2_mhz);
++				 u32 vdev_id, u32 bw, u32 prim_mhz, u32 cf1_mhz,
++				 u32 cf2_mhz);
+ 
+ #else
+ static inline int ath12k_cfr_init(struct ath12k_base *ab)
+@@ -847,8 +848,8 @@
+ }
+ 
+ static inline void ath12k_cfr_rxmeta_note_peer(struct ath12k *ar, const u8 *addr,
+-					       bool enable, u32 bw, u32 prim_mhz,
+-					       u32 cf1_mhz, u32 cf2_mhz)
++					       bool enable, u32 vdev_id, u32 bw,
++					       u32 prim_mhz, u32 cf1_mhz, u32 cf2_mhz)
+ {
+ }
+ #endif /* CPTCFG_ATH12K_CFR */
+diff -ru c/drivers/net/wireless/ath/ath12k/debugfs_sta.c d/drivers/net/wireless/ath/ath12k/debugfs_sta.c
+--- c/drivers/net/wireless/ath/ath12k/debugfs_sta.c	2026-10-01 15:32:18.312021200 +0700
++++ d/drivers/net/wireless/ath/ath12k/debugfs_sta.c	2026-10-01 15:50:40.486344900 +0700
+@@ -1444,7 +1444,7 @@
+ 		struct cfg80211_chan_def *def = &arsta->arvif->chanctx.def;
+ 
+ 		ath12k_cfr_rxmeta_note_peer(ar, link_sta->addr, cfr_capture_enable,
+-					    cfr_capture_bw,
++					    arsta->arvif->vdev_id, cfr_capture_bw,
+ 					    def->chan ? def->chan->center_freq : 0,
+ 					    def->center_freq1, def->center_freq2);
+ 	}

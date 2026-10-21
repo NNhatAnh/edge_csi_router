@@ -1,0 +1,9 @@
+# board=qcom,ipq5210-rdp499 sta=50:bb:b5:fa:e1:06 request="1 0 50 0" secs=20 cfr_rxmeta=11
+# ath12k srcversion= wifi8 srcversion=
+# before: kept=0 hit=0 miss=0
+		  channel 161 (5805 MHz), width: 80 MHz, center1: 5775 MHz
+	inactive time:	390 ms
+	tx bitrate:	864.8 MBit/s 80MHz HE-MCS 8 HE-NSS 2 HE-GI 0 HE-DCM 0
+	last ack signal:-46 dBm
+# after: kept=376 hit=373 miss=0
+# cpu over the capture: busy 0.58% irq+softirq 0.39% (7984 jiffies, all cores)

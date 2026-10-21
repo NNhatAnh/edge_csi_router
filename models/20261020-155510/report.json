@@ -1,0 +1,214 @@
+{
+ "created": "2026-10-20T15:55:10+0700",
+ "bw": 2,
+ "board": "192.168.4.1",
+ "chains": 3,
+ "group": "recording_id",
+ "classes": [
+  "no_wave",
+  "wave"
+ ],
+ "feature_set": "inv_nb",
+ "evaluation": "leave-one-recording_id-out; model cuối fit trên toàn bộ dữ liệu",
+ "baseline_source": [
+  {
+   "recording_id": "20261020-152046_4-1_wave_S1_P1",
+   "baseline": "no_wave khác",
+   "windows": 63
+  },
+  {
+   "recording_id": "20261020-152209_4-1_no_wave_S1_P1",
+   "baseline": "no_wave khác",
+   "windows": 38
+  },
+  {
+   "recording_id": "20261020-152701_4-1_no_wave_S1_P1",
+   "baseline": "no_wave khác",
+   "windows": 25
+  },
+  {
+   "recording_id": "20261020-152845_4-1_wave_S1_P1",
+   "baseline": "no_wave khác",
+   "windows": 63
+  }
+ ],
+ "recordings": 4,
+ "windows": 101,
+ "recordings_by_class": {
+  "wave": 2,
+  "no_wave": 2
+ },
+ "recordings_by_board": {
+  "192.168.4.1": 4
+ },
+ "loro_recording_accuracy": 0.0,
+ "loro_window_accuracy": 0.21782178217821782,
+ "loro_window_confusion": [
+  [
+   22,
+   41
+  ],
+  [
+   38,
+   0
+  ]
+ ],
+ "loro_per_recording": [
+  [
+   "20261020-152046_4-1_wave_S1_P1",
+   "wave",
+   0.024
+  ],
+  [
+   "20261020-152209_4-1_no_wave_S1_P1",
+   "no_wave",
+   0.622
+  ],
+  [
+   "20261020-152701_4-1_no_wave_S1_P1",
+   "no_wave",
+   0.624
+  ],
+  [
+   "20261020-152845_4-1_wave_S1_P1",
+   "wave",
+   0.125
+  ]
+ ],
+ "nuisance_by_class": {},
+ "top_features": [
+  [
+   "nb_inv_tone_p90_c1",
+   0.2977
+  ],
+  [
+   "nb_inv_step_c2",
+   0.1461
+  ],
+  [
+   "nb_inv_std_c1",
+   0.1459
+  ],
+  [
+   "nb_inv_tone_p90_c0",
+   0.1046
+  ],
+  [
+   "nb_inv_ratio_step_02",
+   0.0823
+  ],
+  [
+   "nb_inv_ratio_amp_01",
+   0.0504
+  ],
+  [
+   "nb_inv_step_c1",
+   0.0337
+  ],
+  [
+   "nb_inv_std_c0",
+   0.021
+  ],
+  [
+   "nb_inv_tone_conc_c2",
+   0.0205
+  ],
+  [
+   "nb_inv_std_c2",
+   0.02
+  ]
+ ],
+ "qc": [
+  {
+   "recording_id": "20261020-152046_4-1_wave_S1_P1",
+   "records": 1570,
+   "kept": 1567,
+   "bw80_fraction": 0.9980891719745223,
+   "windows": 27
+  },
+  {
+   "recording_id": "20261020-152209_4-1_no_wave_S1_P1",
+   "records": 1486,
+   "kept": 1486,
+   "bw80_fraction": 1.0,
+   "windows": 25
+  },
+  {
+   "recording_id": "20261020-152701_4-1_no_wave_S1_P1",
+   "records": 1576,
+   "kept": 1575,
+   "bw80_fraction": 0.9993654822335025,
+   "windows": 38
+  },
+  {
+   "recording_id": "20261020-152845_4-1_wave_S1_P1",
+   "records": 1382,
+   "kept": 1380,
+   "bw80_fraction": 0.9985528219971056,
+   "windows": 11
+  }
+ ],
+ "preprocessing": {
+  "requested_columns": [
+   "nb_inv_std_c0",
+   "nb_inv_step_c0",
+   "nb_inv_tone_p90_c0",
+   "nb_inv_tone_conc_c0",
+   "nb_inv_std_c1",
+   "nb_inv_step_c1",
+   "nb_inv_tone_p90_c1",
+   "nb_inv_tone_conc_c1",
+   "nb_inv_std_c2",
+   "nb_inv_step_c2",
+   "nb_inv_tone_p90_c2",
+   "nb_inv_tone_conc_c2",
+   "nb_inv_ratio_step_01",
+   "nb_inv_ratio_std_01",
+   "nb_inv_ratio_amp_01",
+   "nb_inv_ratio_step_02",
+   "nb_inv_ratio_std_02",
+   "nb_inv_ratio_amp_02"
+  ],
+  "train_imputation_medians": [
+   0.2271594653115246,
+   0.18294724597482287,
+   0.23405854016732053,
+   -0.0007600768414971761,
+   0.2586803037376646,
+   0.3003902173988048,
+   0.31894824489720064,
+   0.0034960023043914264,
+   0.37345896728763645,
+   0.30850421134243255,
+   0.35273257826604587,
+   0.00011013032522017898,
+   0.17973085303198372,
+   0.19601080551522032,
+   0.13970684495480257,
+   0.25623307865261374,
+   0.3427562589562608,
+   0.3031880303852828
+  ],
+  "kept_columns": [
+   "nb_inv_std_c0",
+   "nb_inv_step_c0",
+   "nb_inv_tone_p90_c0",
+   "nb_inv_tone_conc_c0",
+   "nb_inv_std_c1",
+   "nb_inv_step_c1",
+   "nb_inv_tone_p90_c1",
+   "nb_inv_tone_conc_c1",
+   "nb_inv_std_c2",
+   "nb_inv_step_c2",
+   "nb_inv_tone_p90_c2",
+   "nb_inv_tone_conc_c2",
+   "nb_inv_ratio_step_01",
+   "nb_inv_ratio_std_01",
+   "nb_inv_ratio_amp_01",
+   "nb_inv_ratio_step_02",
+   "nb_inv_ratio_std_02",
+   "nb_inv_ratio_amp_02"
+  ],
+  "dropped_near_constant_columns": []
+ }
+}

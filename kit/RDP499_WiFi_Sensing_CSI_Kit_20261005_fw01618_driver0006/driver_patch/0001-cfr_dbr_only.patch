@@ -1,0 +1,45 @@
+--- orig/cfr.c	2026-09-30 15:26:59.539088300 +0700
++++ patched/cfr.c	2026-09-30 15:27:41.397620100 +0700
+@@ -8,6 +8,18 @@
+ #include "core.h"
+ #include "debug.h"
+ 
++/* cfr_dbr_only (RDP499 CSI probe, Router_App/router_cfr_probe_rdp499/driver_patch):
++ * QCN9625 firmware r8-00065 sends WMI_PEER_CFR_CAPTURE_EVENT with status 0 and no
++ * DMA address, so the Tx/DBR correlation below never succeeds: every record is
++ * dropped and its DMA buffer is held forever (54 per driver load). With this
++ * parameter set, each DMA buffer is written to the relay as soon as it arrives,
++ * with the standard ath12k_csi_cfr_header (metadata left empty), and the buffer
++ * goes straight back to the ring. Default 0 = stock behaviour.
++ */
++static bool ath12k_cfr_dbr_only;
++module_param_named(cfr_dbr_only, ath12k_cfr_dbr_only, bool, 0644);
++MODULE_PARM_DESC(cfr_dbr_only, "relay every CFR DMA buffer without waiting for the WMI Tx event (0=stock, 1=on)");
++
+ bool peer_is_in_cfr_unassoc_pool(struct ath12k *ar, u8 *peer_mac)
+ {
+ 	struct ath12k_cfr *cfr = &ar->cfr;
+@@ -356,6 +368,23 @@
+ 	lut->data_len = length;
+ 	lut->dbr_tstamp = jiffies;
+ 
++	if (ath12k_cfr_dbr_only) {
++		struct ath12k_cfr_peer_tx_param no_tx = {0};
++
++		if (ab->hw_params->hw_ops->fill_cfr_hdr_info)
++			ab->hw_params->hw_ops->fill_cfr_hdr_info(ar, &lut->header,
++								 &no_tx);
++		ath12k_cfr_rfs_write(ar, &lut->header,
++				     sizeof(struct ath12k_csi_cfr_header),
++				     lut->data, lut->data_len,
++				     &end_magic, sizeof(u32));
++		cfr->release_cnt++;
++		ath12k_cfr_release_lut_entry(lut);
++		spin_unlock_bh(&cfr->lut_lock);
++		/* not HOLD: ath12k_dbring_buffer_release_event() replenishes the buffer */
++		return ATH12K_CORRELATE_STATUS_RELEASE;
++	}
++
+ 	status = ath12k_cfr_correlate_and_relay(ar, lut,
+ 						ATH12K_CORRELATE_DBR_EVENT);
+ 

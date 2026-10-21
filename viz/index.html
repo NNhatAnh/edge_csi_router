@@ -1,0 +1,261 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CSI Live 3D</title>
+<style>
+  :root { --bg:#0e1116; --panel:rgba(20,24,32,.88); --fg:#e6e9ef; --muted:#9aa4b2; --acc:#4cc9f0; --hot:#f72585; --ok:#80ed99; --warn:#ffd166; }
+  html,body { margin:0; height:100%; background:var(--bg); color:var(--fg); font:14px/1.4 system-ui,sans-serif; overflow:hidden; }
+  #c { position:fixed; inset:0; }
+  .hud { position:fixed; top:12px; left:12px; width:290px; max-width:calc(100vw - 24px); max-height:calc(100vh - 70px); overflow-y:auto; background:var(--panel); border-radius:10px; padding:12px 14px; box-sizing:border-box; }
+  .state { font-size:24px; font-weight:700; letter-spacing:.04em; }
+  .row { display:flex; justify-content:space-between; gap:8px; margin-top:8px; } .row span:first-child { color:var(--muted); }
+  .bar { position:relative; height:8px; background:#2a3140; border-radius:4px; margin-top:4px; }
+  .bar i { display:block; height:100%; width:0; border-radius:4px; background:var(--acc); transition:width .25s; }
+  .bar b { position:absolute; top:-3px; width:2px; height:14px; background:var(--fg); }
+  .msg { font-size:12px; color:var(--muted); margin-top:8px; min-height:16px; }
+  label { color:var(--muted); font-size:12px; } input { width:48px; background:#1b2130; color:var(--fg); border:1px solid #333c4d; border-radius:4px; padding:2px 4px; }
+  .phone { border-top:1px solid #333c4d; margin-top:10px; padding-top:2px; }
+  .phone button { margin-top:6px; background:#1b2130; color:var(--fg); border:1px solid #333c4d; border-radius:4px; padding:3px 8px; font-size:12px; cursor:pointer; }
+  .note { position:fixed; bottom:10px; left:12px; color:var(--muted); font-size:12px; }
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<div class="hud">
+  <div class="state" id="state">—</div>
+  <div id="linkstats">
+  <div class="row"><span>P(wave)</span><span id="p">—</span></div>
+  <div class="bar"><i id="pbar"></i><b id="thr"></b></div>
+  <div class="row"><span>Motion</span><span id="mv">—</span></div>
+  <div class="bar"><i id="mbar"></i></div>
+  </div>
+  <div class="msg" id="msg"></div>
+  <div id="phones"></div>
+  <div class="row" id="linkdistance"><label>Link distance (m) <input id="dist" type="number" min="1" max="15" step="0.5" value="4"></label></div>
+</div>
+<div class="note">Signal only — no position or pose.</div>
+
+<script type="importmap">{"imports":{"three":"https://unpkg.com/three@0.160.0/build/three.module.js","three/addons/":"https://unpkg.com/three@0.160.0/examples/jsm/"}}</script>
+<script type="module">
+import * as THREE from "three";
+import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+
+const $ = id => document.getElementById(id);
+const renderer = new THREE.WebGLRenderer({ canvas: $("c"), antialias: true });
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x0e1116);
+const cam = new THREE.PerspectiveCamera(50, 1, 0.1, 100);
+cam.position.set(0, 4.2, 8.5);
+const ctl = new OrbitControls(cam, renderer.domElement);
+ctl.target.set(0, 0.8, -0.8); ctl.enableDamping = true;
+scene.add(new THREE.AmbientLight(0xffffff, 0.6));
+const sun = new THREE.DirectionalLight(0xffffff, 0.8); sun.position.set(4, 8, 6); scene.add(sun);
+
+// phòng 7 × 2.8 × 6 m
+const grid = new THREE.GridHelper(8, 16, 0x3a4458, 0x232a38); scene.add(grid);
+const room = new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(8, 2.8, 6)),
+  new THREE.LineBasicMaterial({ color: 0x3a4458 }));
+room.position.y = 1.4; scene.add(room);
+
+function label(text) {
+  const cv = document.createElement("canvas"); cv.width = 512; cv.height = 64;
+  const g = cv.getContext("2d"); g.fillStyle = "#e6e9ef"; g.font = "bold 30px system-ui"; g.textAlign = "center"; g.fillText(text, 256, 42);
+  const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(cv), transparent: true }));
+  s.scale.set(2.4, 0.3, 1); return s;
+}
+function router(name, color) {
+  const g = new THREE.Group();
+  g.add(new THREE.Mesh(new THREE.BoxGeometry(0.35, 0.08, 0.25), new THREE.MeshStandardMaterial({ color })));
+  for (const dx of [-0.12, 0, 0.12]) { const a = new THREE.Mesh(new THREE.CylinderGeometry(0.01, 0.01, 0.22), new THREE.MeshStandardMaterial({ color: 0xcccccc })); a.position.set(dx, 0.15, -0.1); g.add(a); }
+  const l = label(name); l.position.y = 0.45; g.add(l);
+  scene.add(g); return g;
+}
+const r41 = router("4.1 AP", 0x4cc9f0), r111 = router("11.1", 0xf72585);
+let singleAP = false;
+
+// link + vùng Fresnel thứ nhất: bán kính giữa link r = sqrt(λ·d/4), λ = c / 5.21 GHz
+const LAMBDA = 299792458 / 5.21e9;
+const link = new THREE.Line(new THREE.BufferGeometry(), new THREE.LineBasicMaterial({ color: 0x9aa4b2 })); scene.add(link);
+const fres = new THREE.Mesh(new THREE.SphereGeometry(1, 48, 24),
+  new THREE.MeshBasicMaterial({ color: 0xf72585, transparent: true, opacity: 0.08, depthWrite: false })); scene.add(fres);
+const fresWire = new THREE.Mesh(fres.geometry, new THREE.MeshBasicMaterial({ color: 0xf72585, wireframe: true, transparent: true, opacity: 0.15 })); scene.add(fresWire);
+function layout() {
+  const d = Math.max(1, Math.min(15, +$("dist").value || 4));
+  r41.position.set(-d / 2, 1, 0); r111.position.set(d / 2, 1, 0);
+  if (singleAP) r111.position.set(0, 1, 0);
+  link.geometry.setFromPoints([r41.position.clone(), r111.position.clone()]);
+  const r = Math.sqrt(LAMBDA * d / 4);
+  for (const m of [fres, fresWire]) { m.position.set(0, 1, 0); m.scale.set(d / 2, r, r); }
+}
+$("dist").oninput = layout; layout();
+
+// bề mặt CSI: mỗi chain 52 tone (lấy 1/4) × 60 bước thời gian, cao = biên độ chuẩn hoá
+const NT = 52, NH = 60, surf = [];
+for (let c = 0; c < 3; c++) {
+  const geo = new THREE.PlaneGeometry(2.2, 1.8, NT - 1, NH - 1);
+  geo.rotateX(-Math.PI / 2);
+  geo.setAttribute("color", new THREE.BufferAttribute(new Float32Array(NT * NH * 3), 3));
+  const mesh = new THREE.Mesh(geo, new THREE.MeshBasicMaterial({ vertexColors: true, wireframe: true }));
+  mesh.position.set(-2.5 + c * 2.5, 0, -2.0);  // dọc tường sau, sau link (z = 0): không che router
+  const l = label(`chain ${c}`); l.position.set(0, 1.5, -0.9); mesh.add(l);
+  scene.add(mesh); surf.push({ mesh, geo, hist: Array.from({ length: NH }, () => new Float32Array(NT).fill(1)) });
+}
+const col = new THREE.Color();
+function pushAmp(amp) {
+  surf.forEach((s, c) => {
+    if (!amp[c]) return;
+    s.hist.shift(); s.hist.push(Float32Array.from(amp[c]));
+    const pos = s.geo.attributes.position, cl = s.geo.attributes.color;
+    for (let j = 0; j < NH; j++) for (let i = 0; i < NT; i++) {
+      const k = j * NT + i, v = s.hist[NH - 1 - j][i];
+      pos.setY(k, Math.min(1.4, v * 0.4));
+      col.setHSL(0.62 - Math.min(1, Math.abs(v - 1) * 1.2) * 0.62, 0.85, 0.55); cl.setXYZ(k, col.r, col.g, col.b);
+    }
+    pos.needsUpdate = true; cl.needsUpdate = true;
+  });
+}
+
+// sóng từ 4.1 (minh hoạ chu kỳ request, không phải đo)
+const waves = Array.from({ length: 4 }, (_, i) => {
+  const m = new THREE.Mesh(new THREE.SphereGeometry(1, 24, 12), new THREE.MeshBasicMaterial({ color: 0x4cc9f0, wireframe: true, transparent: true, opacity: 0.12 }));
+  m.userData.p = i / 4; scene.add(m); return m;
+});
+
+function setSingleAP(enabled) {
+  if (singleAP === enabled) return;
+  singleAP = enabled;
+  for (const o of [r41, link, fres, fresWire, ...waves]) o.visible = !singleAP;
+  for (const s of surf) s.mesh.visible = !singleAP;
+  $("linkstats").hidden = $("linkdistance").hidden = singleAP;
+  document.querySelector(".note").textContent = singleAP
+    ? "Router at (0, 0). RSSI rings show distance only; XY needs measured AoA + FTM."
+    : "Signal only — no position or pose.";
+  layout();
+}
+
+// Mỗi điện thoại có vòng khoảng cách riêng; một router không xác định được hướng.
+const phoneViews = new Map(), phoneColors = [0x80ed99, 0xffd166, 0x4cc9f0, 0xf72585];
+function createPhone(ph) {
+  const color = phoneColors[phoneViews.size % phoneColors.length];
+  const card = document.createElement("div"); card.className = "phone";
+  const row = document.createElement("div"); row.className = "row";
+  const name = document.createElement("span"), distance = document.createElement("span");
+  name.style.color = "#" + color.toString(16).padStart(6, "0");
+  name.textContent = ph.name || ph.mac; distance.style.whiteSpace = "nowrap";
+  row.append(name, distance);
+  const info = document.createElement("div"), status = document.createElement("div"), xy = document.createElement("div");
+  info.className = status.className = xy.className = "msg";
+  const cal = document.createElement("button"); cal.textContent = "Calibrate RSSI at 1 m";
+  cal.setAttribute("aria-label", `Calibrate ${ph.name || ph.mac} at 1 m`);
+  cal.onclick = async () => {
+    cal.disabled = true;
+    try {
+      const r = await fetch(`/calibrate?mac=${encodeURIComponent(ph.mac)}`, { method: "POST" });
+      status.textContent = r.ok ? "Calibrated at 1 m" : "No fresh RSSI — keep this phone awake";
+    } catch { status.textContent = "Server not reachable"; }
+    finally { cal.disabled = false; }
+  };
+  card.append(row, info, status, xy, cal); $("phones").append(card);
+  const band = new THREE.Mesh(new THREE.RingGeometry(0.99, 1, 96), new THREE.MeshBasicMaterial({ color, transparent:true, opacity:0.12, side:THREE.DoubleSide, depthWrite:false }));
+  const ring = new THREE.Mesh(new THREE.RingGeometry(0.99, 1, 128), new THREE.MeshBasicMaterial({ color, side:THREE.DoubleSide }));
+  const lbl = label(ph.name || ph.mac); lbl.material.color.setHex(color);
+  const dot = new THREE.Mesh(new THREE.SphereGeometry(0.09, 16, 12), new THREE.MeshStandardMaterial({ color }));
+  for (const r of [band, ring]) r.rotation.x = -Math.PI / 2;
+  for (const o of [band, ring, lbl, dot]) { o.visible = false; scene.add(o); }
+  return { card, name, distance, info, status, xy, cal, band, ring, lbl, dot, labelText: ph.name || ph.mac };
+}
+function showPhones(phones) {
+  const active = new Set(phones.map(ph => ph.mac));
+  for (const [mac, v] of phoneViews) {
+    v.card.hidden = !active.has(mac);
+    for (const o of [v.band, v.ring, v.lbl, v.dot]) o.visible = false;
+  }
+  for (const [index, ph] of phones.entries()) {
+    if (!phoneViews.has(ph.mac)) phoneViews.set(ph.mac, createPhone(ph));
+    const v = phoneViews.get(ph.mac), ok = ph.fresh && ph.dist !== undefined;
+    v.name.textContent = ph.name || ph.mac;
+    if (v.labelText !== v.name.textContent) {
+      const g = v.lbl.material.map.image.getContext("2d");
+      g.clearRect(0, 0, 512, 64); g.fillText(v.name.textContent, 256, 42);
+      v.lbl.material.map.needsUpdate = true; v.labelText = v.name.textContent;
+    }
+    v.cal.setAttribute("aria-label", `Calibrate ${ph.name || ph.mac} at 1 m`);
+    v.info.textContent = `${ph.ip || "No IP yet"} · ${ph.mac}`;
+    v.cal.disabled = !ok;
+    const point = ph.position;
+    v.xy.textContent = point?.valid
+      ? `X ${point.x_m.toFixed(2)} m · Y ${point.y_m.toFixed(2)} m`
+      : "X/Y unavailable · waiting for measured AoA + FTM";
+    if (point?.valid) {
+      v.distance.textContent = `${point.slant_distance_m.toFixed(1)} m (FTM)`;
+      v.status.textContent = `AoA ${point.angle_deg.toFixed(1)}° · relative to router`;
+      v.dot.visible = v.lbl.visible = true;
+      v.dot.position.set(r111.position.x + point.x_m, 0.15, r111.position.z + point.y_m);
+      v.lbl.position.copy(v.dot.position); v.lbl.position.y += 0.35;
+      continue;
+    }
+    for (const o of [v.band, v.ring, v.lbl]) o.visible = ok;
+    if (!ok) {
+      v.distance.textContent = "—";
+      v.status.textContent = ph.connected === false ? "Not connected to 11.1" : ph.connected == null ? "Waiting for router" : "Connected · asleep / no fresh ACK";
+      continue;
+    }
+    v.distance.textContent = `≈ ${ph.dist.toFixed(1)} m (RSSI)`;
+    v.status.textContent = `RSSI ${ph.rssi} dBm · ${ph.lo.toFixed(1)}–${ph.hi.toFixed(1)} m · 1 m = ${ph.p1m.toFixed(0)} dBm`;
+    const c = r111.position, d = Math.min(ph.dist, 12), lo = Math.min(ph.lo, 12), hi = Math.min(ph.hi, 12);
+    v.band.geometry.dispose(); v.band.geometry = new THREE.RingGeometry(lo, hi, 96);
+    v.ring.geometry.dispose(); v.ring.geometry = new THREE.RingGeometry(Math.max(0.01, d - 0.02), d + 0.02, 128);
+    for (const r of [v.band, v.ring]) r.position.set(c.x, 0.02, c.z);
+    v.lbl.position.set(c.x, 0.4 + index * 0.35, c.z + d);
+  }
+}
+
+// HUD: chỉ trạng thái, P(wave) so với ngưỡng daemon, mức chuyển động, và lý do khi dữ liệu không dùng được
+let motion = 0, waving = false;
+const es = new EventSource("/events");
+es.onmessage = e => {
+  const m = JSON.parse(e.data), md = m.model || {};
+  setSingleAP(m.single_ap === true);
+  if (m.amp) pushAmp(m.amp);
+  showPhones(m.phones || (m.phone ? [m.phone] : []));
+  if (m.motion !== undefined) { motion = m.motion; $("mv").textContent = Math.round(motion * 100) + "%"; $("mbar").style.width = motion * 100 + "%"; }
+  const fresh = md.seen && md.age !== undefined && md.age < 6;
+  waving = fresh && md.state === "wave";
+  const thr = md.threshold ?? 0.7;
+  $("p").textContent = fresh ? md.p_wave.toFixed(2) + " / " + thr.toFixed(2) : "—";
+  $("pbar").style.width = (fresh ? md.p_wave * 100 : 0) + "%"; $("pbar").style.background = waving ? "var(--warn)" : "var(--acc)";
+  $("thr").style.left = thr * 100 + "%";
+  const live = !m.stale && /đang thu/.test(m.status || "");
+  $("state").textContent = !live ? "NO DATA" : waving ? "WAVING" : motion > 0.3 ? "MOTION" : "IDLE";
+  $("state").style.color = !live ? "var(--muted)" : waving ? "var(--warn)" : motion > 0.3 ? "var(--acc)" : "var(--fg)";
+  $("msg").textContent = !live ? (/VIZERR/.test(m.status || "") ? "CSI busy on 11.1" : "No CSI from 11.1")
+    : !fresh ? "Model on 4.1 not reporting"
+    : m.skip ? "Window skipped: " + m.skip.reason.replace("chỉ", "only").replace("bản ghi", "records")
+    : `${m.rate} CSI/s`;
+  $("mbar").style.opacity = m.skip ? 0.35 : 1;
+  if (singleAP) {
+    const positioned = (m.phones || []).some(ph => ph.position?.valid);
+    $("state").textContent = positioned ? "POSITION" : "WAITING FOR XY";
+    $("state").style.color = positioned ? "var(--ok)" : "var(--muted)";
+    $("msg").textContent = positioned ? "Single router · measured AoA + FTM" : "Single router · AoA/FTM measurements not ready";
+  }
+};
+es.onerror = () => { $("state").textContent = "OFFLINE"; $("state").style.color = "var(--muted)"; $("msg").textContent = "viz/server.py not reachable"; };
+
+function resize() { const w = innerWidth, h = innerHeight; renderer.setSize(w, h, false); cam.aspect = w / h; cam.updateProjectionMatrix(); }
+addEventListener("resize", resize); resize();
+const clock = new THREE.Clock();
+renderer.setAnimationLoop(() => {
+  const dt = clock.getDelta();
+  fres.material.opacity = 0.06 + motion * 0.5; fresWire.material.opacity = 0.12 + motion * 0.5;
+  if (waving) { const pulse = 0.5 + 0.5 * Math.sin(clock.elapsedTime * 8); fres.material.color.setHSL(0.11, 1, 0.5 + 0.15 * pulse); fres.material.opacity = 0.35 + 0.3 * pulse; }
+  else fres.material.color.setHSL(0.6 - motion * 0.6, 0.9, 0.55);
+  waves.forEach(m => { m.userData.p = (m.userData.p + dt * 0.25) % 1; const s = 0.15 + m.userData.p * 1.2; m.scale.setScalar(s); m.position.copy(r41.position); m.material.opacity = 0.1 * (1 - m.userData.p); });
+  ctl.update(); renderer.render(scene, cam);
+});
+</script>
+</body>
+</html>

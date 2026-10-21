@@ -1,0 +1,372 @@
+diff -ru c/drivers/net/wireless/ath/ath12k/cfr.c d/drivers/net/wireless/ath/ath12k/cfr.c
+--- c/drivers/net/wireless/ath/ath12k/cfr.c	2026-10-05 11:10:19.905615600 +0700
++++ d/drivers/net/wireless/ath/ath12k/cfr.c	2026-10-05 11:12:03.900813400 +0700
+@@ -123,12 +123,19 @@
+  *          (u32 magic 0xCF4E7A01, u16 ppdu id, u8 pdev, u8 n, u64 host ns, u32 bytes,
+  *           n x {u16 tag, u16 len, data padded to 4}, u32 0xBEAFDEAD)
+  *   bit 2: one ATH12K_DBG_CFR summary line per kept PPDU
++ *   bit 3: write every WMI_PEER_CFR_CAPTURE_EVENT to the relay as its own record, raw
++ *          (u32 magic 0xCF4E7A02, u16 ppdu id, u8 pdev, u8 version 1, u64 host ns,
++ *           u32 bytes, the event's TLVs as the firmware sent them padded to 4,
++ *           u32 0xBEAFDEAD). WLAN.WBO.1.0-01618 fills that event (status, per-chain dBm
++ *           RSSI, AGC gain index, gain table, CFO, MCS/GI, sequence control) and sends one
++ *           per capture; r8-00065 sends it empty. The reader joins it by ppdu id.
+  * Field positions come from data, not from QTI definitions (none for QCN9625 in this tree):
+- * Router_App/router_cfr_probe_rdp499/RDP499_CSI_METADATA_GUIDE.md section 5.
++ * Router_App/router_cfr_probe_rdp499/RDP499_CSI_METADATA_GUIDE.md section 5. The WMI event
++ * layout is the firmware's own wmi_unified.h (qca-wifi-fw-src-component-cmn, 01618).
+  */
+-static uint ath12k_cfr_rxmeta = 3;
++static uint ath12k_cfr_rxmeta = 11;
+ module_param_named(cfr_rxmeta, ath12k_cfr_rxmeta, uint, 0644);
+-MODULE_PARM_DESC(cfr_rxmeta, "CFR Rx PHY metadata: bit0 fill relay header, bit1 raw TLV records, bit2 log line");
++MODULE_PARM_DESC(cfr_rxmeta, "CFR Rx PHY metadata: bit0 fill relay header, bit1 raw TLV records, bit2 log line, bit3 raw WMI event records");
+ 
+ static ulong ath12k_cfr_rxmeta_kept;
+ static ulong ath12k_cfr_rxmeta_hit;
+@@ -137,12 +144,26 @@
+ module_param_named(cfr_rxmeta_hit, ath12k_cfr_rxmeta_hit, ulong, 0444);
+ module_param_named(cfr_rxmeta_miss, ath12k_cfr_rxmeta_miss, ulong, 0444);
+ 
++/* WMI events seen while CFR is on; CSI buffers whose own event (same ppdu id, capture bit
++ * set) had already arrived when the buffer did, so the header carries that event's fields
++ */
++static ulong ath12k_cfr_wmievt_seen;
++static ulong ath12k_cfr_wmievt_hit;
++module_param_named(cfr_wmievt_seen, ath12k_cfr_wmievt_seen, ulong, 0444);
++module_param_named(cfr_wmievt_hit, ath12k_cfr_wmievt_hit, ulong, 0444);
++
+ #define CFR_RXMETA_MAGIC		0xCF4E7A01
+ #define CFR_RXMETA_SLOTS		16
+ #define CFR_RXMETA_TABLES		4
+ #define CFR_RXMETA_RAW_MAX		1024
+ #define CFR_RXMETA_TLV_MAX		8
+ #define CFR_RXMETA_TX_FRESH_MS		100
++#define CFR_WMIEVT_MAGIC		0xCF4E7A02
++#define CFR_WMIEVT_VERSION		1
++#define CFR_WMIEVT_SLOTS		8
++#define CFR_WMIEVT_RAW_MAX		512
++/* WMI_SERVICE_AOA_FOR_RCC_SUPPORTED in the firmware's wmi_services.h (not in this tree) */
++#define CFR_WMI_SERVICE_AOA_FOR_RCC	302
+ 
+ #define CFR_TLV_RSSI_LEGACY		132
+ #define CFR_TLV_PKT_END			135
+@@ -180,6 +201,9 @@
+ 	 */
+ 	struct ath12k_cfr_peer_tx_param req_tx;
+ 	bool req_valid;
++	/* the last WMI events, matched to a CSI buffer by the ppdu id in correlation_info_2 */
++	struct ath12k_cfr_peer_tx_param wmi[CFR_WMIEVT_SLOTS];
++	u32 wmi_head;
+ };
+ 
+ struct cfr_rxmeta_rec_hdr {
+@@ -206,6 +230,8 @@
+ static struct cfr_rxmeta_table s_cfr_rxmeta[CFR_RXMETA_TABLES];
+ static u8 s_cfr_rxmeta_rec[sizeof(struct cfr_rxmeta_rec_hdr) +
+ 			   CFR_RXMETA_TLV_MAX * 4 + CFR_RXMETA_RAW_MAX];
++/* same header as cfr_rxmeta_rec_hdr: ntlv carries CFR_WMIEVT_VERSION */
++static u8 s_cfr_wmievt_rec[sizeof(struct cfr_rxmeta_rec_hdr) + CFR_WMIEVT_RAW_MAX];
+ /* protects s_cfr_rxmeta and s_cfr_rxmeta_rec; never taken together with lut_lock in
+  * the other order (the Rx path does not take lut_lock)
+  */
+@@ -415,10 +441,52 @@
+ 		t->last_tx = *params;
+ 		t->last_tx_jiffies = jiffies;
+ 		t->last_tx_valid = true;
++		if (params->status & WMI_CFR_PEER_CAPTURE_STATUS)
++			t->wmi[t->wmi_head++ % CFR_WMIEVT_SLOTS] = *params;
+ 	}
+ 	spin_unlock_bh(&s_cfr_rxmeta_lock);
+ }
+ 
++/* Called by the WMI parser for every WMI_PEER_CFR_CAPTURE_EVENT, with the event's TLVs as
++ * received (bit 3 of cfr_rxmeta). Only while CFR is enabled on the event's pdev.
++ */
++void ath12k_cfr_wmi_event_raw(struct ath12k_base *ab,
++			      const struct ath12k_cfr_peer_tx_param *params,
++			      const void *raw, u32 len)
++{
++	struct cfr_rxmeta_rec_hdr *h = (struct cfr_rxmeta_rec_hdr *)s_cfr_wmievt_rec;
++	u32 end_magic = ATH12K_CFR_END_MAGIC;
++	struct ath12k_link_vif *arvif;
++	struct ath12k *ar;
++	u32 n;
++
++	rcu_read_lock();
++	arvif = ath12k_mac_get_arvif_by_vdev_id(ab, params->vdev_id);
++	ar = arvif ? arvif->ar : NULL;
++	rcu_read_unlock();
++	if (!ar || !READ_ONCE(ar->cfr.cfr_enabled))
++		return;
++
++	ath12k_cfr_wmievt_seen++;
++	if (!(ath12k_cfr_rxmeta & BIT(3)))
++		return;
++
++	n = min_t(u32, len, CFR_WMIEVT_RAW_MAX);
++	spin_lock_bh(&s_cfr_rxmeta_lock);
++	h->magic = CFR_WMIEVT_MAGIC;
++	h->ppdu_id = FIELD_GET(WMI_CFR_CORRELATION_INFO2_PPDU_ID,
++			       params->correlation_info_2);
++	h->pdev_idx = ar->pdev_idx;
++	h->ntlv = CFR_WMIEVT_VERSION;
++	h->host_ts_ns = ktime_to_ns(ktime_get_real());
++	memcpy(s_cfr_wmievt_rec + sizeof(*h), raw, n);
++	memset(s_cfr_wmievt_rec + sizeof(*h) + n, 0, ALIGN(n, 4) - n);
++	h->tlv_bytes = ALIGN(n, 4);
++	ath12k_cfr_rfs_write(ar, s_cfr_wmievt_rec, sizeof(*h) + ALIGN(n, 4), NULL, 0,
++			     &end_magic, sizeof(end_magic));
++	spin_unlock_bh(&s_cfr_rxmeta_lock);
++}
++
+ void ath12k_cfr_rxmeta_note_peer(struct ath12k *ar, const u8 *addr, bool enable,
+ 				 u32 vdev_id, u32 bw, u32 prim_mhz, u32 cf1_mhz,
+ 				 u32 cf2_mhz)
+@@ -445,23 +513,40 @@
+ 	spin_unlock_bh(&s_cfr_rxmeta_lock);
+ }
+ 
+-/* the WMI event that arrived just before this DMA buffer, if any (it carries the peer
+- * MAC, primary/center frequency, phy mode and capture bw even when its status is 0).
++/* The WMI event of this capture: the one whose correlation_info_2 names this DMA buffer's
++ * ppdu id with the capture bit set (WLAN.WBO.1.0-01618 sends one per capture).
++ * Else the WMI event that arrived just before this DMA buffer, but only if it is an
++ * r8-00065-style event (capture bit clear, no ppdu id): it still names the peer MAC,
++ * primary/center frequency, phy mode and capture bw. An event with the capture bit set and
++ * another ppdu id belongs to another capture and is never used here.
+  * Without one, the peer of the last capture request, but only while exactly one peer
+  * has capture enabled on this pdev: with two, a record cannot be attributed.
+- * Returns 2 = WMI event, 1 = request, 0 = nothing.
++ * Returns 3 = this PPDU's WMI event, 2 = recent status-0 WMI event, 1 = request, 0 = nothing.
+  */
+-static int cfr_rxmeta_recent_tx(struct ath12k *ar,
++static int cfr_rxmeta_recent_tx(struct ath12k *ar, u16 ppdu_id,
+ 				struct ath12k_cfr_peer_tx_param *out)
+ {
+ 	struct cfr_rxmeta_table *t;
+ 	int src = 0;
++	int i;
+ 
+ 	spin_lock_bh(&s_cfr_rxmeta_lock);
+ 	t = cfr_rxmeta_table_get(ar, false);
+-	if (t && t->last_tx_valid &&
+-	    time_before(jiffies, t->last_tx_jiffies +
+-			msecs_to_jiffies(CFR_RXMETA_TX_FRESH_MS))) {
++	for (i = 0; t && i < CFR_WMIEVT_SLOTS; i++) {
++		if ((t->wmi[i].status & WMI_CFR_PEER_CAPTURE_STATUS) &&
++		    FIELD_GET(WMI_CFR_CORRELATION_INFO2_PPDU_ID,
++			      t->wmi[i].correlation_info_2) == ppdu_id) {
++			*out = t->wmi[i];
++			src = 3;
++			break;
++		}
++	}
++	if (src) {
++		ath12k_cfr_wmievt_hit++;
++	} else if (t && t->last_tx_valid &&
++		   !(t->last_tx.status & WMI_CFR_PEER_CAPTURE_STATUS) &&
++		   time_before(jiffies, t->last_tx_jiffies +
++			       msecs_to_jiffies(CFR_RXMETA_TX_FRESH_MS))) {
+ 		*out = t->last_tx;
+ 		src = 2;
+ 	} else if (t && t->req_valid && READ_ONCE(ar->cfr.cfr_enabled_peer_cnt) == 1) {
+@@ -505,7 +590,7 @@
+  * in its low byte, tagged 0xC0 in bits 31:24 so that it cannot be mistaken for an unfilled 0
+  * (cfr_enh_metadata has no field of its own for it, and the last slot is never a chain here).
+  */
+-static void ath12k_cfr_fill_rxmeta(struct ath12k *ar,
++static bool ath12k_cfr_fill_rxmeta(struct ath12k *ar,
+ 				   struct ath12k_cfr_look_up_table *lut)
+ {
+ 	struct cfr_enh_metadata *m = &lut->header.meta_enh;
+@@ -515,7 +600,7 @@
+ 	int i, c;
+ 
+ 	if (!(ath12k_cfr_rxmeta & BIT(0)))
+-		return;
++		return false;
+ 
+ 	spin_lock_bh(&s_cfr_rxmeta_lock);
+ 	t = cfr_rxmeta_table_get(ar, false);
+@@ -528,7 +613,7 @@
+ 	if (!e) {
+ 		ath12k_cfr_rxmeta_miss++;
+ 		spin_unlock_bh(&s_cfr_rxmeta_lock);
+-		return;
++		return false;
+ 	}
+ 	cfr_rxmeta_decode(e, &f);
+ 	ath12k_cfr_rxmeta_hit++;
+@@ -548,6 +633,7 @@
+ 		m->mcs_rate = f.lsig_word & 0xf;
+ 	if (f.rssi)
+ 		m->chain_rssi[HOST_MAX_CHAINS - 1] = 0xC0000000 | f.rssi_comb;
++	return f.pkt_end;
+ }
+ 
+ static void ath12k_cfr_free_pending_dbr_events(struct ath12k *ar)
+@@ -815,17 +901,23 @@
+ 		 * without one, the capture request does (0004). The channel is re-read from the
+ 		 * vdev now unless the firmware's own event reported it (vdev 0 is a valid id).
+ 		 */
+-		src = cfr_rxmeta_recent_tx(ar, &tx);
+-		if (src == 1 || (src == 2 && !tx.band_center_freq1))
++		src = cfr_rxmeta_recent_tx(ar, lut->dbr_ppdu_id, &tx);
++		if (src == 1 || (src >= 2 && !tx.band_center_freq1))
+ 			punct = cfr_rxmeta_chan_now(ar, &tx);
+ 		if (ab->hw_params->hw_ops->fill_cfr_hdr_info)
+ 			ab->hw_params->hw_ops->fill_cfr_hdr_info(ar, &lut->header,
+ 								 &tx);
+ 		if (punct >= 0)
+ 			lut->header.meta_enh.puncture_bitmap = punct;
+-		/* status 1 = the DMA payload arrived (the WMI capture bit is always clear) */
++		/* status 1 = the DMA payload arrived (r8-00065's WMI capture bit is always clear) */
+ 		lut->header.meta_enh.status = 1;
+-		ath12k_cfr_fill_rxmeta(ar, lut);
++		/* The PHY rows replace chain_rssi[0..1] in dB over NF; the WMI event's other rows
++		 * are dBm. Never leave the two units side by side in one array: the WMI values are
++		 * in the raw WMI record (bit 3).
++		 */
++		if (ath12k_cfr_fill_rxmeta(ar, lut) && src == 3)
++			memset(&lut->header.meta_enh.chain_rssi[2], 0,
++			       sizeof(u32) * (HOST_MAX_CHAINS - 3));
+ 		ath12k_cfr_rfs_write(ar, &lut->header,
+ 				     sizeof(struct ath12k_csi_cfr_header),
+ 				     lut->data, lut->data_len,
+@@ -941,8 +1033,20 @@
+ 	}
+ 
+ 	if (!lut) {
++		u16 ppdu = FIELD_GET(WMI_CFR_CORRELATION_INFO2_PPDU_ID,
++				     params->correlation_info_2);
++
++		/* which buffer the firmware meant: same ppdu id, already received */
++		for (i = 0; i < cfr->lut_num; i++) {
++			temp = &cfr->lut[i];
++			if (temp->dbr_recv && temp->dbr_ppdu_id == ppdu)
++				break;
++		}
+ 		ath12k_dbg(ab, ATH12K_DBG_CFR,
+-			   "lut failure to process tx event\n");
++			   "lut failure to process tx event: ppdu %u corr1 0x%08x corr2 0x%08x addr %pad; same-ppdu buf %d addr %pad\n",
++			   ppdu, params->correlation_info_1, params->correlation_info_2,
++			   &buf_addr, i < cfr->lut_num ? i : -1,
++			   i < cfr->lut_num ? &cfr->lut[i].dbr_address : &buf_addr);
+ 		cfr->tx_dbr_lookup_fail++;
+ 		spin_unlock_bh(&cfr->lut_lock);
+ 		return -EINVAL;
+@@ -1349,6 +1453,13 @@
+ 	    !ab->hw_params->cfr_support)
+ 		return ret;
+ 
++	/* Per-chain AoA phase needs WMI_PDEV_AOA_PHASEDELTA_EVENTID, which only firmware that
++	 * advertises this service sends; without it every chain_phase stays 0xFFFF.
++	 */
++	ath12k_info(ab, "cfr: firmware service aoa_for_rcc(%d)=%d\n",
++		    CFR_WMI_SERVICE_AOA_FOR_RCC,
++		    test_bit(CFR_WMI_SERVICE_AOA_FOR_RCC, ab->wmi_ab.svc_map));
++
+ 	for (i = 0; i < ab->num_radios; i++) {
+ 		ar = ab->pdevs[i].ar;
+ 		cfr = &ar->cfr;
+diff -ru c/drivers/net/wireless/ath/ath12k/cfr.h d/drivers/net/wireless/ath/ath12k/cfr.h
+--- c/drivers/net/wireless/ath/ath12k/cfr.h	2026-10-05 11:10:19.919871900 +0700
++++ d/drivers/net/wireless/ath/ath12k/cfr.h	2026-10-05 11:12:33.297250900 +0700
+@@ -789,6 +789,9 @@
+ void ath12k_cfr_rxmeta_note_peer(struct ath12k *ar, const u8 *addr, bool enable,
+ 				 u32 vdev_id, u32 bw, u32 prim_mhz, u32 cf1_mhz,
+ 				 u32 cf2_mhz);
++void ath12k_cfr_wmi_event_raw(struct ath12k_base *ab,
++			      const struct ath12k_cfr_peer_tx_param *params,
++			      const void *raw, u32 len);
+ 
+ #else
+ static inline int ath12k_cfr_init(struct ath12k_base *ab)
+@@ -852,5 +855,12 @@
+ 					       u32 prim_mhz, u32 cf1_mhz, u32 cf2_mhz)
+ {
+ }
++
++static inline void
++ath12k_cfr_wmi_event_raw(struct ath12k_base *ab,
++			 const struct ath12k_cfr_peer_tx_param *params,
++			 const void *raw, u32 len)
++{
++}
+ #endif /* CPTCFG_ATH12K_CFR */
+ #endif /* ATH12K_CFR_H */
+diff -ru c/drivers/net/wireless/ath/ath12k/wmi.c d/drivers/net/wireless/ath/ath12k/wmi.c
+--- c/drivers/net/wireless/ath/ath12k/wmi.c	2026-10-05 11:10:19.937029800 +0700
++++ d/drivers/net/wireless/ath/ath12k/wmi.c	2026-10-05 11:13:26.981564700 +0700
+@@ -18210,7 +18210,7 @@
+ 
+ 
+ static void ath12k_wmi_tlv_cfr_cpature_event_fixed_param(const void *ptr,
+-							 void *data)
++							 u16 len, void *data)
+ {
+ 	struct ath12k_cfr_peer_tx_param *tx_params =
+ 			(struct ath12k_cfr_peer_tx_param *)data;
+@@ -18242,10 +18242,20 @@
+ 
+ 	tx_params->rx_start_ts = params->rx_start_ts;
+ 	tx_params->rx_ts_reset = params->rx_ts_reset;
++
++	/* WLAN.WBO.1.0-01618 appends mcs_gi_info (mcs bits 7:0, gi bits 15:8) and
++	 * frame_seq_ctrl; r8-00065's event ends at rx_ts_reset
++	 */
++	if (len >= sizeof(*params) + sizeof(u32)) {
++		u32 mcs_gi = get_unaligned_le32((const u8 *)ptr + sizeof(*params));
++
++		tx_params->mcs_rate = mcs_gi & 0xff;
++		tx_params->gi_type = (mcs_gi >> 8) & 0xff;
++	}
+ }
+ 
+ static void ath12k_wmi_tlv_cfr_cpature_phase_fixed_param(const void *ptr,
+-							 void *data)
++							 u16 len, void *data)
+ {
+ 	struct ath12k_cfr_peer_tx_param *tx_params =
+ 			(struct ath12k_cfr_peer_tx_param *)data;
+@@ -18257,6 +18267,13 @@
+ 		tx_params->chain_phase[i] = params->chain_phase[i];
+ 		tx_params->agc_gain[i] = params->agc_gain[i];
+ 	}
++
++	/* agc_gain_tbl_index[] (one byte per chain, 0 = default gain table) follows
++	 * agc_gain[] in the firmware's wmi_peer_cfr_capture_event_phase_fixed_param
++	 */
++	if (len >= sizeof(*params) + WMI_MAX_CHAINS)
++		memcpy(tx_params->agc_gain_tbl_index,
++		       (const u8 *)ptr + sizeof(*params), WMI_MAX_CHAINS);
+ }
+ 
+ static int ath12k_wmi_tlv_cfr_capture_evt_parse(struct ath12k_base *ab,
+@@ -18265,10 +18282,14 @@
+ {
+ 	switch (tag) {
+ 	case WMI_TAG_PEER_CFR_CAPTURE_EVENT:
+-		ath12k_wmi_tlv_cfr_cpature_event_fixed_param(ptr, data);
++		if (len < sizeof(struct ath12k_wmi_cfr_peer_tx_event_param))
++			return -EINVAL;
++		ath12k_wmi_tlv_cfr_cpature_event_fixed_param(ptr, len, data);
+ 		break;
+ 	case WMI_TAG_CFR_CAPTURE_PHASE_PARAM:
+-		ath12k_wmi_tlv_cfr_cpature_phase_fixed_param(ptr, data);
++		if (len < sizeof(struct ath12k_wmi_cfr_peer_tx_event_phase_param))
++			return -EINVAL;
++		ath12k_wmi_tlv_cfr_cpature_phase_fixed_param(ptr, len, data);
+ 		break;
+ 	default:
+ 		ath12k_warn(ab, "Invalid tag received tag %d len %d\n",
+@@ -18297,6 +18318,8 @@
+ 		return;
+ 	}
+ 
++	ath12k_cfr_wmi_event_raw(ab, &params, skb->data, skb->len);
++
+ 	ret = ath12k_process_cfr_capture_event(ab, &params);
+ 	if (ret)
+ 		ath12k_dbg(ab, ATH12K_DBG_CFR,

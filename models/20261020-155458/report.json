@@ -1,0 +1,193 @@
+{
+ "created": "2026-10-20T15:54:58+0700",
+ "bw": 2,
+ "board": "192.168.4.1",
+ "chains": 3,
+ "group": "recording_id",
+ "classes": [
+  "no_wave",
+  "wave"
+ ],
+ "feature_set": "inv",
+ "evaluation": "leave-one-recording_id-out; model cuối fit trên toàn bộ dữ liệu",
+ "baseline_source": null,
+ "recordings": 4,
+ "windows": 101,
+ "recordings_by_class": {
+  "wave": 2,
+  "no_wave": 2
+ },
+ "recordings_by_board": {
+  "192.168.4.1": 4
+ },
+ "loro_recording_accuracy": 0.25,
+ "loro_window_accuracy": 0.3069306930693069,
+ "loro_window_confusion": [
+  [
+   31,
+   32
+  ],
+  [
+   38,
+   0
+  ]
+ ],
+ "loro_per_recording": [
+  [
+   "20261020-152046_4-1_wave_S1_P1",
+   "wave",
+   0.019
+  ],
+  [
+   "20261020-152209_4-1_no_wave_S1_P1",
+   "no_wave",
+   0.539
+  ],
+  [
+   "20261020-152701_4-1_no_wave_S1_P1",
+   "no_wave",
+   0.47
+  ],
+  [
+   "20261020-152845_4-1_wave_S1_P1",
+   "wave",
+   0.152
+  ]
+ ],
+ "nuisance_by_class": {},
+ "top_features": [
+  [
+   "inv_std_c1",
+   0.3274
+  ],
+  [
+   "inv_tone_p90_c1",
+   0.2558
+  ],
+  [
+   "inv_ratio_std_01",
+   0.0502
+  ],
+  [
+   "inv_step_c2",
+   0.0496
+  ],
+  [
+   "inv_std_c0",
+   0.0486
+  ],
+  [
+   "inv_ratio_amp_01",
+   0.0482
+  ],
+  [
+   "inv_ratio_step_02",
+   0.0444
+  ],
+  [
+   "inv_ratio_std_02",
+   0.0299
+  ],
+  [
+   "inv_tone_p90_c0",
+   0.0278
+  ],
+  [
+   "inv_ratio_amp_02",
+   0.0249
+  ]
+ ],
+ "qc": [
+  {
+   "recording_id": "20261020-152046_4-1_wave_S1_P1",
+   "records": 1570,
+   "kept": 1567,
+   "bw80_fraction": 0.9980891719745223,
+   "windows": 27
+  },
+  {
+   "recording_id": "20261020-152209_4-1_no_wave_S1_P1",
+   "records": 1486,
+   "kept": 1486,
+   "bw80_fraction": 1.0,
+   "windows": 25
+  },
+  {
+   "recording_id": "20261020-152701_4-1_no_wave_S1_P1",
+   "records": 1576,
+   "kept": 1575,
+   "bw80_fraction": 0.9993654822335025,
+   "windows": 38
+  },
+  {
+   "recording_id": "20261020-152845_4-1_wave_S1_P1",
+   "records": 1382,
+   "kept": 1380,
+   "bw80_fraction": 0.9985528219971056,
+   "windows": 11
+  }
+ ],
+ "preprocessing": {
+  "requested_columns": [
+   "inv_std_c0",
+   "inv_step_c0",
+   "inv_tone_p90_c0",
+   "inv_tone_conc_c0",
+   "inv_std_c1",
+   "inv_step_c1",
+   "inv_tone_p90_c1",
+   "inv_tone_conc_c1",
+   "inv_std_c2",
+   "inv_step_c2",
+   "inv_tone_p90_c2",
+   "inv_tone_conc_c2",
+   "inv_ratio_step_01",
+   "inv_ratio_std_01",
+   "inv_ratio_amp_01",
+   "inv_ratio_step_02",
+   "inv_ratio_std_02",
+   "inv_ratio_amp_02"
+  ],
+  "train_imputation_medians": [
+   0.11651275061070915,
+   0.05652387637531798,
+   0.1521020756943837,
+   1.3529452648097455,
+   0.1057580337163345,
+   0.05261054212449822,
+   0.1507211349681416,
+   1.398567810935378,
+   0.1433615304857014,
+   0.0708460332572343,
+   0.19380162240436913,
+   1.3836986695751845,
+   0.11477230128252662,
+   0.2630356522317099,
+   0.22692996274606275,
+   0.1550254479680685,
+   0.3666627688817419,
+   0.314109832313868
+  ],
+  "kept_columns": [
+   "inv_std_c0",
+   "inv_step_c0",
+   "inv_tone_p90_c0",
+   "inv_tone_conc_c0",
+   "inv_std_c1",
+   "inv_step_c1",
+   "inv_tone_p90_c1",
+   "inv_tone_conc_c1",
+   "inv_std_c2",
+   "inv_step_c2",
+   "inv_tone_p90_c2",
+   "inv_tone_conc_c2",
+   "inv_ratio_step_01",
+   "inv_ratio_std_01",
+   "inv_ratio_amp_01",
+   "inv_ratio_step_02",
+   "inv_ratio_std_02",
+   "inv_ratio_amp_02"
+  ],
+  "dropped_near_constant_columns": []
+ }
+}

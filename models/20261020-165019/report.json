@@ -1,0 +1,237 @@
+{
+ "created": "2026-10-20T16:50:19+0700",
+ "bw": 2,
+ "board": "192.168.4.1",
+ "chains": 3,
+ "group": "recording_id",
+ "classes": [
+  "no_wave",
+  "wave"
+ ],
+ "feature_set": "inv_nb",
+ "evaluation": "leave-one-recording_id-out; model cuối fit trên toàn bộ dữ liệu",
+ "baseline_source": [
+  {
+   "recording_id": "20261020-152046_4-1_wave_S1_P1",
+   "baseline": "no_wave khác",
+   "windows": 110
+  },
+  {
+   "recording_id": "20261020-152209_4-1_no_wave_S1_P1",
+   "baseline": "no_wave khác",
+   "windows": 50
+  },
+  {
+   "recording_id": "20261020-152701_4-1_no_wave_S1_P1",
+   "baseline": "no_wave khác",
+   "windows": 60
+  },
+  {
+   "recording_id": "20261020-152845_4-1_wave_S1_P1",
+   "baseline": "no_wave khác",
+   "windows": 110
+  },
+  {
+   "recording_id": "20261020-164644_4-1_wave_S1_P1",
+   "baseline": "no_wave khác",
+   "windows": 110
+  }
+ ],
+ "recordings": 5,
+ "windows": 262,
+ "recordings_by_class": {
+  "wave": 3,
+  "no_wave": 2
+ },
+ "recordings_by_board": {
+  "192.168.4.1": 5
+ },
+ "loro_recording_accuracy": 0.4,
+ "loro_window_accuracy": 0.5343511450381679,
+ "loro_window_confusion": [
+  [
+   32,
+   78
+  ],
+  [
+   44,
+   108
+  ]
+ ],
+ "loro_per_recording": [
+  [
+   "20261020-152046_4-1_wave_S1_P1",
+   "wave",
+   0.262
+  ],
+  [
+   "20261020-152209_4-1_no_wave_S1_P1",
+   "no_wave",
+   0.587
+  ],
+  [
+   "20261020-152701_4-1_no_wave_S1_P1",
+   "no_wave",
+   0.768
+  ],
+  [
+   "20261020-152845_4-1_wave_S1_P1",
+   "wave",
+   0.892
+  ],
+  [
+   "20261020-164644_4-1_wave_S1_P1",
+   "wave",
+   0.871
+  ]
+ ],
+ "nuisance_by_class": {},
+ "top_features": [
+  [
+   "nb_inv_step_c2",
+   0.3434
+  ],
+  [
+   "nb_inv_std_c1",
+   0.2425
+  ],
+  [
+   "nb_inv_tone_p90_c1",
+   0.103
+  ],
+  [
+   "nb_inv_ratio_step_02",
+   0.1029
+  ],
+  [
+   "nb_inv_ratio_std_01",
+   0.0781
+  ],
+  [
+   "nb_inv_ratio_amp_01",
+   0.043
+  ],
+  [
+   "nb_inv_tone_p90_c0",
+   0.0188
+  ],
+  [
+   "nb_inv_std_c2",
+   0.0116
+  ],
+  [
+   "nb_inv_step_c1",
+   0.0108
+  ],
+  [
+   "nb_inv_ratio_std_02",
+   0.0099
+  ]
+ ],
+ "qc": [
+  {
+   "recording_id": "20261020-152046_4-1_wave_S1_P1",
+   "records": 1581,
+   "kept": 1579,
+   "bw80_fraction": 1.0,
+   "windows": 52
+  },
+  {
+   "recording_id": "20261020-152209_4-1_no_wave_S1_P1",
+   "records": 1492,
+   "kept": 1492,
+   "bw80_fraction": 1.0,
+   "windows": 60
+  },
+  {
+   "recording_id": "20261020-152701_4-1_no_wave_S1_P1",
+   "records": 1582,
+   "kept": 1582,
+   "bw80_fraction": 1.0,
+   "windows": 50
+  },
+  {
+   "recording_id": "20261020-152845_4-1_wave_S1_P1",
+   "records": 1394,
+   "kept": 1393,
+   "bw80_fraction": 1.0,
+   "windows": 49
+  },
+  {
+   "recording_id": "20261020-164644_4-1_wave_S1_P1",
+   "records": 1567,
+   "kept": 1566,
+   "bw80_fraction": 1.0,
+   "windows": 51
+  }
+ ],
+ "preprocessing": {
+  "requested_columns": [
+   "nb_inv_std_c0",
+   "nb_inv_step_c0",
+   "nb_inv_tone_p90_c0",
+   "nb_inv_tone_conc_c0",
+   "nb_inv_std_c1",
+   "nb_inv_step_c1",
+   "nb_inv_tone_p90_c1",
+   "nb_inv_tone_conc_c1",
+   "nb_inv_std_c2",
+   "nb_inv_step_c2",
+   "nb_inv_tone_p90_c2",
+   "nb_inv_tone_conc_c2",
+   "nb_inv_ratio_step_01",
+   "nb_inv_ratio_std_01",
+   "nb_inv_ratio_amp_01",
+   "nb_inv_ratio_step_02",
+   "nb_inv_ratio_std_02",
+   "nb_inv_ratio_amp_02"
+  ],
+  "train_imputation_medians": [
+   0.68225460460386,
+   0.6538949691861762,
+   0.6562274453190113,
+   0.04127287853441383,
+   0.6821121581930598,
+   0.6775254907690822,
+   0.6866723368414818,
+   0.07254022190900855,
+   0.8791658490381227,
+   0.7599677487466859,
+   0.905463978782107,
+   0.05185460264816839,
+   0.6298031997301886,
+   0.586436068037447,
+   0.5236127957282657,
+   0.7252648680664906,
+   0.8948352218311209,
+   0.6945036204772114
+  ],
+  "kept_columns": [
+   "nb_inv_std_c0",
+   "nb_inv_step_c0",
+   "nb_inv_tone_p90_c0",
+   "nb_inv_tone_conc_c0",
+   "nb_inv_std_c1",
+   "nb_inv_step_c1",
+   "nb_inv_tone_p90_c1",
+   "nb_inv_tone_conc_c1",
+   "nb_inv_std_c2",
+   "nb_inv_step_c2",
+   "nb_inv_tone_p90_c2",
+   "nb_inv_tone_conc_c2",
+   "nb_inv_ratio_step_01",
+   "nb_inv_ratio_std_01",
+   "nb_inv_ratio_amp_01",
+   "nb_inv_ratio_step_02",
+   "nb_inv_ratio_std_02",
+   "nb_inv_ratio_amp_02"
+  ],
+  "dropped_near_constant_columns": []
+ },
+ "c_parity": {
+  "status": "PASS",
+  "windows_checked": 262,
+  "probability_max_error": 0.0,
+  "scope": "host compiler parity only"
+ }
+}

@@ -1,0 +1,3071 @@
+{
+ "classes": [
+  "no_wave",
+  "wave"
+ ],
+ "preprocessing": {
+  "requested_columns": [
+   "level_rms_c0",
+   "level_log_block_rms_c0_b0",
+   "shape_block_power_share_c0_b0",
+   "level_log_block_rms_c0_b1",
+   "shape_block_power_share_c0_b1",
+   "level_log_block_rms_c0_b2",
+   "shape_block_power_share_c0_b2",
+   "level_log_block_rms_c0_b3",
+   "shape_block_power_share_c0_b3",
+   "shape_tone_entropy_c0",
+   "shape_tone_roughness_c0",
+   "shape_tone_slope_c0",
+   "dynamic_cv_median_c0",
+   "dynamic_cv_p90_c0",
+   "dynamic_relative_delta_c0",
+   "dynamic_shape_step_c0",
+   "dynamic_log_envelope_std_c0",
+   "dynamic_acf_lag1_c0",
+   "dynamic_acf_lag8_c0",
+   "spectral_low_fraction_c0",
+   "spectral_mid_fraction_c0",
+   "spectral_high_fraction_c0",
+   "spectral_entropy_c0",
+   "spectral_centroid_c0",
+   "spectral_log_power_c0",
+   "level_rms_c1",
+   "level_log_block_rms_c1_b0",
+   "shape_block_power_share_c1_b0",
+   "level_log_block_rms_c1_b1",
+   "shape_block_power_share_c1_b1",
+   "level_log_block_rms_c1_b2",
+   "shape_block_power_share_c1_b2",
+   "level_log_block_rms_c1_b3",
+   "shape_block_power_share_c1_b3",
+   "shape_tone_entropy_c1",
+   "shape_tone_roughness_c1",
+   "shape_tone_slope_c1",
+   "dynamic_cv_median_c1",
+   "dynamic_cv_p90_c1",
+   "dynamic_relative_delta_c1",
+   "dynamic_shape_step_c1",
+   "dynamic_log_envelope_std_c1",
+   "dynamic_acf_lag1_c1",
+   "dynamic_acf_lag8_c1",
+   "spectral_low_fraction_c1",
+   "spectral_mid_fraction_c1",
+   "spectral_high_fraction_c1",
+   "spectral_entropy_c1",
+   "spectral_centroid_c1",
+   "spectral_log_power_c1",
+   "level_rms_c2",
+   "level_log_block_rms_c2_b0",
+   "shape_block_power_share_c2_b0",
+   "level_log_block_rms_c2_b1",
+   "shape_block_power_share_c2_b1",
+   "level_log_block_rms_c2_b2",
+   "shape_block_power_share_c2_b2",
+   "level_log_block_rms_c2_b3",
+   "shape_block_power_share_c2_b3",
+   "shape_tone_entropy_c2",
+   "shape_tone_roughness_c2",
+   "shape_tone_slope_c2",
+   "dynamic_cv_median_c2",
+   "dynamic_cv_p90_c2",
+   "dynamic_relative_delta_c2",
+   "dynamic_shape_step_c2",
+   "dynamic_log_envelope_std_c2",
+   "dynamic_acf_lag1_c2",
+   "dynamic_acf_lag8_c2",
+   "spectral_low_fraction_c2",
+   "spectral_mid_fraction_c2",
+   "spectral_high_fraction_c2",
+   "spectral_entropy_c2",
+   "spectral_centroid_c2",
+   "spectral_log_power_c2",
+   "shape_chain_log_ratio_01",
+   "coherence_envelope_corr_01",
+   "coherence_log_ratio_std_01",
+   "shape_chain_log_ratio_02",
+   "coherence_envelope_corr_02",
+   "coherence_log_ratio_std_02",
+   "shape_chain_log_ratio_12",
+   "coherence_envelope_corr_12",
+   "coherence_log_ratio_std_12"
+  ],
+  "train_imputation_medians": [
+   1205.1282398953322,
+   6.791514118969135,
+   0.13497670760666983,
+   7.205350664535296,
+   0.3317354415099492,
+   7.330692320526546,
+   0.4145945832577107,
+   6.676644566961537,
+   0.12010683413658427,
+   0.9824019488028357,
+   0.11126711718007154,
+   0.002592901427249473,
+   0.23322261873205433,
+   0.45398106816679923,
+   0.14000481801985973,
+   0.009598767824769256,
+   0.10932051045173848,
+   0.5283911194070372,
+   0.06746654864713869,
+   0.48430020357474923,
+   0.29265621452129836,
+   0.2478018797026551,
+   0.8381606992184476,
+   0.14688433902678305,
+   -4.37640092685093,
+   1311.688410601947,
+   7.219127616109514,
+   0.275365555779681,
+   7.36241070367645,
+   0.3621507571858933,
+   7.149126608248907,
+   0.23127050859593593,
+   6.843709616675666,
+   0.12909604754274728,
+   0.9944681888689701,
+   0.046777334226755014,
+   0.01636567345328832,
+   0.10969059850570412,
+   0.14440403118917866,
+   0.09555039586001578,
+   0.002928935110028015,
+   0.07245435194634346,
+   0.36443733121277533,
+   0.043275403488335064,
+   0.44143244447806224,
+   0.3357991280585499,
+   0.2545360111419469,
+   0.8600069664850141,
+   0.1763067149262867,
+   -6.360830865188237,
+   1242.6296170343967,
+   7.18583544287256,
+   0.27274638502509474,
+   7.392887405238498,
+   0.4110871411038029,
+   7.035873420644088,
+   0.20736662504305572,
+   6.653236804292817,
+   0.09512071178555896,
+   0.9844541887921223,
+   0.09361402695112683,
+   0.024537638008145013,
+   0.16816483079771527,
+   0.3994081544002793,
+   0.10761951260061053,
+   0.007540413576801448,
+   0.05652386775468775,
+   0.565991891825899,
+   0.1320511927229807,
+   0.4895379830189006,
+   0.25380985305757725,
+   0.22812271652530197,
+   0.8437557773187242,
+   0.139594612130404,
+   -4.926881510963503,
+   -0.08700018609242337,
+   -0.4343578522585385,
+   0.15349409961444888,
+   -0.05521488696260903,
+   0.47625161286303236,
+   0.09404751556366811,
+   0.051307448213985175,
+   -0.3790287672832126,
+   0.11135943256170168
+  ],
+  "kept_columns": [
+   "level_rms_c0",
+   "level_log_block_rms_c0_b0",
+   "shape_block_power_share_c0_b0",
+   "level_log_block_rms_c0_b1",
+   "shape_block_power_share_c0_b1",
+   "level_log_block_rms_c0_b2",
+   "shape_block_power_share_c0_b2",
+   "level_log_block_rms_c0_b3",
+   "shape_block_power_share_c0_b3",
+   "shape_tone_entropy_c0",
+   "shape_tone_roughness_c0",
+   "shape_tone_slope_c0",
+   "dynamic_cv_median_c0",
+   "dynamic_cv_p90_c0",
+   "dynamic_relative_delta_c0",
+   "dynamic_shape_step_c0",
+   "dynamic_log_envelope_std_c0",
+   "dynamic_acf_lag1_c0",
+   "dynamic_acf_lag8_c0",
+   "spectral_low_fraction_c0",
+   "spectral_mid_fraction_c0",
+   "spectral_high_fraction_c0",
+   "spectral_entropy_c0",
+   "spectral_centroid_c0",
+   "spectral_log_power_c0",
+   "level_rms_c1",
+   "level_log_block_rms_c1_b0",
+   "shape_block_power_share_c1_b0",
+   "level_log_block_rms_c1_b1",
+   "shape_block_power_share_c1_b1",
+   "level_log_block_rms_c1_b2",
+   "shape_block_power_share_c1_b2",
+   "level_log_block_rms_c1_b3",
+   "shape_block_power_share_c1_b3",
+   "shape_tone_entropy_c1",
+   "shape_tone_roughness_c1",
+   "shape_tone_slope_c1",
+   "dynamic_cv_median_c1",
+   "dynamic_cv_p90_c1",
+   "dynamic_relative_delta_c1",
+   "dynamic_shape_step_c1",
+   "dynamic_log_envelope_std_c1",
+   "dynamic_acf_lag1_c1",
+   "dynamic_acf_lag8_c1",
+   "spectral_low_fraction_c1",
+   "spectral_mid_fraction_c1",
+   "spectral_high_fraction_c1",
+   "spectral_entropy_c1",
+   "spectral_centroid_c1",
+   "spectral_log_power_c1",
+   "level_rms_c2",
+   "level_log_block_rms_c2_b0",
+   "shape_block_power_share_c2_b0",
+   "level_log_block_rms_c2_b1",
+   "shape_block_power_share_c2_b1",
+   "level_log_block_rms_c2_b2",
+   "shape_block_power_share_c2_b2",
+   "level_log_block_rms_c2_b3",
+   "shape_block_power_share_c2_b3",
+   "shape_tone_entropy_c2",
+   "shape_tone_roughness_c2",
+   "shape_tone_slope_c2",
+   "dynamic_cv_median_c2",
+   "dynamic_cv_p90_c2",
+   "dynamic_relative_delta_c2",
+   "dynamic_shape_step_c2",
+   "dynamic_log_envelope_std_c2",
+   "dynamic_acf_lag1_c2",
+   "dynamic_acf_lag8_c2",
+   "spectral_low_fraction_c2",
+   "spectral_mid_fraction_c2",
+   "spectral_high_fraction_c2",
+   "spectral_entropy_c2",
+   "spectral_centroid_c2",
+   "spectral_log_power_c2",
+   "shape_chain_log_ratio_01",
+   "coherence_envelope_corr_01",
+   "coherence_log_ratio_std_01",
+   "shape_chain_log_ratio_02",
+   "coherence_envelope_corr_02",
+   "coherence_log_ratio_std_02",
+   "shape_chain_log_ratio_12",
+   "coherence_envelope_corr_12",
+   "coherence_log_ratio_std_12"
+  ],
+  "dropped_near_constant_columns": []
+ },
+ "trees": [
+  {
+   "children_left": [
+    -1
+   ],
+   "children_right": [
+    -1
+   ],
+   "feature": [
+    -2
+   ],
+   "threshold": [
+    -2.0
+   ],
+   "probabilities": [
+    [
+     0.23529411764705882,
+     0.7647058823529411
+    ]
+   ]
+  },
+  {
+   "children_left": [
+    1,
+    -1,
+    -1
+   ],
+   "children_right": [
+    2,
+    -1,
+    -1
+   ],
+   "feature": [
+    76,
+    -2,
+    -2
+   ],
+   "threshold": [
+    -0.32521891593933105,
+    -2.0,
+    -2.0
+   ],
+   "probabilities": [
+    [
+     0.5294117647058824,
+     0.47058823529411764
+    ],
+    [
+     1.0,
+     0.0
+    ],
+    [
+     0.2,
+     0.8
+    ]
+   ]
+  },
+  {
+   "children_left": [
+    1,
+    -1,
+    -1
+   ],
+   "children_right": [
+    2,
+    -1,
+    -1
+   ],
+   "feature": [
+    52,
+    -2,
+    -2
+   ],
+   "threshold": [
+    0.27960775792598724,
+    -2.0,
+    -2.0
+   ],
+   "probabilities": [
+    [
+     0.5882352941176471,
+     0.4117647058823529
+    ],
+    [
+     1.0,
+     0.0
+    ],
+    [
+     0.125,
+     0.875
+    ]
+   ]
+  },
+  {
+   "children_left": [
+    1,
+    -1,
+    -1
+   ],
+   "children_right": [
+    2,
+    -1,
+    -1
+   ],
+   "feature": [
+    49,
+    -2,
+    -2
+   ],
+   "threshold": [
+    -6.1700825691223145,
+    -2.0,
+    -2.0
+   ],
+   "probabilities": [
+    [
+     0.4117647058823529,
+     0.5882352941176471
+    ],
+    [
+     1.0,
+     0.0
+    ],
+    [
+     0.09090909090909091,
+     0.9090909090909091
+    ]
+   ]
+  },
+  {
+   "children_left": [
+    1,
+    -1,
+    -1
+   ],
+   "children_right": [
+    2,
+    -1,
+    -1
+   ],
+   "feature": [
+    82,
+    -2,
+    -2
+   ],
+   "threshold": [
+    -0.29926641285419464,
+    -2.0,
+    -2.0
+   ],
+   "probabilities": [
+    [
+     0.5882352941176471,
+     0.4117647058823529
+    ],
+    [
+     1.0,
+     0.0
+    ],
+    [
+     0.125,
+     0.875
+    ]
+   ]
+  },
+  {
+   "children_left": [
+    1,
+    -1,
+    -1
+   ],
+   "children_right": [
+    2,
+    -1,
+    -1
+   ],
+   "feature": [
+    10,
+    -2,
+    -2
+   ],
+   "threshold": [
+    0.10398247092962265,
+    -2.0,
+    -2.0
+   ],
+   "probabilities": [
+    [
+     0.5882352941176471,
+     0.4117647058823529
+    ],
+    [
+     0.2222222222222222,
+     0.7777777777777778
+    ],
+    [
+     1.0,
+     0.0
+    ]
+   ]
+  },
+  {
+   "children_left": [
+    1,
+    -1,
+    -1
+   ],
+   "children_right": [
+    2,
+    -1,
+    -1
+   ],
+   "feature": [
+    40,
+    -2,
+    -2
+   ],
+   "threshold": [
+    0.00454057683236897,
+    -2.0,
+    -2.0
+   ],
+   "probabilities": [
+    [
+     0.5882352941176471,
+     0.4117647058823529
+    ],
+    [
+     1.0,
+     0.0
+    ],
+    [
+     0.125,
+     0.875
+    ]
+   ]
+  },
+  {
+   "children_left": [
+    1,
+    -1,
+    -1
+   ],
+   "children_right": [
+    2,
+    -1,
+    -1
+   ],
+   "feature": [
+    22,
+    -2,
+    -2
+   ],
+   "threshold": [
+    0.8264184892177582,
+    -2.0,
+    -2.0
+   ],
+   "probabilities": [
+    [
+     0.7058823529411765,
+     0.29411764705882354
+    ],
+    [
+     1.0,
+     0.0
+    ],
+    [
+     0.375,
+     0.625
+    ]
+   ]
+  },
+  {
+   "children_left": [
+    -1
+   ],
+   "children_right": [
+    -1
+   ],
+   "feature": [
+    -2
+   ],
+   "threshold": [
+    -2.0
+   ],
+   "probabilities": [
+    [
+     0.5294117647058824,
+     0.47058823529411764
+    ]
+   ]
+  },
+  {
+   "children_left": [
+    -1
+   ],
+   "children_right": [
+    -1
+   ],
+   "feature": [
+    -2
+   ],
+   "threshold": [
+    -2.0
+   ],
+   "probabilities": [
+    [
+     0.35294117647058826,
+     0.6470588235294118
+    ]
+   ]
+  },
+  {
+   "children_left": [
+    -1
+   ],
+   "children_right": [
+    -1
+   ],
+   "feature": [
+    -2
+   ],
+   "threshold": [
+    -2.0
+   ],
+   "probabilities": [
+    [
+     0.47058823529411764,
+     0.5294117647058824
+    ]
+   ]
+  },
+  {
+   "children_left": [
+    1,
+    -1,
+    -1
+   ],
+   "children_right": [
+    2,
+    -1,
+    -1
+   ],
+   "feature": [
+    40,
+    -2,
+    -2
+   ],
+   "threshold": [
+    0.004309372627176344,
+    -2.0,
+    -2.0
+   ],
+   "probabilities": [
+    [
+     0.4117647058823529,
+     0.5882352941176471
+    ],
+    [
+     1.0,
+     0.0
+    ],
+    [
+     0.09090909090909091,
+     0.9090909090909091
+    ]
+   ]
+  },
+  {
+   "children_left": [
+    -1
+   ],
+   "children_right": [
+    -1
+   ],
+   "feature": [
+    -2
+   ],
+   "threshold": [
+    -2.0
+   ],
+   "probabilities": [
+    [
+     0.4117647058823529,
+     0.5882352941176471
+    ]
+   ]
+  },
+  {
+   "children_left": [
+    -1
+   ],
+   "children_right": [
+    -1
+   ],
+   "feature": [
+    -2
+   ],
+   "threshold": [
+    -2.0
+   ],
+   "probabilities": [
+    [
+     0.4117647058823529,
+     0.5882352941176471
+    ]
+   ]
+  },
+  {
+   "children_left": [
+    1,
+    -1,
+    -1
+   ],
+   "children_right": [
+    2,
+    -1,
+    -1
+   ],
+   "feature": [
+    37,
+    -2,
+    -2
+   ],
+   "threshold": [
+    0.12501449137926102,
+    -2.0,
+    -2.0
+   ],
+   "probabilities": [
+    [
+     0.47058823529411764,
+     0.5294117647058824
+    ],
+    [
+     1.0,
+     0.0
+    ],
+    [
+     0.18181818181818182,
+     0.8181818181818182
+    ]
+   ]
+  },
+  {
+   "children_left": [
+    -1
+   ],
+   "children_right": [
+    -1
+   ],
+   "feature": [
+    -2
+   ],
+   "threshold": [
+    -2.0
+   ],
+   "probabilities": [
+    [
+     0.4117647058823529,
+     0.5882352941176471
+    ]
+   ]
+  },
+  {
+   "children_left": [
+    -1
+   ],
+   "children_right": [
+    -1
+   ],
+   "feature": [
+    -2
+   ],
+   "threshold": [
+    -2.0
+   ],
+   "probabilities": [
+    [
+     0.4117647058823529,
+     0.5882352941176471
+    ]
+   ]
+  },
+  {
+   "children_left": [
+    -1
+   ],
+   "children_right": [
+    -1
+   ],
+   "feature": [
+    -2
+   ],
+   "threshold": [
+    -2.0
+   ],
+   "probabilities": [
+    [
+     0.6470588235294118,
+     0.35294117647058826
+    ]
+   ]
+  },
+  {
+   "children_left": [
+    -1
+   ],
+   "children_right": [
+    -1
+   ],
+   "feature": [
+    -2
+   ],
+   "threshold": [
+    -2.0
+   ],
+   "probabilities": [
+    [
+     0.5882352941176471,
+     0.4117647058823529
+    ]
+   ]
+  },
+  {
+   "children_left": [
+    -1
+   ],
+   "children_right": [
+    -1
+   ],
+   "feature": [
+    -2
+   ],
+   "threshold": [
+    -2.0
+   ],
+   "probabilities": [
+    [
+     0.4117647058823529,
+     0.5882352941176471
+    ]
+   ]
+  },
+  {
+   "children_left": [
+    1,
+    -1,
+    -1
+   ],
+   "children_right": [
+    2,
+    -1,
+    -1
+   ],
+   "feature": [
+    46,
+    -2,
+    -2
+   ],
+   "threshold": [
+    0.27036619186401367,
+    -2.0,
+    -2.0
+   ],
+   "probabilities": [
+    [
+     0.7058823529411765,
+     0.29411764705882354
+    ],
+    [
+     0.2857142857142857,
+     0.7142857142857143
+    ],
+    [
+     1.0,
+     0.0
+    ]
+   ]
+  },
+  {
+   "children_left": [
+    -1
+   ],
+   "children_right": [
+    -1
+   ],
+   "feature": [
+    -2
+   ],
+   "threshold": [
+    -2.0
+   ],
+   "probabilities": [
+    [
+     0.29411764705882354,
+     0.7058823529411765
+    ]
+   ]
+  },
+  {
+   "children_left": [
+    -1
+   ],
+   "children_right": [
+    -1
+   ],
+   "feature": [
+    -2
+   ],
+   "threshold": [
+    -2.0
+   ],
+   "probabilities": [
+    [
+     0.4117647058823529,
+     0.5882352941176471
+    ]
+   ]
+  },
+  {
+   "children_left": [
+    1,
+    -1,
+    -1
+   ],
+   "children_right": [
+    2,
+    -1,
+    -1
+   ],
+   "feature": [
+    68,
+    -2,
+    -2
+   ],
+   "threshold": [
+    0.056391919031739235,
+    -2.0,
+    -2.0
+   ],
+   "probabilities": [
+    [
+     0.5882352941176471,
+     0.4117647058823529
+    ],
+    [
+     0.125,
+     0.875
+    ],
+    [
+     1.0,
+     0.0
+    ]
+   ]
+  },
+  {
+   "children_left": [
+    1,
+    -1,
+    -1
+   ],
+   "children_right": [
+    2,
+    -1,
+    -1
+   ],
+   "feature": [
+    76,
+    -2,
+    -2
+   ],
+   "threshold": [
+    -0.32088831067085266,
+    -2.0,
+    -2.0
+   ],
+   "probabilities": [
+    [
+     0.6470588235294118,
+     0.35294117647058826
+    ],
+    [
+     1.0,
+     0.0
+    ],
+    [
+     0.25,
+     0.75
+    ]
+   ]
+  },
+  {
+   "children_left": [
+    1,
+    -1,
+    -1
+   ],
+   "children_right": [
+    2,
+    -1,
+    -1
+   ],
+   "feature": [
+    77,
+    -2,
+    -2
+   ],
+   "threshold": [
+    0.15077248215675354,
+    -2.0,
+    -2.0
+   ],
+   "probabilities": [
+    [
+     0.6470588235294118,
+     0.35294117647058826
+    ],
+    [
+     0.3333333333333333,
+     0.6666666666666666
+    ],
+    [
+     1.0,
+     0.0
+    ]
+   ]
+  },
+  {
+   "children_left": [
+    1,
+    -1,
+    -1
+   ],
+   "children_right": [
+    2,
+    -1,
+    -1
+   ],
+   "feature": [
+    76,
+    -2,
+    -2
+   ],
+   "threshold": [
+    -0.2887659966945648,
+    -2.0,
+    -2.0
+   ],
+   "probabilities": [
+    [
+     0.5882352941176471,
+     0.4117647058823529
+    ],
+    [
+     1.0,
+     0.0
+    ],
+    [
+     0.125,
+     0.875
+    ]
+   ]
+  },
+  {
+   "children_left": [
+    -1
+   ],
+   "children_right": [
+    -1
+   ],
+   "feature": [
+    -2
+   ],
+   "threshold": [
+    -2.0
+   ],
+   "probabilities": [
+    [
+     0.47058823529411764,
+     0.5294117647058824
+    ]
+   ]
+  },
+  {
+   "children_left": [
+    1,
+    -1,
+    -1
+   ],
+   "children_right": [
+    2,
+    -1,
+    -1
+   ],
+   "feature": [
+    52,
+    -2,
+    -2
+   ],
+   "threshold": [
+    0.27960775792598724,
+    -2.0,
+    -2.0
+   ],
+   "probabilities": [
+    [
+     0.47058823529411764,
+     0.5294117647058824
+    ],
+    [
+     1.0,
+     0.0
+    ],
+    [
+     0.1,
+     0.9
+    ]
+   ]
+  },
+  {
+   "children_left": [
+    1,
+    -1,
+    -1
+   ],
+   "children_right": [
+    2,
+    -1,
+    -1
+   ],
+   "feature": [
+    51,
+    -2,
+    -2
+   ],
+   "threshold": [
+    7.179355144500732,
+    -2.0,
+    -2.0
+   ],
+   "probabilities": [
+    [
+     0.4117647058823529,
+     0.5882352941176471
+    ],
+    [
+     1.0,
+     0.0
+    ],
+    [
+     0.09090909090909091,
+     0.9090909090909091
+    ]
+   ]
+  },
+  {
+   "children_left": [
+    -1
+   ],
+   "children_right": [
+    -1
+   ],
+   "feature": [
+    -2
+   ],
+   "threshold": [
+    -2.0
+   ],
+   "probabilities": [
+    [
+     0.47058823529411764,
+     0.5294117647058824
+    ]
+   ]
+  },
+  {
+   "children_left": [
+    1,
+    -1,
+    -1
+   ],
+   "children_right": [
+    2,
+    -1,
+    -1
+   ],
+   "feature": [
+    40,
+    -2,
+    -2
+   ],
+   "threshold": [
+    0.0028648829320445657,
+    -2.0,
+    -2.0
+   ],
+   "probabilities": [
+    [
+     0.7647058823529411,
+     0.23529411764705882
+    ],
+    [
+     1.0,
+     0.0
+    ],
+    [
+     0.3333333333333333,
+     0.6666666666666666
+    ]
+   ]
+  },
+  {
+   "children_left": [
+    1,
+    -1,
+    -1
+   ],
+   "children_right": [
+    2,
+    -1,
+    -1
+   ],
+   "feature": [
+    13,
+    -2,
+    -2
+   ],
+   "threshold": [
+    0.4489316791296005,
+    -2.0,
+    -2.0
+   ],
+   "probabilities": [
+    [
+     0.5882352941176471,
+     0.4117647058823529
+    ],
+    [
+     1.0,
+     0.0
+    ],
+    [
+     0.2222222222222222,
+     0.7777777777777778
+    ]
+   ]
+  },
+  {
+   "children_left": [
+    -1
+   ],
+   "children_right": [
+    -1
+   ],
+   "feature": [
+    -2
+   ],
+   "threshold": [
+    -2.0
+   ],
+   "probabilities": [
+    [
+     0.5294117647058824,
+     0.47058823529411764
+    ]
+   ]
+  },
+  {
+   "children_left": [
+    1,
+    -1,
+    -1
+   ],
+   "children_right": [
+    2,
+    -1,
+    -1
+   ],
+   "feature": [
+    82,
+    -2,
+    -2
+   ],
+   "threshold": [
+    -0.3106481581926346,
+    -2.0,
+    -2.0
+   ],
+   "probabilities": [
+    [
+     0.5294117647058824,
+     0.47058823529411764
+    ],
+    [
+     1.0,
+     0.0
+    ],
+    [
+     0.2727272727272727,
+     0.7272727272727273
+    ]
+   ]
+  },
+  {
+   "children_left": [
+    1,
+    -1,
+    -1
+   ],
+   "children_right": [
+    2,
+    -1,
+    -1
+   ],
+   "feature": [
+    40,
+    -2,
+    -2
+   ],
+   "threshold": [
+    0.0029748950619250536,
+    -2.0,
+    -2.0
+   ],
+   "probabilities": [
+    [
+     0.47058823529411764,
+     0.5294117647058824
+    ],
+    [
+     1.0,
+     0.0
+    ],
+    [
+     0.1,
+     0.9
+    ]
+   ]
+  },
+  {
+   "children_left": [
+    -1
+   ],
+   "children_right": [
+    -1
+   ],
+   "feature": [
+    -2
+   ],
+   "threshold": [
+    -2.0
+   ],
+   "probabilities": [
+    [
+     0.4117647058823529,
+     0.5882352941176471
+    ]
+   ]
+  },
+  {
+   "children_left": [
+    -1
+   ],
+   "children_right": [
+    -1
+   ],
+   "feature": [
+    -2
+   ],
+   "threshold": [
+    -2.0
+   ],
+   "probabilities": [
+    [
+     0.4117647058823529,
+     0.5882352941176471
+    ]
+   ]
+  },
+  {
+   "children_left": [
+    -1
+   ],
+   "children_right": [
+    -1
+   ],
+   "feature": [
+    -2
+   ],
+   "threshold": [
+    -2.0
+   ],
+   "probabilities": [
+    [
+     0.35294117647058826,
+     0.6470588235294118
+    ]
+   ]
+  },
+  {
+   "children_left": [
+    1,
+    -1,
+    -1
+   ],
+   "children_right": [
+    2,
+    -1,
+    -1
+   ],
+   "feature": [
+    76,
+    -2,
+    -2
+   ],
+   "threshold": [
+    -0.2887659966945648,
+    -2.0,
+    -2.0
+   ],
+   "probabilities": [
+    [
+     0.4117647058823529,
+     0.5882352941176471
+    ],
+    [
+     1.0,
+     0.0
+    ],
+    [
+     0.09090909090909091,
+     0.9090909090909091
+    ]
+   ]
+  },
+  {
+   "children_left": [
+    1,
+    -1,
+    -1
+   ],
+   "children_right": [
+    2,
+    -1,
+    -1
+   ],
+   "feature": [
+    15,
+    -2,
+    -2
+   ],
+   "threshold": [
+    0.011717014946043491,
+    -2.0,
+    -2.0
+   ],
+   "probabilities": [
+    [
+     0.47058823529411764,
+     0.5294117647058824
+    ],
+    [
+     1.0,
+     0.0
+    ],
+    [
+     0.18181818181818182,
+     0.8181818181818182
+    ]
+   ]
+  },
+  {
+   "children_left": [
+    -1
+   ],
+   "children_right": [
+    -1
+   ],
+   "feature": [
+    -2
+   ],
+   "threshold": [
+    -2.0
+   ],
+   "probabilities": [
+    [
+     0.47058823529411764,
+     0.5294117647058824
+    ]
+   ]
+  },
+  {
+   "children_left": [
+    -1
+   ],
+   "children_right": [
+    -1
+   ],
+   "feature": [
+    -2
+   ],
+   "threshold": [
+    -2.0
+   ],
+   "probabilities": [
+    [
+     0.47058823529411764,
+     0.5294117647058824
+    ]
+   ]
+  },
+  {
+   "children_left": [
+    1,
+    -1,
+    -1
+   ],
+   "children_right": [
+    2,
+    -1,
+    -1
+   ],
+   "feature": [
+    49,
+    -2,
+    -2
+   ],
+   "threshold": [
+    -6.1095640659332275,
+    -2.0,
+    -2.0
+   ],
+   "probabilities": [
+    [
+     0.5882352941176471,
+     0.4117647058823529
+    ],
+    [
+     1.0,
+     0.0
+    ],
+    [
+     0.2222222222222222,
+     0.7777777777777778
+    ]
+   ]
+  },
+  {
+   "children_left": [
+    1,
+    -1,
+    -1
+   ],
+   "children_right": [
+    2,
+    -1,
+    -1
+   ],
+   "feature": [
+    14,
+    -2,
+    -2
+   ],
+   "threshold": [
+    0.17625753581523895,
+    -2.0,
+    -2.0
+   ],
+   "probabilities": [
+    [
+     0.47058823529411764,
+     0.5294117647058824
+    ],
+    [
+     1.0,
+     0.0
+    ],
+    [
+     0.1,
+     0.9
+    ]
+   ]
+  },
+  {
+   "children_left": [
+    -1
+   ],
+   "children_right": [
+    -1
+   ],
+   "feature": [
+    -2
+   ],
+   "threshold": [
+    -2.0
+   ],
+   "probabilities": [
+    [
+     0.47058823529411764,
+     0.5294117647058824
+    ]
+   ]
+  },
+  {
+   "children_left": [
+    1,
+    -1,
+    -1
+   ],
+   "children_right": [
+    2,
+    -1,
+    -1
+   ],
+   "feature": [
+    49,
+    -2,
+    -2
+   ],
+   "threshold": [
+    -5.913837909698486,
+    -2.0,
+    -2.0
+   ],
+   "probabilities": [
+    [
+     0.6470588235294118,
+     0.35294117647058826
+    ],
+    [
+     1.0,
+     0.0
+    ],
+    [
+     0.14285714285714285,
+     0.8571428571428571
+    ]
+   ]
+  },
+  {
+   "children_left": [
+    -1
+   ],
+   "children_right": [
+    -1
+   ],
+   "feature": [
+    -2
+   ],
+   "threshold": [
+    -2.0
+   ],
+   "probabilities": [
+    [
+     0.35294117647058826,
+     0.6470588235294118
+    ]
+   ]
+  },
+  {
+   "children_left": [
+    -1
+   ],
+   "children_right": [
+    -1
+   ],
+   "feature": [
+    -2
+   ],
+   "threshold": [
+    -2.0
+   ],
+   "probabilities": [
+    [
+     0.35294117647058826,
+     0.6470588235294118
+    ]
+   ]
+  },
+  {
+   "children_left": [
+    1,
+    -1,
+    -1
+   ],
+   "children_right": [
+    2,
+    -1,
+    -1
+   ],
+   "feature": [
+    64,
+    -2,
+    -2
+   ],
+   "threshold": [
+    0.12147065997123718,
+    -2.0,
+    -2.0
+   ],
+   "probabilities": [
+    [
+     0.4117647058823529,
+     0.5882352941176471
+    ],
+    [
+     1.0,
+     0.0
+    ],
+    [
+     0.09090909090909091,
+     0.9090909090909091
+    ]
+   ]
+  },
+  {
+   "children_left": [
+    1,
+    -1,
+    -1
+   ],
+   "children_right": [
+    2,
+    -1,
+    -1
+   ],
+   "feature": [
+    4,
+    -2,
+    -2
+   ],
+   "threshold": [
+    0.3324398547410965,
+    -2.0,
+    -2.0
+   ],
+   "probabilities": [
+    [
+     0.5294117647058824,
+     0.47058823529411764
+    ],
+    [
+     0.1111111111111111,
+     0.8888888888888888
+    ],
+    [
+     1.0,
+     0.0
+    ]
+   ]
+  },
+  {
+   "children_left": [
+    1,
+    -1,
+    -1
+   ],
+   "children_right": [
+    2,
+    -1,
+    -1
+   ],
+   "feature": [
+    68,
+    -2,
+    -2
+   ],
+   "threshold": [
+    0.056391919031739235,
+    -2.0,
+    -2.0
+   ],
+   "probabilities": [
+    [
+     0.4117647058823529,
+     0.5882352941176471
+    ],
+    [
+     0.09090909090909091,
+     0.9090909090909091
+    ],
+    [
+     1.0,
+     0.0
+    ]
+   ]
+  },
+  {
+   "children_left": [
+    1,
+    -1,
+    -1
+   ],
+   "children_right": [
+    2,
+    -1,
+    -1
+   ],
+   "feature": [
+    64,
+    -2,
+    -2
+   ],
+   "threshold": [
+    0.10204936936497688,
+    -2.0,
+    -2.0
+   ],
+   "probabilities": [
+    [
+     0.5294117647058824,
+     0.47058823529411764
+    ],
+    [
+     1.0,
+     0.0
+    ],
+    [
+     0.2,
+     0.8
+    ]
+   ]
+  },
+  {
+   "children_left": [
+    -1
+   ],
+   "children_right": [
+    -1
+   ],
+   "feature": [
+    -2
+   ],
+   "threshold": [
+    -2.0
+   ],
+   "probabilities": [
+    [
+     0.4117647058823529,
+     0.5882352941176471
+    ]
+   ]
+  },
+  {
+   "children_left": [
+    -1
+   ],
+   "children_right": [
+    -1
+   ],
+   "feature": [
+    -2
+   ],
+   "threshold": [
+    -2.0
+   ],
+   "probabilities": [
+    [
+     0.5294117647058824,
+     0.47058823529411764
+    ]
+   ]
+  },
+  {
+   "children_left": [
+    1,
+    -1,
+    -1
+   ],
+   "children_right": [
+    2,
+    -1,
+    -1
+   ],
+   "feature": [
+    20,
+    -2,
+    -2
+   ],
+   "threshold": [
+    0.28523561358451843,
+    -2.0,
+    -2.0
+   ],
+   "probabilities": [
+    [
+     0.47058823529411764,
+     0.5294117647058824
+    ],
+    [
+     1.0,
+     0.0
+    ],
+    [
+     0.1,
+     0.9
+    ]
+   ]
+  },
+  {
+   "children_left": [
+    -1
+   ],
+   "children_right": [
+    -1
+   ],
+   "feature": [
+    -2
+   ],
+   "threshold": [
+    -2.0
+   ],
+   "probabilities": [
+    [
+     0.29411764705882354,
+     0.7058823529411765
+    ]
+   ]
+  },
+  {
+   "children_left": [
+    1,
+    -1,
+    -1
+   ],
+   "children_right": [
+    2,
+    -1,
+    -1
+   ],
+   "feature": [
+    10,
+    -2,
+    -2
+   ],
+   "threshold": [
+    0.09854892641305923,
+    -2.0,
+    -2.0
+   ],
+   "probabilities": [
+    [
+     0.7647058823529411,
+     0.23529411764705882
+    ],
+    [
+     0.2,
+     0.8
+    ],
+    [
+     1.0,
+     0.0
+    ]
+   ]
+  },
+  {
+   "children_left": [
+    -1
+   ],
+   "children_right": [
+    -1
+   ],
+   "feature": [
+    -2
+   ],
+   "threshold": [
+    -2.0
+   ],
+   "probabilities": [
+    [
+     0.4117647058823529,
+     0.5882352941176471
+    ]
+   ]
+  },
+  {
+   "children_left": [
+    1,
+    -1,
+    -1
+   ],
+   "children_right": [
+    2,
+    -1,
+    -1
+   ],
+   "feature": [
+    37,
+    -2,
+    -2
+   ],
+   "threshold": [
+    0.12065129727125168,
+    -2.0,
+    -2.0
+   ],
+   "probabilities": [
+    [
+     0.7058823529411765,
+     0.29411764705882354
+    ],
+    [
+     1.0,
+     0.0
+    ],
+    [
+     0.2857142857142857,
+     0.7142857142857143
+    ]
+   ]
+  },
+  {
+   "children_left": [
+    -1
+   ],
+   "children_right": [
+    -1
+   ],
+   "feature": [
+    -2
+   ],
+   "threshold": [
+    -2.0
+   ],
+   "probabilities": [
+    [
+     0.4117647058823529,
+     0.5882352941176471
+    ]
+   ]
+  },
+  {
+   "children_left": [
+    -1
+   ],
+   "children_right": [
+    -1
+   ],
+   "feature": [
+    -2
+   ],
+   "threshold": [
+    -2.0
+   ],
+   "probabilities": [
+    [
+     0.35294117647058826,
+     0.6470588235294118
+    ]
+   ]
+  },
+  {
+   "children_left": [
+    1,
+    -1,
+    -1
+   ],
+   "children_right": [
+    2,
+    -1,
+    -1
+   ],
+   "feature": [
+    52,
+    -2,
+    -2
+   ],
+   "threshold": [
+    0.27633124589920044,
+    -2.0,
+    -2.0
+   ],
+   "probabilities": [
+    [
+     0.5294117647058824,
+     0.47058823529411764
+    ],
+    [
+     1.0,
+     0.0
+    ],
+    [
+     0.2,
+     0.8
+    ]
+   ]
+  },
+  {
+   "children_left": [
+    -1
+   ],
+   "children_right": [
+    -1
+   ],
+   "feature": [
+    -2
+   ],
+   "threshold": [
+    -2.0
+   ],
+   "probabilities": [
+    [
+     0.47058823529411764,
+     0.5294117647058824
+    ]
+   ]
+  },
+  {
+   "children_left": [
+    -1
+   ],
+   "children_right": [
+    -1
+   ],
+   "feature": [
+    -2
+   ],
+   "threshold": [
+    -2.0
+   ],
+   "probabilities": [
+    [
+     0.4117647058823529,
+     0.5882352941176471
+    ]
+   ]
+  },
+  {
+   "children_left": [
+    1,
+    -1,
+    -1
+   ],
+   "children_right": [
+    2,
+    -1,
+    -1
+   ],
+   "feature": [
+    64,
+    -2,
+    -2
+   ],
+   "threshold": [
+    0.13111082464456558,
+    -2.0,
+    -2.0
+   ],
+   "probabilities": [
+    [
+     0.6470588235294118,
+     0.35294117647058826
+    ],
+    [
+     1.0,
+     0.0
+    ],
+    [
+     0.14285714285714285,
+     0.8571428571428571
+    ]
+   ]
+  },
+  {
+   "children_left": [
+    1,
+    -1,
+    -1
+   ],
+   "children_right": [
+    2,
+    -1,
+    -1
+   ],
+   "feature": [
+    15,
+    -2,
+    -2
+   ],
+   "threshold": [
+    0.01587179023772478,
+    -2.0,
+    -2.0
+   ],
+   "probabilities": [
+    [
+     0.5882352941176471,
+     0.4117647058823529
+    ],
+    [
+     1.0,
+     0.0
+    ],
+    [
+     0.125,
+     0.875
+    ]
+   ]
+  },
+  {
+   "children_left": [
+    -1
+   ],
+   "children_right": [
+    -1
+   ],
+   "feature": [
+    -2
+   ],
+   "threshold": [
+    -2.0
+   ],
+   "probabilities": [
+    [
+     0.35294117647058826,
+     0.6470588235294118
+    ]
+   ]
+  },
+  {
+   "children_left": [
+    1,
+    -1,
+    -1
+   ],
+   "children_right": [
+    2,
+    -1,
+    -1
+   ],
+   "feature": [
+    39,
+    -2,
+    -2
+   ],
+   "threshold": [
+    0.1007976271212101,
+    -2.0,
+    -2.0
+   ],
+   "probabilities": [
+    [
+     0.6470588235294118,
+     0.35294117647058826
+    ],
+    [
+     1.0,
+     0.0
+    ],
+    [
+     0.14285714285714285,
+     0.8571428571428571
+    ]
+   ]
+  },
+  {
+   "children_left": [
+    1,
+    -1,
+    -1
+   ],
+   "children_right": [
+    2,
+    -1,
+    -1
+   ],
+   "feature": [
+    77,
+    -2,
+    -2
+   ],
+   "threshold": [
+    0.15951848030090332,
+    -2.0,
+    -2.0
+   ],
+   "probabilities": [
+    [
+     0.47058823529411764,
+     0.5294117647058824
+    ],
+    [
+     0.1,
+     0.9
+    ],
+    [
+     1.0,
+     0.0
+    ]
+   ]
+  },
+  {
+   "children_left": [
+    1,
+    -1,
+    -1
+   ],
+   "children_right": [
+    2,
+    -1,
+    -1
+   ],
+   "feature": [
+    37,
+    -2,
+    -2
+   ],
+   "threshold": [
+    0.12535666674375534,
+    -2.0,
+    -2.0
+   ],
+   "probabilities": [
+    [
+     0.47058823529411764,
+     0.5294117647058824
+    ],
+    [
+     1.0,
+     0.0
+    ],
+    [
+     0.1,
+     0.9
+    ]
+   ]
+  },
+  {
+   "children_left": [
+    1,
+    -1,
+    -1
+   ],
+   "children_right": [
+    2,
+    -1,
+    -1
+   ],
+   "feature": [
+    42,
+    -2,
+    -2
+   ],
+   "threshold": [
+    0.3758034408092499,
+    -2.0,
+    -2.0
+   ],
+   "probabilities": [
+    [
+     0.6470588235294118,
+     0.35294117647058826
+    ],
+    [
+     1.0,
+     0.0
+    ],
+    [
+     0.25,
+     0.75
+    ]
+   ]
+  },
+  {
+   "children_left": [
+    1,
+    -1,
+    -1
+   ],
+   "children_right": [
+    2,
+    -1,
+    -1
+   ],
+   "feature": [
+    37,
+    -2,
+    -2
+   ],
+   "threshold": [
+    0.11591634899377823,
+    -2.0,
+    -2.0
+   ],
+   "probabilities": [
+    [
+     0.4117647058823529,
+     0.5882352941176471
+    ],
+    [
+     1.0,
+     0.0
+    ],
+    [
+     0.09090909090909091,
+     0.9090909090909091
+    ]
+   ]
+  },
+  {
+   "children_left": [
+    1,
+    -1,
+    -1
+   ],
+   "children_right": [
+    2,
+    -1,
+    -1
+   ],
+   "feature": [
+    18,
+    -2,
+    -2
+   ],
+   "threshold": [
+    0.07229055464267731,
+    -2.0,
+    -2.0
+   ],
+   "probabilities": [
+    [
+     0.5882352941176471,
+     0.4117647058823529
+    ],
+    [
+     0.3,
+     0.7
+    ],
+    [
+     1.0,
+     0.0
+    ]
+   ]
+  },
+  {
+   "children_left": [
+    1,
+    -1,
+    -1
+   ],
+   "children_right": [
+    2,
+    -1,
+    -1
+   ],
+   "feature": [
+    15,
+    -2,
+    -2
+   ],
+   "threshold": [
+    0.013514268677681684,
+    -2.0,
+    -2.0
+   ],
+   "probabilities": [
+    [
+     0.5882352941176471,
+     0.4117647058823529
+    ],
+    [
+     1.0,
+     0.0
+    ],
+    [
+     0.125,
+     0.875
+    ]
+   ]
+  },
+  {
+   "children_left": [
+    1,
+    -1,
+    -1
+   ],
+   "children_right": [
+    2,
+    -1,
+    -1
+   ],
+   "feature": [
+    1,
+    -2,
+    -2
+   ],
+   "threshold": [
+    6.885816335678101,
+    -2.0,
+    -2.0
+   ],
+   "probabilities": [
+    [
+     0.47058823529411764,
+     0.5294117647058824
+    ],
+    [
+     1.0,
+     0.0
+    ],
+    [
+     0.18181818181818182,
+     0.8181818181818182
+    ]
+   ]
+  },
+  {
+   "children_left": [
+    -1
+   ],
+   "children_right": [
+    -1
+   ],
+   "feature": [
+    -2
+   ],
+   "threshold": [
+    -2.0
+   ],
+   "probabilities": [
+    [
+     0.4117647058823529,
+     0.5882352941176471
+    ]
+   ]
+  },
+  {
+   "children_left": [
+    -1
+   ],
+   "children_right": [
+    -1
+   ],
+   "feature": [
+    -2
+   ],
+   "threshold": [
+    -2.0
+   ],
+   "probabilities": [
+    [
+     0.47058823529411764,
+     0.5294117647058824
+    ]
+   ]
+  },
+  {
+   "children_left": [
+    1,
+    -1,
+    -1
+   ],
+   "children_right": [
+    2,
+    -1,
+    -1
+   ],
+   "feature": [
+    14,
+    -2,
+    -2
+   ],
+   "threshold": [
+    0.16563672572374344,
+    -2.0,
+    -2.0
+   ],
+   "probabilities": [
+    [
+     0.47058823529411764,
+     0.5294117647058824
+    ],
+    [
+     1.0,
+     0.0
+    ],
+    [
+     0.1,
+     0.9
+    ]
+   ]
+  },
+  {
+   "children_left": [
+    1,
+    -1,
+    -1
+   ],
+   "children_right": [
+    2,
+    -1,
+    -1
+   ],
+   "feature": [
+    15,
+    -2,
+    -2
+   ],
+   "threshold": [
+    0.011717014946043491,
+    -2.0,
+    -2.0
+   ],
+   "probabilities": [
+    [
+     0.5882352941176471,
+     0.4117647058823529
+    ],
+    [
+     1.0,
+     0.0
+    ],
+    [
+     0.125,
+     0.875
+    ]
+   ]
+  },
+  {
+   "children_left": [
+    -1
+   ],
+   "children_right": [
+    -1
+   ],
+   "feature": [
+    -2
+   ],
+   "threshold": [
+    -2.0
+   ],
+   "probabilities": [
+    [
+     0.47058823529411764,
+     0.5294117647058824
+    ]
+   ]
+  },
+  {
+   "children_left": [
+    -1
+   ],
+   "children_right": [
+    -1
+   ],
+   "feature": [
+    -2
+   ],
+   "threshold": [
+    -2.0
+   ],
+   "probabilities": [
+    [
+     0.29411764705882354,
+     0.7058823529411765
+    ]
+   ]
+  },
+  {
+   "children_left": [
+    -1
+   ],
+   "children_right": [
+    -1
+   ],
+   "feature": [
+    -2
+   ],
+   "threshold": [
+    -2.0
+   ],
+   "probabilities": [
+    [
+     0.47058823529411764,
+     0.5294117647058824
+    ]
+   ]
+  },
+  {
+   "children_left": [
+    1,
+    -1,
+    -1
+   ],
+   "children_right": [
+    2,
+    -1,
+    -1
+   ],
+   "feature": [
+    64,
+    -2,
+    -2
+   ],
+   "threshold": [
+    0.13111082464456558,
+    -2.0,
+    -2.0
+   ],
+   "probabilities": [
+    [
+     0.5882352941176471,
+     0.4117647058823529
+    ],
+    [
+     1.0,
+     0.0
+    ],
+    [
+     0.125,
+     0.875
+    ]
+   ]
+  },
+  {
+   "children_left": [
+    1,
+    -1,
+    -1
+   ],
+   "children_right": [
+    2,
+    -1,
+    -1
+   ],
+   "feature": [
+    10,
+    -2,
+    -2
+   ],
+   "threshold": [
+    0.11391358450055122,
+    -2.0,
+    -2.0
+   ],
+   "probabilities": [
+    [
+     0.4117647058823529,
+     0.5882352941176471
+    ],
+    [
+     0.09090909090909091,
+     0.9090909090909091
+    ],
+    [
+     1.0,
+     0.0
+    ]
+   ]
+  },
+  {
+   "children_left": [
+    -1
+   ],
+   "children_right": [
+    -1
+   ],
+   "feature": [
+    -2
+   ],
+   "threshold": [
+    -2.0
+   ],
+   "probabilities": [
+    [
+     0.35294117647058826,
+     0.6470588235294118
+    ]
+   ]
+  },
+  {
+   "children_left": [
+    1,
+    -1,
+    -1
+   ],
+   "children_right": [
+    2,
+    -1,
+    -1
+   ],
+   "feature": [
+    76,
+    -2,
+    -2
+   ],
+   "threshold": [
+    -0.2887659966945648,
+    -2.0,
+    -2.0
+   ],
+   "probabilities": [
+    [
+     0.47058823529411764,
+     0.5294117647058824
+    ],
+    [
+     1.0,
+     0.0
+    ],
+    [
+     0.1,
+     0.9
+    ]
+   ]
+  },
+  {
+   "children_left": [
+    1,
+    -1,
+    -1
+   ],
+   "children_right": [
+    2,
+    -1,
+    -1
+   ],
+   "feature": [
+    51,
+    -2,
+    -2
+   ],
+   "threshold": [
+    7.182415723800659,
+    -2.0,
+    -2.0
+   ],
+   "probabilities": [
+    [
+     0.5882352941176471,
+     0.4117647058823529
+    ],
+    [
+     1.0,
+     0.0
+    ],
+    [
+     0.125,
+     0.875
+    ]
+   ]
+  },
+  {
+   "children_left": [
+    -1
+   ],
+   "children_right": [
+    -1
+   ],
+   "feature": [
+    -2
+   ],
+   "threshold": [
+    -2.0
+   ],
+   "probabilities": [
+    [
+     0.47058823529411764,
+     0.5294117647058824
+    ]
+   ]
+  },
+  {
+   "children_left": [
+    1,
+    -1,
+    -1
+   ],
+   "children_right": [
+    2,
+    -1,
+    -1
+   ],
+   "feature": [
+    34,
+    -2,
+    -2
+   ],
+   "threshold": [
+    0.9947767853736877,
+    -2.0,
+    -2.0
+   ],
+   "probabilities": [
+    [
+     0.47058823529411764,
+     0.5294117647058824
+    ],
+    [
+     0.1,
+     0.9
+    ],
+    [
+     1.0,
+     0.0
+    ]
+   ]
+  },
+  {
+   "children_left": [
+    1,
+    -1,
+    -1
+   ],
+   "children_right": [
+    2,
+    -1,
+    -1
+   ],
+   "feature": [
+    77,
+    -2,
+    -2
+   ],
+   "threshold": [
+    0.15077248215675354,
+    -2.0,
+    -2.0
+   ],
+   "probabilities": [
+    [
+     0.35294117647058826,
+     0.6470588235294118
+    ],
+    [
+     0.08333333333333333,
+     0.9166666666666666
+    ],
+    [
+     1.0,
+     0.0
+    ]
+   ]
+  },
+  {
+   "children_left": [
+    -1
+   ],
+   "children_right": [
+    -1
+   ],
+   "feature": [
+    -2
+   ],
+   "threshold": [
+    -2.0
+   ],
+   "probabilities": [
+    [
+     0.4117647058823529,
+     0.5882352941176471
+    ]
+   ]
+  },
+  {
+   "children_left": [
+    1,
+    -1,
+    -1
+   ],
+   "children_right": [
+    2,
+    -1,
+    -1
+   ],
+   "feature": [
+    68,
+    -2,
+    -2
+   ],
+   "threshold": [
+    0.056391919031739235,
+    -2.0,
+    -2.0
+   ],
+   "probabilities": [
+    [
+     0.5294117647058824,
+     0.47058823529411764
+    ],
+    [
+     0.1111111111111111,
+     0.8888888888888888
+    ],
+    [
+     1.0,
+     0.0
+    ]
+   ]
+  },
+  {
+   "children_left": [
+    1,
+    -1,
+    -1
+   ],
+   "children_right": [
+    2,
+    -1,
+    -1
+   ],
+   "feature": [
+    49,
+    -2,
+    -2
+   ],
+   "threshold": [
+    -5.868639945983887,
+    -2.0,
+    -2.0
+   ],
+   "probabilities": [
+    [
+     0.5882352941176471,
+     0.4117647058823529
+    ],
+    [
+     1.0,
+     0.0
+    ],
+    [
+     0.125,
+     0.875
+    ]
+   ]
+  },
+  {
+   "children_left": [
+    1,
+    -1,
+    -1
+   ],
+   "children_right": [
+    2,
+    -1,
+    -1
+   ],
+   "feature": [
+    12,
+    -2,
+    -2
+   ],
+   "threshold": [
+    0.21377867460250854,
+    -2.0,
+    -2.0
+   ],
+   "probabilities": [
+    [
+     0.7058823529411765,
+     0.29411764705882354
+    ],
+    [
+     1.0,
+     0.0
+    ],
+    [
+     0.2857142857142857,
+     0.7142857142857143
+    ]
+   ]
+  },
+  {
+   "children_left": [
+    1,
+    -1,
+    -1
+   ],
+   "children_right": [
+    2,
+    -1,
+    -1
+   ],
+   "feature": [
+    68,
+    -2,
+    -2
+   ],
+   "threshold": [
+    0.056391919031739235,
+    -2.0,
+    -2.0
+   ],
+   "probabilities": [
+    [
+     0.6470588235294118,
+     0.35294117647058826
+    ],
+    [
+     0.14285714285714285,
+     0.8571428571428571
+    ],
+    [
+     1.0,
+     0.0
+    ]
+   ]
+  }
+ ],
+ "window": 64,
+ "input_contract": "vector requested_columns c\u1ee7a m\u1ed9t c\u1eeda s\u1ed5 64 record \u0111\u00e3 QC (features.py)"
+}

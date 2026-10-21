@@ -1,0 +1,162 @@
+{
+ "created": "2026-10-20T15:54:47+0700",
+ "bw": 2,
+ "board": "192.168.4.1",
+ "chains": 3,
+ "group": "recording_id",
+ "classes": [
+  "no_wave",
+  "wave"
+ ],
+ "feature_set": "motion_core",
+ "evaluation": "leave-one-recording_id-out; model cuối fit trên toàn bộ dữ liệu",
+ "baseline_source": null,
+ "recordings": 4,
+ "windows": 101,
+ "recordings_by_class": {
+  "wave": 2,
+  "no_wave": 2
+ },
+ "recordings_by_board": {
+  "192.168.4.1": 4
+ },
+ "loro_recording_accuracy": 0.5,
+ "loro_window_accuracy": 0.32673267326732675,
+ "loro_window_confusion": [
+  [
+   33,
+   30
+  ],
+  [
+   38,
+   0
+  ]
+ ],
+ "loro_per_recording": [
+  [
+   "20261020-152046_4-1_wave_S1_P1",
+   "wave",
+   0.025
+  ],
+  [
+   "20261020-152209_4-1_no_wave_S1_P1",
+   "no_wave",
+   0.5
+  ],
+  [
+   "20261020-152701_4-1_no_wave_S1_P1",
+   "no_wave",
+   0.488
+  ],
+  [
+   "20261020-152845_4-1_wave_S1_P1",
+   "wave",
+   0.244
+  ]
+ ],
+ "nuisance_by_class": {},
+ "top_features": [
+  [
+   "motion_std_c1",
+   0.5474
+  ],
+  [
+   "motion_c1_log_power",
+   0.1397
+  ],
+  [
+   "motion_std_c0",
+   0.0876
+  ],
+  [
+   "motion_step_c2",
+   0.0666
+  ],
+  [
+   "motion_step_c1",
+   0.0515
+  ],
+  [
+   "motion_std_c2",
+   0.0452
+  ],
+  [
+   "motion_step_c0",
+   0.0395
+  ],
+  [
+   "motion_c0_log_power",
+   0.0169
+  ],
+  [
+   "motion_c2_log_power",
+   0.0057
+  ]
+ ],
+ "qc": [
+  {
+   "recording_id": "20261020-152046_4-1_wave_S1_P1",
+   "records": 1570,
+   "kept": 1567,
+   "bw80_fraction": 0.9980891719745223,
+   "windows": 27
+  },
+  {
+   "recording_id": "20261020-152209_4-1_no_wave_S1_P1",
+   "records": 1486,
+   "kept": 1486,
+   "bw80_fraction": 1.0,
+   "windows": 25
+  },
+  {
+   "recording_id": "20261020-152701_4-1_no_wave_S1_P1",
+   "records": 1576,
+   "kept": 1575,
+   "bw80_fraction": 0.9993654822335025,
+   "windows": 38
+  },
+  {
+   "recording_id": "20261020-152845_4-1_wave_S1_P1",
+   "records": 1382,
+   "kept": 1380,
+   "bw80_fraction": 0.9985528219971056,
+   "windows": 11
+  }
+ ],
+ "preprocessing": {
+  "requested_columns": [
+   "motion_std_c0",
+   "motion_step_c0",
+   "motion_std_c1",
+   "motion_step_c1",
+   "motion_std_c2",
+   "motion_step_c2",
+   "motion_c0_log_power",
+   "motion_c1_log_power",
+   "motion_c2_log_power"
+  ],
+  "train_imputation_medians": [
+   0.116512750556822,
+   0.05652387592010869,
+   0.10575803334212303,
+   0.052610542439159594,
+   0.1433615307933159,
+   0.07084603313027511,
+   2.3572602774670885,
+   2.1454566723212602,
+   2.870047178756864
+  ],
+  "kept_columns": [
+   "motion_std_c0",
+   "motion_step_c0",
+   "motion_std_c1",
+   "motion_step_c1",
+   "motion_std_c2",
+   "motion_step_c2",
+   "motion_c0_log_power",
+   "motion_c1_log_power",
+   "motion_c2_log_power"
+  ],
+  "dropped_near_constant_columns": []
+ }
+}

@@ -1,0 +1,34 @@
+--- orig/wifi8_hw.c	2026-09-30 15:26:59.883421800 +0700
++++ patched/wifi8_hw.c	2026-09-30 15:27:41.406052600 +0700
+@@ -245,20 +245,26 @@
+ 	memcpy(&cc_hdr, cc_hdr_wire, sizeof(struct ath12k_cfir_wifi8_cc_hdr));
+ 
+ 	if (cc_hdr.freeze_data_incl) {
+-		freeze_tlv = cc_hdr_wire + cc_hdr.freeze_tlv_offset * 2;
++		/* freeze_tlv_offset counts 32-bit words from the start of the buffer:
++		 * 16 -> byte 64, where the TLV (phy_ppdu_id at +4, RA at +12, TSF at
++		 * +18) was found in every capture on the RDP499 (2026-09-30). The old
++		 * "u16 units from cc_hdr" reading pointed 8 bytes into it.
++		 */
++		freeze_tlv = data + cc_hdr.freeze_tlv_offset * 4;
+ 		capture_type = freeze_reason_to_capture_type(ab, freeze_tlv);
+ 	} else {
+ 		capture_type = CFR_CAPTURE_METHOD_AUTO;
+ 	}
+ 
+-	/* header_size is already in bytes for the wifi8 layout, unlike
+-	 * ath12k_cfir_enh_dma_hdr.length (words) on wifi7.
++	/* header_size counts 32-bit words on wifi8 too (30 -> 120 bytes: the payload
++	 * starts at byte 120 in every capture on the RDP499, 2026-09-30). Reading it
++	 * as bytes cut the last 90 bytes = 23 samples of the last chain.
+ 	 */
+-	*length = common_hdr.header_size;
++	*length = common_hdr.header_size * 4;
+ 	*length += common_hdr.payload_size;
+ 
+ 	lut->dbr_ppdu_id = common_hdr.phy_ppdu_id;
+-	lut->header_length = common_hdr.header_size;
++	lut->header_length = common_hdr.header_size * 4;
+ 	lut->payload_length = common_hdr.payload_size;
+ 	memcpy(&lut->dma_hdr.wifi8_hdr, &common_hdr,
+ 	       sizeof(struct ath12k_cfir_wifi8_common_hdr));

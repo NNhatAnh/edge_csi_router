@@ -1,0 +1,26 @@
+# /etc/config/wifi_sensing — daemon phát hiện vẫy tay bằng CSI (router/wifi_sensing.c)
+config wifi_sensing 'main'
+	option enabled '1'
+	# AP 5 GHz và node CFR của RDP488 (4.1)
+	option ap_if 'phy00.2-0'
+	option hw 'ath12k_hw2'
+	# MAC station dùng làm "cảm biến"; 'auto' = station đầu tiên trên ap_if
+	option station 'auto'
+	# IP station cho keep-awake UDP; trống = tra /tmp/dhcp.leases, /proc/net/arp
+	option station_ip ''
+	# 4.1 mất ~50 % request: 50 ms → ~9 CSI/s, gap > 160 ms liên tục; 20 ms → ~33 CSI/s (đo 2026-10-20)
+	option period_ms '20'
+	option keepawake_ms '5'
+	# hysteresis: bật khi P(wave) >= on_threshold ở 'consecutive' cửa sổ liền (mỗi 0.8 s), tắt khi < off_threshold
+	option on_threshold '0.7'
+	option off_threshold '0.3'
+	option consecutive '1'
+	option cooldown_s '5'
+	# nền cho model inv_nb (feature chuẩn hoá theo nền): ghi bởi '/etc/init.d/wifi_sensing calibrate' (phòng yên calib_s giây).
+	# Hiệu chỉnh lại khi dời router / station hoặc đổi phòng. Model không cần nền thì bỏ qua.
+	option baseline '/root/wifi_sensing/baseline.txt'
+	option calib_s '120'  # cần ≥ 10 cửa sổ; link 11.1→4.1 yếu (2026-10-20) cần 240
+	# IPC trigger: lệnh chạy khi phát hiện vẫy tay (hợp đồng: router/IPC_TRIGGER.md).
+	# Biến môi trường: WS_P (xác suất), WS_STATION (MAC, "manual" khi phát thử), WS_TS (epoch giây)
+	# + cách A: show_listening.sh phát kws.listening start/tick/stop → panel hiện "đang nghe" (mic KHÔNG mở)
+	option action 'ubus send wifi_sensing.gesture "{\"gesture\":\"wave\",\"source\":\"wifi-sensing\",\"p\":$WS_P,\"station\":\"$WS_STATION\",\"ts\":$WS_TS}"; /root/wifi_sensing/show_listening.sh'

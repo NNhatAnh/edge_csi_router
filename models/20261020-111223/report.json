@@ -1,0 +1,154 @@
+{
+ "created": "2026-10-20T11:12:23+0700",
+ "bw": 2,
+ "board": "192.168.11.1",
+ "chains": 3,
+ "classes": [
+  "no_wave",
+  "wave"
+ ],
+ "feature_set": "motion_core",
+ "train_recordings": [
+  "20261020-103850_11-1_wave_S1_P1",
+  "20261020-104320_11-1_no_wave_S1_P1"
+ ],
+ "test_recordings": [
+  "20261020-104013_11-1_no_wave_S1_P1",
+  "20261020-104542_11-1_wave_S1_P1"
+ ],
+ "train_sessions": [
+  "S1"
+ ],
+ "test_sessions": [
+  "S1"
+ ],
+ "train_windows": 69,
+ "test_windows": 81,
+ "window_macro_f1": 0.7689914441275603,
+ "window_confusion": [
+  [
+   9,
+   10
+  ],
+  [
+   1,
+   61
+  ]
+ ],
+ "recording_macro_f1": 1.0,
+ "recording_confusion": [
+  [
+   1,
+   0
+  ],
+  [
+   0,
+   1
+  ]
+ ],
+ "nuisance_by_class": {},
+ "top_features": [
+  [
+   "motion_step_c1",
+   0.4064
+  ],
+  [
+   "motion_c0_log_power",
+   0.2438
+  ],
+  [
+   "motion_step_c0",
+   0.1972
+  ],
+  [
+   "motion_std_c0",
+   0.1251
+  ],
+  [
+   "motion_c2_log_power",
+   0.0138
+  ],
+  [
+   "motion_step_c2",
+   0.0117
+  ],
+  [
+   "motion_std_c2",
+   0.001
+  ],
+  [
+   "motion_c1_log_power",
+   0.0009
+  ],
+  [
+   "motion_std_c1",
+   0.0
+  ]
+ ],
+ "qc": [
+  {
+   "recording_id": "20261020-103850_11-1_wave_S1_P1",
+   "records": 462,
+   "kept": 421,
+   "bw80_fraction": 0.9112554112554112,
+   "windows": 14
+  },
+  {
+   "recording_id": "20261020-104013_11-1_no_wave_S1_P1",
+   "records": 552,
+   "kept": 480,
+   "bw80_fraction": 0.8695652173913043,
+   "windows": 19
+  },
+  {
+   "recording_id": "20261020-104320_11-1_no_wave_S1_P1",
+   "records": 1107,
+   "kept": 1004,
+   "bw80_fraction": 0.9069557362240289,
+   "windows": 55
+  },
+  {
+   "recording_id": "20261020-104542_11-1_wave_S1_P1",
+   "records": 1050,
+   "kept": 985,
+   "bw80_fraction": 0.9380952380952381,
+   "windows": 62
+  }
+ ],
+ "preprocessing": {
+  "requested_columns": [
+   "motion_std_c0",
+   "motion_step_c0",
+   "motion_std_c1",
+   "motion_step_c1",
+   "motion_std_c2",
+   "motion_step_c2",
+   "motion_c0_log_power",
+   "motion_c1_log_power",
+   "motion_c2_log_power"
+  ],
+  "train_imputation_medians": [
+   0.12455408334999665,
+   0.0644587158906075,
+   0.05731620272635674,
+   0.025948852750293315,
+   0.09407470670279774,
+   0.05191066017474672,
+   2.556258102972072,
+   0.8387172347658961,
+   2.071138301504665
+  ],
+  "kept_columns": [
+   "motion_std_c0",
+   "motion_step_c0",
+   "motion_std_c1",
+   "motion_step_c1",
+   "motion_std_c2",
+   "motion_step_c2",
+   "motion_c0_log_power",
+   "motion_c1_log_power",
+   "motion_c2_log_power"
+  ],
+  "dropped_near_constant_columns": []
+ }
+}
