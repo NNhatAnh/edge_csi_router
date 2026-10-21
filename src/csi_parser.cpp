@@ -109,6 +109,12 @@ std::string CSIData::toJson() const {
          << ",\"is_human_presence\":" << (is_human_presence ? "true" : "false")
          << ",\"is_sleeping\":" << (is_sleeping ? "true" : "false")
          << ",\"presence_status\":\"" << presence_status << "\""
+         << ",\"wave_detected\":" << (wave_detected ? "true" : "false")
+         << ",\"wave_confidence\":" << wave_confidence
+         << ",\"wave_status\":\"" << wave_status << "\""
+         << ",\"wave_samples_in_window\":" << wave_samples_in_window
+         << ",\"wave_raw_prob\":" << wave_raw_prob
+         << ",\"wave_reason\":\"" << wave_reason << "\""
          << ",\"ap_mac\":\"" << ap_mac << "\",\"amplitude_gain_ratio\":[";
 
     for (size_t i = 0; i < 5; ++i) {

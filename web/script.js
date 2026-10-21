@@ -28,6 +28,13 @@ const i18n = {
         metric_chains: 'ANTENNA CHAINS',
         metric_motion: 'MOTION SCORE',
         metric_presence: 'NHẬN DIỆN HIỆN DIỆN',
+        metric_wave: 'CỬ CHỈ VẪY TAY',
+        wave_idle: 'KHÔNG CÓ',
+        wave_detected: 'PHÁT HIỆN',
+        wave_waiting: 'CHỜ DỮ LIỆU',
+        caption_wave_idle: 'Chưa phát hiện cử chỉ',
+        caption_wave_detected: 'Cử chỉ vẫy tay đang diễn ra',
+        caption_wave_waiting: 'Cần luồng CSI 80 MHz (BW=2)',
         metric_framerate: 'TỐC ĐỘ GÓI',
         caption_waiting_csi: 'Chờ dữ liệu CSI',
         caption_framerate: 'Tốc độ nhận gần nhất',
@@ -162,6 +169,13 @@ const i18n = {
         metric_chains: 'ANTENNA CHAINS',
         metric_motion: 'MOTION SCORE',
         metric_presence: 'PRESENCE DETECTION',
+        metric_wave: 'HAND-WAVE GESTURE',
+        wave_idle: 'NONE',
+        wave_detected: 'DETECTED',
+        wave_waiting: 'WAITING',
+        caption_wave_idle: 'No gesture detected',
+        caption_wave_detected: 'Waving gesture in progress',
+        caption_wave_waiting: 'Requires 80 MHz CSI stream',
         metric_framerate: 'FRAME RATE',
         caption_waiting_csi: 'Waiting for CSI data',
         caption_framerate: 'Latest received rate',
@@ -327,6 +341,10 @@ const domElements = {
     motionCaption: document.getElementById('motion-caption'),
     presenceValue: document.getElementById('presence-value'),
     presenceCaption: document.getElementById('presence-caption'),
+    waveValue: document.getElementById('wave-value'),
+    waveCaption: document.getElementById('wave-caption'),
+    waveChip: document.getElementById('wave-confidence-chip'),
+    waveCard: document.getElementById('metric-card-wave'),
     frameRate: document.getElementById('frame-rate'),
     chipTsf: document.getElementById('chip-tsf'),
     ppduId: document.getElementById('ppdu-id'),
@@ -435,6 +453,51 @@ function updateDomMetrics(frame, isNewFrame, now) {
             domElements.presenceValue.textContent = t('presence_empty');
             domElements.presenceValue.style.color = '#77869d';
             domElements.presenceCaption.textContent = t('caption_empty');
+        }
+    }
+
+    if (domElements.waveValue && domElements.waveCaption) {
+        const pct = Math.round((Number(frame.wave_confidence) || 0) * 100);
+        const rawPct = Math.round((Number(frame.wave_raw_prob) || 0) * 100);
+        const samples = Number(frame.wave_samples_in_window) || 0;
+        const reason = frame.wave_reason || 'idle';
+        const tones = frame.tones_per_chain || 0;
+        const chains = frame.num_chains || 0;
+
+        if (domElements.waveChip) {
+            domElements.waveChip.textContent = `${pct}%`;
+        }
+
+        if (frame.wave_status === 'unavailable') {
+            domElements.waveValue.textContent = t('wave_waiting');
+            domElements.waveValue.style.color = '#77869d';
+            let detail = t('caption_wave_waiting');
+            if (reason === 'waiting_80mhz') {
+                detail = currentLang === 'vi' ? `Chờ kênh 80 MHz (${tones}/208 tones)` : `Waiting 80 MHz (${tones}/208 tones)`;
+            } else if (reason === 'waiting_3chains') {
+                detail = currentLang === 'vi' ? `Chờ 3 antenna (${chains}/3 chains)` : `Waiting 3 antennas (${chains}/3 chains)`;
+            } else if (reason === 'too_few_samples') {
+                detail = currentLang === 'vi' ? `Chờ dữ liệu (${samples}/16 mẫu · bật Prober)` : `Waiting samples (${samples}/16 · enable Prober)`;
+            }
+            domElements.waveCaption.textContent = detail;
+            if (domElements.waveCard) domElements.waveCard.classList.remove('detected');
+            if (domElements.waveChip) domElements.waveChip.className = 'wave-confidence-chip';
+        } else if (frame.wave_detected) {
+            domElements.waveValue.textContent = t('wave_detected');
+            domElements.waveValue.style.color = '#4be2d0';
+            domElements.waveCaption.textContent = currentLang === 'vi'
+                ? `Cử chỉ vẫy tay đang diễn ra (P: ${pct}%)`
+                : `Waving gesture in progress (P: ${pct}%)`;
+            if (domElements.waveCard) domElements.waveCard.classList.add('detected');
+            if (domElements.waveChip) domElements.waveChip.className = 'wave-confidence-chip wave-active';
+        } else {
+            domElements.waveValue.textContent = t('wave_idle');
+            domElements.waveValue.style.color = '#8fa3bf';
+            domElements.waveCaption.textContent = currentLang === 'vi'
+                ? `Chưa phát hiện · ${samples} mẫu/3.2s · P: ${rawPct}%`
+                : `Idle · ${samples} samples/3.2s · P: ${rawPct}%`;
+            if (domElements.waveCard) domElements.waveCard.classList.remove('detected');
+            if (domElements.waveChip) domElements.waveChip.className = 'wave-confidence-chip';
         }
     }
 

@@ -182,6 +182,7 @@ void WebServer::publish(const CSIData &frame) {
     latest_frame_ = frame;
     motion_detector_.update(latest_frame_);
     breath_detector_.update(latest_frame_);
+    wave_detector_.update(latest_frame_);
 
     // Quyết định hiện diện hợp nhất 3 trạng thái cốt lõi:
     // 1. Chuyển động vĩ mô (người đi lại / cử động)
@@ -214,6 +215,7 @@ void WebServer::resetMotionCalibration() {
         std::lock_guard<std::mutex> lock(data_mutex_);
         motion_detector_.reset();
         breath_detector_.reset();
+        wave_detector_.reset();
         if (has_frame_) {
             latest_frame_.motion_score = 0.0f;
             latest_frame_.motion_threshold_high = 0.0f;
@@ -433,7 +435,9 @@ void WebServer::handleWebClient(int client_fd) {
                       "\"breath_rrv\":0,\"breath_regularity\":0,\"breath_"
                       "valid\":false,\"is_human_presence\":false,"
                       "\"is_sleeping\":false,\"presence_status\":\"empty_"
-                      "room\",\"chains\":[]}";
+                      "room\",\"wave_detected\":false,\"wave_confidence\":0,"
+                      "\"wave_status\":\"idle\",\"wave_samples_in_window\":0,"
+                      "\"wave_raw_prob\":0,\"wave_reason\":\"idle\",\"chains\":[]}";
         }
         sendAll(
             client_fd,

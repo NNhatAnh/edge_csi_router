@@ -6,6 +6,7 @@
 #include "csi_parser.hpp"
 #include "motion.hpp"
 #include "prober.hpp"
+#include "wave_detector.hpp"
 
 #include <atomic>
 #include <condition_variable>
@@ -45,6 +46,7 @@ class WebServer {
     std::condition_variable data_changed_;
     MotionDetector motion_detector_;
     BreathDetector breath_detector_;
+    WaveDetector wave_detector_;
     CSIData latest_frame_;
     uint64_t sequence_ = 0;
     bool has_frame_ = false;

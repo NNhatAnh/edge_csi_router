@@ -1,9 +1,10 @@
 cmake_minimum_required(VERSION 3.10)
-project(EdgeCSIRouter LANGUAGES CXX)
+project(EdgeCSIRouter LANGUAGES C CXX)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
+set(CMAKE_C_STANDARD 99)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 add_executable(edge_csi_daemon
@@ -14,11 +15,13 @@ add_executable(edge_csi_daemon
   src/prober.cpp
   src/cfr_controller.cpp
   src/web_server.cpp
+  src/wave_detector.cpp
+  src/csi_rf_model1.c
 )
 
 target_include_directories(edge_csi_daemon PRIVATE src)
 target_compile_options(edge_csi_daemon PRIVATE -Wall -Wextra -Wpedantic)
-target_link_libraries(edge_csi_daemon PRIVATE pthread)
+target_link_libraries(edge_csi_daemon PRIVATE pthread m)
 target_link_options(edge_csi_daemon PRIVATE -static)
 
 file(COPY web DESTINATION "${CMAKE_BINARY_DIR}")

@@ -352,9 +352,52 @@ h2 {
 
 .metric-grid {
     display: grid;
-    grid-template-columns: repeat(5, minmax(0, 1fr));
+    grid-template-columns: repeat(6, minmax(0, 1fr));
     gap: 12px;
     margin-bottom: 14px;
+}
+
+.wave-confidence-chip {
+    font-family: "DM Mono", monospace;
+    font-size: 10px;
+    padding: 2px 7px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.05);
+    color: var(--text-muted);
+    border: 1px solid var(--border);
+    transition: all 0.2s ease;
+}
+
+.wave-confidence-chip.wave-active {
+    background: rgba(75, 226, 208, 0.15);
+    color: #4be2d0;
+    border-color: rgba(75, 226, 208, 0.4);
+    font-weight: 600;
+}
+
+.wave-model-tag {
+    display: inline-flex;
+    align-items: center;
+    background: rgba(75, 226, 208, 0.08);
+    border: 1px solid rgba(75, 226, 208, 0.25);
+    border-radius: 4px;
+    padding: 1px 5px;
+    font-family: "DM Mono", monospace;
+    font-size: 8px;
+    font-weight: 600;
+    color: #4be2d0;
+    letter-spacing: 0.04em;
+    margin-left: auto;
+    margin-right: 6px;
+}
+
+.metric-card-wave {
+    transition: border-color 0.3s ease, background 0.3s ease;
+}
+
+.metric-card-wave.detected {
+    border-color: rgba(75, 226, 208, 0.45);
+    background: linear-gradient(145deg, rgba(19, 40, 52, 0.95), rgba(14, 28, 42, 0.96));
 }
 
 .metric-card,

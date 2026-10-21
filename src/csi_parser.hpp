@@ -48,6 +48,15 @@ struct CSIData {
     bool is_human_presence = false;
     bool is_sleeping = false;
     std::string presence_status = "empty_room";
+
+    // Gesture Detection (Wave - VNPT Sensing 3.2s)
+    bool wave_detected = false;
+    float wave_confidence = 0.0f;
+    std::string wave_status = "idle"; // "idle", "waving", "unavailable"
+    uint32_t wave_samples_in_window = 0;
+    float wave_raw_prob = 0.0f;
+    std::string wave_reason = "idle";
+
     size_t tonesPerChain() const;
     std::string toJson() const;
 };
