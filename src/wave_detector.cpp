@@ -3,33 +3,11 @@
 
 #include <algorithm>
 #include <cmath>
+#include <cstring>
 #include <iostream>
 
-#ifndef M_PI
-#define M_PI 3.14159265358979323846
-#endif
-
-namespace {
-constexpr double kEps = 1e-9;
-} // namespace
-
 WaveDetector::WaveDetector() {
-    initTables();
-}
-
-void WaveDetector::initTables() {
-    for (size_t k = 0; k < kGridSamples; ++k) {
-        hann_[k] = 0.5 - 0.5 * std::cos(2.0 * M_PI * static_cast<double>(k) /
-                                       static_cast<double>(kGridSamples - 1));
-    }
-    for (int f = 0; f < 33; ++f) {
-        for (size_t k = 0; k < kGridSamples; ++k) {
-            const double angle = 2.0 * M_PI * static_cast<double>(f * k) /
-                                 static_cast<double>(kGridSamples);
-            twc_[f][k] = std::cos(angle);
-            tws_[f][k] = std::sin(angle);
-        }
-    }
+    reset();
 }
 
 void WaveDetector::reset() {
@@ -44,10 +22,21 @@ void WaveDetector::reset() {
     last_infer_ts_us_ = 0;
 }
 
+float WaveDetector::computeMedian(std::vector<float> &values) {
+    if (values.empty())
+        return 0.0f;
+    std::sort(values.begin(), values.end());
+    const size_t mid = values.size() / 2;
+    if (values.size() % 2 == 0) {
+        return (values[mid - 1] + values[mid]) * 0.5f;
+    }
+    return values[mid];
+}
+
 void WaveDetector::update(CSIData &frame) {
-    if (frame.chains.size() < kRequiredChains) {
+    if (frame.chains.size() < kMinChains) {
         status_ = "unavailable";
-        reason_ = "waiting_3chains";
+        reason_ = "waiting_2chains";
         frame.wave_detected = false;
         frame.wave_confidence = 0.0f;
         frame.wave_status = status_;
@@ -57,10 +46,13 @@ void WaveDetector::update(CSIData &frame) {
         return;
     }
 
-    const size_t tones = frame.chains[0].amplitudes.size();
-    if (tones < kNonDcTones) {
+    const size_t available_tones = frame.chains[0].amplitudes.empty()
+                                       ? frame.chains[0].i.size()
+                                       : frame.chains[0].amplitudes.size();
+
+    if (available_tones < 16) {
         status_ = "unavailable";
-        reason_ = "waiting_80mhz";
+        reason_ = "waiting_tones";
         frame.wave_detected = false;
         frame.wave_confidence = 0.0f;
         frame.wave_status = status_;
@@ -88,23 +80,63 @@ void WaveDetector::update(CSIData &frame) {
     Sample sample;
     sample.timestamp_us = ts_us;
 
-    for (size_t ch = 0; ch < kRequiredChains; ++ch) {
-        const auto &amp = frame.chains[ch].amplitudes;
-        sample.amplitudes[ch].reserve(kNonDcTones);
+    const size_t available_chains = frame.chains.size();
+    const size_t chains_to_extract = std::min(available_chains, static_cast<size_t>(3));
 
-        if (amp.size() >= 212) {
-            // Qualcomm 80 MHz raw CFR: 4 blocks of 53 tones. DC tones at k % 53 == 26
-            for (size_t k = 0; k < 212 && sample.amplitudes[ch].size() < kNonDcTones; ++k) {
-                if (k % 53 == 26)
-                    continue;
-                sample.amplitudes[ch].push_back(amp[k]);
+    for (size_t ch = 0; ch < chains_to_extract; ++ch) {
+        const auto &amp = frame.chains[ch].amplitudes;
+        const auto &i_vec = frame.chains[ch].i;
+        const auto &q_vec = frame.chains[ch].q;
+
+        if (!amp.empty()) {
+            if (amp.size() >= 212) {
+                // Qualcomm 80 MHz raw CFR: 4 blocks of 53 tones. DC tones at k % 53 == 26
+                size_t o = 0;
+                for (size_t k = 0; k < 212 && o < kNonDcTones; ++k) {
+                    if (k % 53 == 26)
+                        continue;
+                    sample.amp[ch][o++] = amp[k];
+                }
+            } else if (amp.size() >= kNonDcTones) {
+                for (size_t k = 0; k < kNonDcTones; ++k) {
+                    sample.amp[ch][k] = amp[k];
+                }
+            } else {
+                // 20 MHz (52 tones) or 40 MHz (108 tones): resample across 208 tone grid
+                const size_t n_in = amp.size();
+                for (size_t o = 0; o < kNonDcTones; ++o) {
+                    const size_t src_k = (o * n_in) / kNonDcTones;
+                    sample.amp[ch][o] = amp[src_k];
+                }
             }
-        } else {
-            // Already 208 non-DC tones
-            for (size_t k = 0; k < kNonDcTones && k < amp.size(); ++k) {
-                sample.amplitudes[ch].push_back(amp[k]);
+        } else if (!i_vec.empty() && !q_vec.empty()) {
+            if (i_vec.size() >= 212) {
+                size_t o = 0;
+                for (size_t k = 0; k < 212 && o < kNonDcTones; ++k) {
+                    if (k % 53 == 26)
+                        continue;
+                    sample.amp[ch][o++] = std::hypot(static_cast<float>(i_vec[k]),
+                                                     static_cast<float>(q_vec[k]));
+                }
+            } else if (i_vec.size() >= kNonDcTones) {
+                for (size_t k = 0; k < kNonDcTones; ++k) {
+                    sample.amp[ch][k] = std::hypot(static_cast<float>(i_vec[k]),
+                                                   static_cast<float>(q_vec[k]));
+                }
+            } else {
+                const size_t n_in = i_vec.size();
+                for (size_t o = 0; o < kNonDcTones; ++o) {
+                    const size_t src_k = (o * n_in) / kNonDcTones;
+                    sample.amp[ch][o] = std::hypot(static_cast<float>(i_vec[src_k]),
+                                                   static_cast<float>(q_vec[src_k]));
+                }
             }
         }
+    }
+
+    // 2-ANTENNA FALLBACK: If only 2 chains are available, mirror chain 1 to chain 2
+    if (available_chains == 2) {
+        std::memcpy(sample.amp[2], sample.amp[1], sizeof(sample.amp[2]));
     }
 
     // Monotonic timestamp handling
@@ -119,8 +151,8 @@ void WaveDetector::update(CSIData &frame) {
 
     history_.push_back(std::move(sample));
 
-    // Prune history older than 4.5 seconds
-    while (!history_.empty() && (ts_us - history_.front().timestamp_us > 4500000ULL)) {
+    // Prune history older than 3.5 seconds
+    while (!history_.empty() && (ts_us - history_.front().timestamp_us > 3500000ULL)) {
         history_.pop_front();
     }
 
@@ -156,7 +188,6 @@ void WaveDetector::processWindow(uint64_t current_ts_us) {
     if (n < kMinSamples) {
         status_ = "unavailable";
         reason_ = "too_few_samples";
-        // Maintain hold timer even if brief gap occurs
         if (is_waving_ && (current_ts_us > last_active_ts_us_) &&
             (current_ts_us - last_active_ts_us_ >= kHoldDurationUs)) {
             is_waving_ = false;
@@ -164,124 +195,103 @@ void WaveDetector::processWindow(uint64_t current_ts_us) {
         return;
     }
 
-    const double t0 = static_cast<double>(window_start_us) / 1000000.0;
-    constexpr double fs = 20.0;
+    // Filter consecutive sample pairs with dt <= 100ms (matching sparse_wave.py MAX_PAIR_GAP_S = 0.1)
+    struct PairData {
+        float delta_rate[3];
+        float shape_step_rate[3];
+    };
+    std::vector<PairData> pairs;
+    pairs.reserve(n);
 
-    double tc[kGridSamples];
-    double tcc = 0.0;
-    for (size_t k = 0; k < kGridSamples; ++k) {
-        tc[k] = static_cast<double>(k) - (kGridSamples - 1) / 2.0;
-        tcc += tc[k] * tc[k];
+    for (size_t i = 0; i + 1 < n; ++i) {
+        const Sample *s0 = window_samples[i];
+        const Sample *s1 = window_samples[i + 1];
+        if (s1->timestamp_us <= s0->timestamp_us)
+            continue;
+        const uint64_t dt_us = s1->timestamp_us - s0->timestamp_us;
+        if (dt_us > kMaxPairGapUs)
+            continue;
+
+        const double dt_s = static_cast<double>(dt_us) / 1000000.0;
+        const double dt_factor = dt_s / 0.03125;
+
+        PairData pd{};
+        for (size_t ch = 0; ch < 3; ++ch) {
+            double sum_prev = 0.0;
+            double diff_abs_sum = 0.0;
+            double norm0_sq = 0.0;
+            double norm1_sq = 0.0;
+            double dot = 0.0;
+
+            for (size_t q = 0; q < kNonDcTones; ++q) {
+                const double a0 = s0->amp[ch][q];
+                const double a1 = s1->amp[ch][q];
+                sum_prev += a0;
+                diff_abs_sum += std::abs(a1 - a0);
+                norm0_sq += a0 * a0;
+                norm1_sq += a1 * a1;
+                dot += a0 * a1;
+            }
+
+            const double mean_prev = sum_prev / static_cast<double>(kNonDcTones);
+            const double mean_diff = diff_abs_sum / static_cast<double>(kNonDcTones);
+            const double delta = mean_diff / (mean_prev + 1e-9);
+            pd.delta_rate[ch] = static_cast<float>(delta / (dt_factor + 1e-9));
+
+            const double norm0 = std::sqrt(norm0_sq) + 1e-9;
+            const double norm1 = std::sqrt(norm1_sq) + 1e-9;
+            const double cos_sim = dot / (norm0 * norm1);
+            const double shape_step = (1.0 - cos_sim) / (dt_factor + 1e-9);
+            pd.shape_step_rate[ch] = static_cast<float>(shape_step);
+        }
+        pairs.push_back(pd);
+    }
+
+    if (pairs.size() < kMinShortPairs) {
+        status_ = "unavailable";
+        reason_ = "too_few_local_pairs";
+        if (is_waving_ && (current_ts_us > last_active_ts_us_) &&
+            (current_ts_us - last_active_ts_us_ >= kHoldDurationUs)) {
+            is_waving_ = false;
+        }
+        return;
+    }
+
+    // Extract 5 features matching feature_columns of sparse_wave:
+    // 0: relative_delta_rate_c0
+    // 1: relative_delta_rate_c1
+    // 2: relative_delta_rate_c2
+    // 3: shape_step_rate_c0
+    // 4: shape_step_rate_c2
+    std::vector<float> v_dr0, v_dr1, v_dr2, v_sr0, v_sr2;
+    v_dr0.reserve(pairs.size());
+    v_dr1.reserve(pairs.size());
+    v_dr2.reserve(pairs.size());
+    v_sr0.reserve(pairs.size());
+    v_sr2.reserve(pairs.size());
+
+    for (const auto &p : pairs) {
+        v_dr0.push_back(p.delta_rate[0]);
+        v_dr1.push_back(p.delta_rate[1]);
+        v_dr2.push_back(p.delta_rate[2]);
+        v_sr0.push_back(p.shape_step_rate[0]);
+        v_sr2.push_back(p.shape_step_rate[2]);
     }
 
     float features[CSI_RF1_N_INPUT];
-
-    for (size_t ch = 0; ch < kRequiredChains; ++ch) {
-        // 1. Calculate per-record inverse mean amplitude to eliminate AGC variations
-        std::vector<double> inv(n);
-        for (size_t r = 0; r < n; ++r) {
-            double s = 0.0;
-            const auto &amp = window_samples[r]->amplitudes[ch];
-            for (size_t q = 0; q < kNonDcTones; ++q) {
-                s += amp[q];
-            }
-            inv[r] = 1.0 / (s / kNonDcTones + kEps);
-        }
-
-        // 2. Interpolate linearly onto uniform 20 Hz grid (64 time points)
-        double g[kGridSamples][kNonDcTones];
-        size_t r = 0;
-        for (size_t k = 0; k < kGridSamples; ++k) {
-            const double x = t0 + static_cast<double>(k) / fs;
-            while (r + 1 < n && (static_cast<double>(window_samples[r + 1]->timestamp_us) / 1e6) <= x) {
-                ++r;
-            }
-            double w = 0.0;
-            size_t r2 = r;
-            const double tr = static_cast<double>(window_samples[r]->timestamp_us) / 1e6;
-            if (x <= static_cast<double>(window_samples[0]->timestamp_us) / 1e6) {
-                r = r2 = 0;
-            } else if (r + 1 < n) {
-                r2 = r + 1;
-                const double tr2 = static_cast<double>(window_samples[r2]->timestamp_us) / 1e6;
-                if (tr2 > tr)
-                    w = (x - tr) / (tr2 - tr);
-            }
-
-            const auto &amp_r = window_samples[r]->amplitudes[ch];
-            const auto &amp_r2 = window_samples[r2]->amplitudes[ch];
-            for (size_t q = 0; q < kNonDcTones; ++q) {
-                g[k][q] = amp_r[q] * inv[r] * (1.0 - w) + amp_r2[q] * inv[r2] * w;
-            }
-        }
-
-        // 3. Detrend, standard deviation, step, and 32-bin Fourier power
-        double sstd = 0.0;
-        double sstep = 0.0;
-        double power[33] = {0.0};
-
-        for (size_t q = 0; q < kNonDcTones; ++q) {
-            double m = 0.0;
-            double d[kGridSamples];
-            double b = 0.0;
-            double v = 0.0;
-            double dm = 0.0;
-
-            for (size_t k = 0; k < kGridSamples; ++k) {
-                m += g[k][q];
-            }
-            m /= static_cast<double>(kGridSamples);
-
-            for (size_t k = 0; k < kGridSamples; ++k) {
-                d[k] = g[k][q] - m;
-                b += tc[k] * d[k];
-            }
-            b /= (tcc + 1e-12);
-
-            for (size_t k = 0; k < kGridSamples; ++k) {
-                d[k] -= tc[k] * b;
-                dm += d[k];
-            }
-            dm /= static_cast<double>(kGridSamples);
-
-            for (size_t k = 0; k < kGridSamples; ++k) {
-                v += (d[k] - dm) * (d[k] - dm);
-            }
-            sstd += std::sqrt(v / static_cast<double>(kGridSamples));
-
-            for (size_t k = 1; k < kGridSamples; ++k) {
-                sstep += std::abs(g[k][q] - g[k - 1][q]);
-            }
-
-            for (int f = 1; f < 33; ++f) {
-                double re = 0.0;
-                double im = 0.0;
-                for (size_t k = 0; k < kGridSamples; ++k) {
-                    const double x_val = d[k] * hann_[k];
-                    re += x_val * twc_[f][k];
-                    im -= x_val * tws_[f][k];
-                }
-                power[f] += re * re + im * im;
-            }
-        }
-
-        double total_power = 0.0;
-        for (int f = 1; f < 33; ++f) {
-            total_power += power[f] / static_cast<double>(kNonDcTones);
-        }
-
-        features[2 * ch] = static_cast<float>(sstd / kNonDcTones);
-        features[2 * ch + 1] = static_cast<float>(sstep / (kNonDcTones * (kGridSamples - 1)));
-        features[2 * kRequiredChains + ch] = static_cast<float>(std::log(total_power + kEps));
-    }
+    features[0] = computeMedian(v_dr0);
+    features[1] = computeMedian(v_dr1);
+    features[2] = computeMedian(v_dr2);
+    features[3] = computeMedian(v_sr0);
+    features[4] = computeMedian(v_sr2);
 
     double proba[CSI_RF1_N_CLASSES] = {0.0, 0.0};
     csi_rf1_predict(features, proba);
     raw_prob_ = static_cast<float>(proba[1]);
     wave_confidence_ = raw_prob_;
 
-    // Instant trigger when P >= 0.40 with 1.5s debounce hold time
-    if (raw_prob_ >= kTriggerThreshold) {
+    // Instant trigger when P >= 0.35 with 1.5s debounce hold time
+    if (raw_prob_ >= trigger_threshold_) {
         is_waving_ = true;
         last_active_ts_us_ = current_ts_us;
     } else if (is_waving_) {

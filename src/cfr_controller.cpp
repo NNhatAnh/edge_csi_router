@@ -233,7 +233,13 @@ bool CFRController::startCapture(const std::string &mac,
             }
         }
         if (chosen_iface.empty()) {
-            chosen_iface = "phy00.1-0"; // Mặc định 2.4GHz
+            if (fs::exists("/sys/kernel/debug/ieee80211/phy00/netdev:phy00.2-0", ec)) {
+                chosen_iface = "phy00.2-0"; // Ưu tiên 5GHz (4-5 anten, 80MHz)
+            } else if (fs::exists("/sys/kernel/debug/ieee80211/phy00/netdev:phy00.0-0", ec)) {
+                chosen_iface = "phy00.0-0";
+            } else {
+                chosen_iface = "phy00.1-0"; // Fallback 2.4GHz
+            }
         }
     }
 

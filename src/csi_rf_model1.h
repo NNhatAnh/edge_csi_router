@@ -5,24 +5,20 @@
 extern "C" {
 #endif
 
-#define CSI_RF1_N_INPUT 9
+#define CSI_RF1_N_INPUT 5
 #define CSI_RF1_N_CLASSES 2
-#define CSI_RF1_DEFAULT_THRESHOLD 0.50
+#define CSI_RF1_DEFAULT_THRESHOLD 0.35f
 
-/* Features in order (motion_core, 3 chains):
- * 0: motion_std_c0
- * 1: motion_step_c0
- * 2: motion_std_c1
- * 3: motion_step_c1
- * 4: motion_std_c2
- * 5: motion_step_c2
- * 6: motion_c0_log_power
- * 7: motion_c1_log_power
- * 8: motion_c2_log_power
+/*
+ * Features in order (sparse_wave, model_package/model/wave_rf.joblib):
+ * 0: relative_delta_rate_c0   (Chain 0 normalized amplitude delta rate)
+ * 1: relative_delta_rate_c1   (Chain 1 normalized amplitude delta rate)
+ * 2: relative_delta_rate_c2   (Chain 2 normalized amplitude delta rate)
+ * 3: shape_step_rate_c0       (Chain 0 subcarrier shape step rate)
+ * 4: shape_step_rate_c2       (Chain 2 subcarrier shape step rate)
  */
 
 int csi_rf1_predict(const float *input, double *proba);
-int csi_rf1_predict_thresh(const float *input, double *proba, double threshold);
 
 #ifdef __cplusplus
 }

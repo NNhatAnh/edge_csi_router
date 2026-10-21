@@ -142,14 +142,15 @@ ProberStatus ActiveProber::getStatus(bool scan_network) {
         status.active = enabled_ && is_running_;
     }
 
+    const auto now = std::chrono::steady_clock::now();
     if (!scan_network) {
         std::lock_guard<std::mutex> lock(scan_cache_mutex_);
-        if (!cached_cards_.empty() || !cached_clients_.empty()) {
+        if (!cached_cards_.empty() &&
+            std::chrono::duration_cast<std::chrono::milliseconds>(now - last_scan_time_).count() < 3500) {
             status.cards = cached_cards_;
             status.clients = cached_clients_;
             return status;
         }
-        // Cache hoàn toàn rỗng lúc khởi động: chỉ quét 1 lần nạp cache
     }
 
     std::vector<WifiCardInfo> new_cards;
@@ -160,7 +161,7 @@ ProberStatus ActiveProber::getStatus(bool scan_network) {
         std::lock_guard<std::mutex> lock(scan_cache_mutex_);
         cached_cards_ = std::move(new_cards);
         cached_clients_ = std::move(new_clients);
-        last_scan_time_ = std::chrono::steady_clock::now();
+        last_scan_time_ = now;
         status.cards = cached_cards_;
         status.clients = cached_clients_;
     }

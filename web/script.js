@@ -1764,6 +1764,14 @@ function escapeHtml(str) {
 
 let isScanningNetwork = false;
 let proberTableRenderedOnce = false;
+let lastRenderedClientsSig = '';
+
+function computeClientsSignature(cards, clients) {
+    if (!Array.isArray(clients) && !Array.isArray(cards)) return '';
+    const cSig = (clients || []).map(c => `${c.mac}|${c.ip}|${c.iface}|${c.signal_dbm}|${c.inactive_ms}`).join(';');
+    const cardSig = (cards || []).map(card => `${card.iface}|${card.station_count}|${card.max_bandwidth}`).join(';');
+    return `${cardSig}##${cSig}`;
+}
 
 async function loadProberStatus(forceScan = false) {
     if (forceScan && isScanningNetwork) return;
@@ -1780,11 +1788,13 @@ async function loadProberStatus(forceScan = false) {
         if (!res.ok) return;
         const data = await res.json();
         currentProberConfig = data;
-        const shouldFullRender = forceScan || !proberTableRenderedOnce;
-        renderProberUI(data, shouldFullRender);
+        const newSig = computeClientsSignature(data.cards, data.clients);
+        const shouldFullRender = forceScan || !proberTableRenderedOnce || (newSig !== lastRenderedClientsSig);
         if (shouldFullRender) {
+            lastRenderedClientsSig = newSig;
             proberTableRenderedOnce = true;
         }
+        renderProberUI(data, shouldFullRender);
     } catch (e) {
         console.warn('Cannot load prober status', e);
     } finally {
@@ -1996,10 +2006,19 @@ connectStream();
 loadProberStatus(false);
 fetchCfrStatus();
 
-// Định kỳ cập nhật nhẹ số lượng gói tin & trạng thái (forceScan = false; KHÔNG quét lại mạng)
+// Định kỳ tự động cập nhật danh sách thiết bị kết nối & trạng thái
 window.setInterval(() => {
-    loadProberStatus(false);
-}, 5000);
+    // Khi đang thu CFR: thăm dò giãn cách 8s để tối ưu CPU router; khi rảnh: thăm dò mỗi 4s
+    if (!cfrState.running) {
+        loadProberStatus(false);
+    }
+}, 4000);
+
+window.setInterval(() => {
+    if (cfrState.running) {
+        loadProberStatus(false);
+    }
+}, 8000);
 
 window.setInterval(() => {
     if (cfrState.running) {
