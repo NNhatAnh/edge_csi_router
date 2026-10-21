@@ -375,22 +375,6 @@ h2 {
     font-weight: 600;
 }
 
-.wave-model-tag {
-    display: inline-flex;
-    align-items: center;
-    background: rgba(75, 226, 208, 0.08);
-    border: 1px solid rgba(75, 226, 208, 0.25);
-    border-radius: 4px;
-    padding: 1px 5px;
-    font-family: "DM Mono", monospace;
-    font-size: 8px;
-    font-weight: 600;
-    color: #4be2d0;
-    letter-spacing: 0.04em;
-    margin-left: auto;
-    margin-right: 6px;
-}
-
 .metric-card-wave {
     transition: border-color 0.3s ease, background 0.3s ease;
 }
@@ -1214,9 +1198,25 @@ footer {
     transition: 0.2s;
 }
 
-.scan-refresh-btn:hover {
+.scan-refresh-btn:hover:not(:disabled) {
     color: var(--cyan);
     border-color: var(--cyan);
+}
+
+.scan-refresh-btn.loading {
+    opacity: 0.6;
+    cursor: wait;
+    pointer-events: none;
+}
+
+.scan-refresh-btn.loading .refresh-icon {
+    display: inline-block;
+    animation: spinRefresh 0.8s linear infinite;
+}
+
+@keyframes spinRefresh {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
 }
 
 .multi-actions-bar {
@@ -1794,19 +1794,40 @@ footer {
 }
 
 .cfr-bw-chip.active {
-    color: #4be2d0;
-    background: rgba(75, 226, 208, 0.15);
-    border-color: rgba(75, 226, 208, 0.5);
-    box-shadow: 0 0 10px rgba(75, 226, 208, 0.22);
-    font-weight: 700;
+    color: #4be2d0 !important;
+    background: rgba(75, 226, 208, 0.18) !important;
+    border-color: #4be2d0 !important;
+    box-shadow: 0 0 10px rgba(75, 226, 208, 0.35) !important;
+    font-weight: 700 !important;
+    opacity: 1 !important;
+    text-decoration: none !important;
+    cursor: default;
 }
 
-.cfr-bw-chip:disabled,
-.cfr-bw-chip.unsupported {
-    color: #4a5768;
-    background: transparent;
-    border-color: transparent;
-    opacity: 0.35;
+.cfr-bw-chip.active.capturing {
+    background: rgba(75, 226, 208, 0.25) !important;
+    border-color: #4be2d0 !important;
+    box-shadow: 0 0 14px rgba(75, 226, 208, 0.55) !important;
+    animation: cfrActiveBwPulse 2s infinite ease-in-out;
+}
+
+@keyframes cfrActiveBwPulse {
+    0%, 100% {
+        box-shadow: 0 0 8px rgba(75, 226, 208, 0.35);
+        border-color: #4be2d0;
+    }
+    50% {
+        box-shadow: 0 0 16px rgba(75, 226, 208, 0.7);
+        border-color: #84ffeb;
+    }
+}
+
+.cfr-bw-chip:disabled:not(.active),
+.cfr-bw-chip.unsupported:not(.active) {
+    color: #4a5768 !important;
+    background: transparent !important;
+    border-color: transparent !important;
+    opacity: 0.35 !important;
     cursor: not-allowed;
     text-decoration: line-through rgba(131, 152, 185, 0.25);
 }

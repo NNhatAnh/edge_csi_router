@@ -60,7 +60,7 @@ class ActiveProber {
 
     void setConfig(bool enabled, const std::string &mode,
                    const std::vector<std::string> &target_ips, int interval_ms);
-    ProberStatus getStatus(bool scan_network = true);
+    ProberStatus getStatus(bool scan_network = false);
     void scanNetwork(std::vector<WifiCardInfo> &cards, std::vector<ClientInfo> &clients);
     std::vector<ClientInfo> scanClients();
 

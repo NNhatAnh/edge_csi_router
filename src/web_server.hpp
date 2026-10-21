@@ -58,7 +58,7 @@ class WebServer {
     void handleIngestClient(int client_fd);
     void handleEventStream(int client_fd);
     void handleProberApi(int client_fd, const std::string &method,
-                         const std::string &body);
+                         const std::string &path, const std::string &body);
     void handleCfrApi(int client_fd, const std::string &method,
                       const std::string &body);
     void handleCfrDownload(int client_fd);

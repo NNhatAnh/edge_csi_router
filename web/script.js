@@ -1013,7 +1013,8 @@ function updateAvailableBandwidths(targetClient, targetCard) {
 
         chip.classList.toggle('unsupported', !isSupported);
         chip.classList.toggle('active', isSelected);
-        chip.disabled = !isSupported || cfrState.running;
+        chip.classList.toggle('capturing', isSelected && cfrState.running);
+        chip.disabled = !isSupported || (cfrState.running && !isSelected);
 
         if (!isSupported) {
             chip.title = (currentLang === 'vi') ? 'Băng thông không được hỗ trợ bởi card hoặc thiết bị này' : 'Bandwidth not supported by card or client device';
@@ -1074,8 +1075,9 @@ function renderCfrUI() {
         const chipVal = parseInt(chip.dataset.bw, 10);
         const isSelected = (chipVal === cfrState.bandwidth);
         chip.classList.toggle('active', isSelected);
+        chip.classList.toggle('capturing', isSelected && cfrState.running);
         if (cfrState.running) {
-            chip.disabled = true;
+            chip.disabled = !isSelected;
         } else {
             chip.disabled = chip.classList.contains('unsupported');
         }
@@ -1352,7 +1354,7 @@ function getSignalClass(snrStr, signalStr) {
     return '';
 }
 
-function renderProberUI(data) {
+function renderProberUI(data, isFullRender = true) {
     if (!proberElements.toggle) return;
 
     proberElements.toggle.checked = Boolean(data.enabled);
@@ -1412,7 +1414,9 @@ function renderProberUI(data) {
         updateMultiCount();
     }
 
-    renderCardsTables(data.cards, data.clients, mode, data.target_ip);
+    if (isFullRender) {
+        renderCardsTables(data.cards, data.clients, mode, data.target_ip);
+    }
 
     let activeClient = null;
     let activeCard = null;
@@ -1758,15 +1762,39 @@ function escapeHtml(str) {
     return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
 
-async function loadProberStatus() {
+let isScanningNetwork = false;
+let proberTableRenderedOnce = false;
+
+async function loadProberStatus(forceScan = false) {
+    if (forceScan && isScanningNetwork) return;
+    if (forceScan) {
+        isScanningNetwork = true;
+        if (proberElements.refreshBtn) {
+            proberElements.refreshBtn.classList.add('loading');
+            proberElements.refreshBtn.disabled = true;
+        }
+    }
     try {
-        const res = await fetch('/api/prober');
+        const url = forceScan ? '/api/prober?scan=1' : '/api/prober';
+        const res = await fetch(url);
         if (!res.ok) return;
         const data = await res.json();
         currentProberConfig = data;
-        renderProberUI(data);
+        const shouldFullRender = forceScan || !proberTableRenderedOnce;
+        renderProberUI(data, shouldFullRender);
+        if (shouldFullRender) {
+            proberTableRenderedOnce = true;
+        }
     } catch (e) {
         console.warn('Cannot load prober status', e);
+    } finally {
+        if (forceScan) {
+            isScanningNetwork = false;
+            if (proberElements.refreshBtn) {
+                proberElements.refreshBtn.classList.remove('loading');
+                proberElements.refreshBtn.disabled = false;
+            }
+        }
     }
 }
 
@@ -1956,26 +1984,29 @@ document.querySelectorAll('.cfr-bw-chip').forEach(chip => {
     });
 });
 
+if (proberElements.refreshBtn) {
+    proberElements.refreshBtn.addEventListener('click', () => {
+        loadProberStatus(true);
+    });
+}
+
 applyLanguage(currentLang);
 resizeCanvas();
 connectStream();
-loadProberStatus();
+loadProberStatus(false);
 fetchCfrStatus();
+
+// Định kỳ cập nhật nhẹ số lượng gói tin & trạng thái (forceScan = false; KHÔNG quét lại mạng)
 window.setInterval(() => {
-    if (!cfrState.running) {
-        loadProberStatus();
-    }
-}, 4000);
-window.setInterval(() => {
-    if (cfrState.running) {
-        loadProberStatus();
-    }
-}, 8000);
+    loadProberStatus(false);
+}, 5000);
+
 window.setInterval(() => {
     if (cfrState.running) {
         fetchCfrStatus();
     }
 }, 3000);
+
 window.setInterval(() => {
     if (lastFrameAt && performance.now() - lastFrameAt > 6000) {
         setStatus('waiting', t('status_packet_wait'));

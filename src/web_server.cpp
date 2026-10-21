@@ -383,7 +383,7 @@ void WebServer::handleWebClient(int client_fd) {
         if (header_end != std::string::npos) {
             body = full_request.substr(header_end + 4);
         }
-        handleProberApi(client_fd, method, body);
+        handleProberApi(client_fd, method, path, body);
         return;
     }
 
@@ -488,6 +488,7 @@ void WebServer::handleWebClient(int client_fd) {
 }
 
 void WebServer::handleProberApi(int client_fd, const std::string &method,
+                                const std::string &path,
                                 const std::string &body) {
     if (!prober_) {
         sendAll(client_fd,
@@ -579,7 +580,9 @@ void WebServer::handleProberApi(int client_fd, const std::string &method,
     }
 
     // Format ProberStatus thành JSON trả về
-    ProberStatus status = prober_->getStatus();
+    bool force_scan = (path.find("scan=1") != std::string::npos ||
+                       path.find("refresh=1") != std::string::npos);
+    ProberStatus status = prober_->getStatus(force_scan);
     std::ostringstream json;
     json << "{\"status\":\"ok\""
          << ",\"enabled\":" << (status.enabled ? "true" : "false")
@@ -765,7 +768,11 @@ void WebServer::handleCfrApi(int client_fd, const std::string &method,
 
         // Nếu MAC trống hoặc "auto", tự động chọn thiết bị Wi-Fi có sóng tốt nhất
         if ((mac.empty() || mac == "auto") && prober_) {
-            std::vector<ClientInfo> clients = prober_->scanClients();
+            ProberStatus pstat = prober_->getStatus(false);
+            std::vector<ClientInfo> clients = pstat.clients;
+            if (clients.empty()) {
+                clients = prober_->scanClients();
+            }
             int best_signal = -999;
             for (const auto &client : clients) {
                 if (!client.is_wireless)
@@ -796,7 +803,7 @@ void WebServer::handleCfrApi(int client_fd, const std::string &method,
 
         if (started) {
             if (auto_probe && !ip.empty() && ip != "N/A" && prober_) {
-                ProberStatus pstat = prober_->getStatus();
+                ProberStatus pstat = prober_->getStatus(false);
                 prober_->setConfig(true, "single", {ip}, pstat.interval_ms);
             }
 

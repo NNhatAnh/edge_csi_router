@@ -144,20 +144,12 @@ ProberStatus ActiveProber::getStatus(bool scan_network) {
 
     if (!scan_network) {
         std::lock_guard<std::mutex> lock(scan_cache_mutex_);
-        status.cards = cached_cards_;
-        status.clients = cached_clients_;
-        return status;
-    }
-
-    const auto now = std::chrono::steady_clock::now();
-    {
-        std::lock_guard<std::mutex> lock(scan_cache_mutex_);
-        if (!cached_cards_.empty() &&
-            std::chrono::duration_cast<std::chrono::milliseconds>(now - last_scan_time_).count() < 5000) {
+        if (!cached_cards_.empty() || !cached_clients_.empty()) {
             status.cards = cached_cards_;
             status.clients = cached_clients_;
             return status;
         }
+        // Cache hoàn toàn rỗng lúc khởi động: chỉ quét 1 lần nạp cache
     }
 
     std::vector<WifiCardInfo> new_cards;
@@ -578,37 +570,41 @@ std::vector<ClientInfo> ActiveProber::scanClients() {
 
 std::vector<std::string> ActiveProber::getActiveTargets() {
     std::vector<std::string> targets;
-    std::vector<WifiCardInfo> cards;
-    std::vector<ClientInfo> clients;
-    scanNetwork(cards, clients);
 
     if (mode_ == "single") {
         if (!target_ips_.empty() && !target_ips_.front().empty() && target_ips_.front() != "auto") {
             targets.push_back(target_ips_.front());
-        } else {
-            // Tự động tìm thiết bị Wi-Fi có tín hiệu tốt nhất
-            std::string best_ip;
-            int best_score = -999;
-            for (const auto &c : clients) {
-                if (c.ip.empty() || c.ip == "127.0.0.1") continue;
-                int score = -100;
-                if (!c.snr.empty()) {
-                    try {
-                        score = std::stoi(c.snr);
-                    } catch (...) {}
-                } else if (!c.signal_dbm.empty()) {
-                    try {
-                        score = std::stoi(c.signal_dbm);
-                    } catch (...) {}
-                }
-                if (score > best_score || best_ip.empty()) {
-                    best_score = score;
-                    best_ip = c.ip;
-                }
+            return targets;
+        }
+
+        // Tự động tìm thiết bị Wi-Fi có tín hiệu tốt nhất: CHỈ lấy từ cached_clients_
+        std::vector<ClientInfo> clients;
+        {
+            std::lock_guard<std::mutex> lock(scan_cache_mutex_);
+            clients = cached_clients_;
+        }
+
+        std::string best_ip;
+        int best_score = -999;
+        for (const auto &c : clients) {
+            if (c.ip.empty() || c.ip == "127.0.0.1") continue;
+            int score = -100;
+            if (!c.snr.empty()) {
+                try {
+                    score = std::stoi(c.snr);
+                } catch (...) {}
+            } else if (!c.signal_dbm.empty()) {
+                try {
+                    score = std::stoi(c.signal_dbm);
+                } catch (...) {}
             }
-            if (!best_ip.empty()) {
-                targets.push_back(best_ip);
+            if (score > best_score || best_ip.empty()) {
+                best_score = score;
+                best_ip = c.ip;
             }
+        }
+        if (!best_ip.empty()) {
+            targets.push_back(best_ip);
         }
     } else { // Multi mode
         if (!target_ips_.empty()) {
@@ -616,12 +612,19 @@ std::vector<std::string> ActiveProber::getActiveTargets() {
                 if (!ip.empty() && ip != "auto")
                     targets.push_back(ip);
             }
-        } else {
-            // Nếu danh sách rỗng ở multi mode, probe toàn bộ các thiết bị Wi-Fi có IP
-            for (const auto &c : clients) {
-                if (!c.ip.empty() && c.ip != "127.0.0.1") {
-                    targets.push_back(c.ip);
-                }
+            return targets;
+        }
+
+        // Nếu danh sách rỗng ở multi mode: lấy từ cached_clients_
+        std::vector<ClientInfo> clients;
+        {
+            std::lock_guard<std::mutex> lock(scan_cache_mutex_);
+            clients = cached_clients_;
+        }
+
+        for (const auto &c : clients) {
+            if (!c.ip.empty() && c.ip != "127.0.0.1") {
+                targets.push_back(c.ip);
             }
         }
     }
