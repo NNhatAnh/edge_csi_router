@@ -2,6 +2,7 @@
 #define WEB_SERVER_HPP
 
 #include "breath.hpp"
+#include "cfr_controller.hpp"
 #include "csi_parser.hpp"
 #include "motion.hpp"
 #include "prober.hpp"
@@ -16,7 +17,7 @@
 class WebServer {
   public:
     WebServer(int web_port, int ingest_port, std::string web_root,
-              ActiveProber *prober = nullptr);
+              ActiveProber *prober = nullptr, CFRController *cfr_controller = nullptr);
     ~WebServer();
 
     bool start();
@@ -28,6 +29,7 @@ class WebServer {
     int ingest_port_;
     std::string web_root_;
     ActiveProber *prober_ = nullptr;
+    CFRController *cfr_controller_ = nullptr;
     std::atomic<int> web_fd_;
     std::atomic<int> ingest_fd_;
     std::atomic<bool> is_running_;
@@ -55,6 +57,9 @@ class WebServer {
     void handleEventStream(int client_fd);
     void handleProberApi(int client_fd, const std::string &method,
                          const std::string &body);
+    void handleCfrApi(int client_fd, const std::string &method,
+                      const std::string &body);
+    void handleCfrDownload(int client_fd);
     void startClientWorker(int client_fd, bool web_client);
 
     std::string readFile(const std::string &filepath) const;

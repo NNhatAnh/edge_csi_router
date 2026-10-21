@@ -8,6 +8,7 @@
 #include <netinet/in.h>
 #include <sys/socket.h>
 #include <unistd.h>
+#include <filesystem>
 #include <fstream>
 #include <iostream>
 #include <sstream>
@@ -20,6 +21,23 @@ bool sendAll(int socket_fd, const std::string &data) {
     while (sent < data.size()) {
         const ssize_t result = send(socket_fd, data.data() + sent,
                                     data.size() - sent, MSG_NOSIGNAL);
+        if (result < 0) {
+            if (errno == EINTR)
+                continue;
+            return false;
+        }
+        if (result == 0)
+            return false;
+        sent += static_cast<size_t>(result);
+    }
+    return true;
+}
+
+bool sendAllBytes(int socket_fd, const char *data, size_t size) {
+    size_t sent = 0;
+    while (sent < size) {
+        const ssize_t result = send(socket_fd, data + sent,
+                                    size - sent, MSG_NOSIGNAL);
         if (result < 0) {
             if (errno == EINTR)
                 continue;
@@ -73,10 +91,11 @@ std::string httpResponse(const std::string &status,
 } // namespace
 
 WebServer::WebServer(int web_port, int ingest_port, std::string web_root,
-                     ActiveProber *prober)
+                     ActiveProber *prober, CFRController *cfr_controller)
     : web_port_(web_port), ingest_port_(ingest_port),
-      web_root_(std::move(web_root)), prober_(prober), web_fd_(-1),
-      ingest_fd_(-1), is_running_(false) {}
+      web_root_(std::move(web_root)), prober_(prober),
+      cfr_controller_(cfr_controller), web_fd_(-1), ingest_fd_(-1),
+      is_running_(false) {}
 
 WebServer::~WebServer() { stop(); }
 
@@ -179,6 +198,8 @@ void WebServer::publish(const CSIData &frame) {
         latest_frame_.presence_status = "human_moving";
     } else if (is_micro_breathing) {
         latest_frame_.presence_status = "human_present";
+    } else if (latest_frame_.presence_status == "calibrating") {
+        // Giữ trạng thái đang khởi tạo dữ liệu của breath_detector
     } else {
         latest_frame_.presence_status = "empty_room";
     }
@@ -364,6 +385,22 @@ void WebServer::handleWebClient(int client_fd) {
         return;
     }
 
+    if (path.rfind("/api/cfr/download", 0) == 0) {
+        handleCfrDownload(client_fd);
+        return;
+    }
+
+    if (path == "/api/cfr") {
+        const std::string full_request(request, static_cast<size_t>(bytes_read));
+        std::string body;
+        const size_t header_end = full_request.find("\r\n\r\n");
+        if (header_end != std::string::npos) {
+            body = full_request.substr(header_end + 4);
+        }
+        handleCfrApi(client_fd, method, body);
+        return;
+    }
+
     if (method != "GET") {
         sendAll(client_fd, httpResponse("405 Method Not Allowed",
                                         "text/plain; charset=utf-8",
@@ -457,7 +494,7 @@ void WebServer::handleProberApi(int client_fd, const std::string &method,
     }
 
     if (method == "POST") {
-        ProberStatus current = prober_->getStatus();
+        ProberStatus current = prober_->getStatus(false);
         bool new_enabled = current.enabled;
         std::string new_mode = current.mode;
         std::vector<std::string> new_targets = current.target_ips;
@@ -561,7 +598,15 @@ void WebServer::handleProberApi(int client_fd, const std::string &method,
         json << "{\"iface\":\"" << status.cards[i].iface << "\""
              << ",\"ssid\":\"" << status.cards[i].ssid << "\""
              << ",\"band\":\"" << status.cards[i].band << "\""
-             << ",\"station_count\":" << status.cards[i].station_count << "}";
+             << ",\"station_count\":" << status.cards[i].station_count
+             << ",\"max_bandwidth\":" << status.cards[i].max_bandwidth
+             << ",\"width_str\":\"" << status.cards[i].width_str << "\""
+             << ",\"supported_bandwidths\":[";
+        for (size_t b = 0; b < status.cards[i].supported_bandwidths.size(); ++b) {
+            if (b > 0) json << ",";
+            json << status.cards[i].supported_bandwidths[b];
+        }
+        json << "]}";
     }
     json << "],\"clients\":[";
 
@@ -578,13 +623,294 @@ void WebServer::handleProberApi(int client_fd, const std::string &method,
              << ",\"snr\":\"" << status.clients[i].snr << "\""
              << ",\"bitrate\":\"" << status.clients[i].bitrate << "\""
              << ",\"inactive_ms\":\"" << status.clients[i].inactive_ms << "\""
-             << ",\"is_wireless\":" << (status.clients[i].is_wireless ? "true" : "false") << "}";
+             << ",\"is_wireless\":" << (status.clients[i].is_wireless ? "true" : "false")
+             << ",\"max_bandwidth\":" << status.clients[i].max_bandwidth
+             << ",\"width_str\":\"" << status.clients[i].width_str << "\""
+             << ",\"supported_bandwidths\":[";
+        for (size_t b = 0; b < status.clients[i].supported_bandwidths.size(); ++b) {
+            if (b > 0) json << ",";
+            json << status.clients[i].supported_bandwidths[b];
+        }
+        json << "]}";
     }
     json << "]}";
 
     sendAll(client_fd, httpResponse("200 OK",
                                     "application/json; charset=utf-8",
                                     json.str()));
+}
+
+void WebServer::handleCfrApi(int client_fd, const std::string &method,
+                             const std::string &body) {
+    if (!cfr_controller_) {
+        sendAll(client_fd,
+                httpResponse("503 Service Unavailable",
+                             "application/json; charset=utf-8",
+                             "{\"error\":\"CFR controller not initialized\"}"));
+        return;
+    }
+
+    if (method == "POST") {
+        std::string action = "start";
+        size_t pos = body.find("\"action\"");
+        if (pos != std::string::npos) {
+            size_t first_q = body.find('\"', pos + 8);
+            if (first_q != std::string::npos) {
+                size_t second_q = body.find('\"', first_q + 1);
+                if (second_q != std::string::npos) {
+                    action = body.substr(first_q + 1, second_q - first_q - 1);
+                }
+            }
+        }
+
+        if (action == "stop") {
+            cfr_controller_->stopCapture();
+            {
+                std::lock_guard<std::mutex> lock(data_mutex_);
+                has_frame_ = false;
+                motion_detector_.reset();
+                breath_detector_.reset();
+            }
+            sendAll(client_fd,
+                    httpResponse("200 OK", "application/json; charset=utf-8",
+                                 "{\"status\":\"ok\",\"running\":false}"));
+            return;
+        }
+
+        // Action: "start"
+        {
+            std::lock_guard<std::mutex> lock(data_mutex_);
+            has_frame_ = false;
+            motion_detector_.reset();
+            breath_detector_.reset();
+        }
+        std::string mac;
+        std::string iface;
+        std::string ip;
+        int period = 10;
+        int bandwidth = 0;
+        int method_id = 0;
+        bool auto_probe = true;
+
+        // Trích xuất "mac"
+        pos = body.find("\"mac\"");
+        if (pos != std::string::npos) {
+            size_t q1 = body.find('\"', pos + 5);
+            if (q1 != std::string::npos) {
+                size_t q2 = body.find('\"', q1 + 1);
+                if (q2 != std::string::npos) {
+                    mac = body.substr(q1 + 1, q2 - q1 - 1);
+                }
+            }
+        }
+        // Trích xuất "iface"
+        pos = body.find("\"iface\"");
+        if (pos != std::string::npos) {
+            size_t q1 = body.find('\"', pos + 7);
+            if (q1 != std::string::npos) {
+                size_t q2 = body.find('\"', q1 + 1);
+                if (q2 != std::string::npos) {
+                    iface = body.substr(q1 + 1, q2 - q1 - 1);
+                }
+            }
+        }
+        // Trích xuất "ip"
+        pos = body.find("\"ip\"");
+        if (pos != std::string::npos) {
+            size_t q1 = body.find('\"', pos + 4);
+            if (q1 != std::string::npos) {
+                size_t q2 = body.find('\"', q1 + 1);
+                if (q2 != std::string::npos) {
+                    ip = body.substr(q1 + 1, q2 - q1 - 1);
+                }
+            }
+        }
+        // Trích xuất "period"
+        pos = body.find("\"period\"");
+        if (pos != std::string::npos) {
+            size_t col = body.find(':', pos);
+            if (col != std::string::npos) {
+                try {
+                    period = std::stoi(body.substr(col + 1, 10));
+                } catch (...) {}
+            }
+        }
+        // Trích xuất "auto_probe": true/false
+        pos = body.find("\"auto_probe\"");
+        if (pos != std::string::npos) {
+            size_t col = body.find(':', pos);
+            if (col != std::string::npos) {
+                std::string sub = body.substr(col + 1, 15);
+                if (sub.find("false") != std::string::npos)
+                    auto_probe = false;
+                else if (sub.find("true") != std::string::npos)
+                    auto_probe = true;
+            }
+        }
+
+        // Trích xuất "bandwidth": 0, 1, 2, 3, 4
+        pos = body.find("\"bandwidth\"");
+        if (pos != std::string::npos) {
+            size_t col = body.find(':', pos);
+            if (col != std::string::npos) {
+                try {
+                    bandwidth = std::stoi(body.substr(col + 1, 10));
+                } catch (...) {}
+            }
+        }
+
+        // Nếu MAC trống hoặc "auto", tự động chọn thiết bị Wi-Fi có sóng tốt nhất
+        if ((mac.empty() || mac == "auto") && prober_) {
+            std::vector<ClientInfo> clients = prober_->scanClients();
+            int best_signal = -999;
+            for (const auto &client : clients) {
+                if (!client.is_wireless)
+                    continue;
+                int sig = -100;
+                try {
+                    sig = std::stoi(client.signal_dbm);
+                } catch (...) {}
+                if (sig > best_signal || mac.empty()) {
+                    best_signal = sig;
+                    mac = client.mac;
+                    iface = client.iface;
+                    if (ip.empty() && client.ip != "N/A")
+                        ip = client.ip;
+                }
+            }
+        }
+
+        if (mac.empty()) {
+            sendAll(client_fd,
+                    httpResponse("400 Bad Request", "application/json; charset=utf-8",
+                                 "{\"error\":\"No Wi-Fi client available for capture\"}"));
+            return;
+        }
+
+        bool started = cfr_controller_->startCapture(mac, iface, ip, period, bandwidth, method_id);
+        CFRCaptureStatus status = cfr_controller_->getStatus();
+
+        if (started) {
+            if (auto_probe && !ip.empty() && ip != "N/A" && prober_) {
+                ProberStatus pstat = prober_->getStatus();
+                prober_->setConfig(true, "single", {ip}, pstat.interval_ms);
+            }
+
+            std::ostringstream ss;
+            ss << "{\"status\":\"ok\",\"running\":true"
+               << ",\"target_mac\":\"" << status.target_mac << "\""
+               << ",\"target_ip\":\"" << status.target_ip << "\""
+               << ",\"iface\":\"" << status.iface << "\""
+               << ",\"phy\":\"" << status.phy << "\""
+               << ",\"hw\":\"" << status.hw << "\""
+               << ",\"mac_dev\":\"" << status.mac_dev << "\""
+               << ",\"bandwidth\":" << status.bandwidth
+               << ",\"period\":" << status.period
+               << ",\"latest_file\":\"" << status.latest_file << "\""
+               << ",\"latest_file_size\":" << status.latest_file_size
+               << ",\"pid\":" << status.pid
+               << ",\"uptime_sec\":" << status.uptime_sec
+               << ",\"available_bandwidths\":[";
+            for (size_t b = 0; b < status.available_bandwidths.size(); ++b) {
+                if (b > 0) ss << ",";
+                ss << status.available_bandwidths[b];
+            }
+            ss << "]}";
+            sendAll(client_fd, httpResponse("200 OK", "application/json; charset=utf-8", ss.str()));
+        } else {
+            std::ostringstream ss;
+            ss << "{\"status\":\"error\",\"running\":false"
+               << ",\"error\":\"" << status.last_error << "\""
+               << "}";
+            sendAll(client_fd, httpResponse("500 Internal Server Error", "application/json; charset=utf-8", ss.str()));
+        }
+        return;
+    }
+
+    // GET: Trả về trạng thái hiện tại
+    CFRCaptureStatus status = cfr_controller_->getStatus();
+    std::ostringstream ss;
+    ss << "{\"running\":" << (status.running ? "true" : "false")
+       << ",\"target_mac\":\"" << status.target_mac << "\""
+       << ",\"target_ip\":\"" << status.target_ip << "\""
+       << ",\"iface\":\"" << status.iface << "\""
+       << ",\"phy\":\"" << status.phy << "\""
+       << ",\"hw\":\"" << status.hw << "\""
+       << ",\"mac_dev\":\"" << status.mac_dev << "\""
+       << ",\"bandwidth\":" << status.bandwidth
+       << ",\"period\":" << status.period
+       << ",\"latest_file\":\"" << status.latest_file << "\""
+       << ",\"latest_file_size\":" << status.latest_file_size
+       << ",\"pid\":" << status.pid
+       << ",\"uptime_sec\":" << status.uptime_sec
+       << ",\"last_error\":\"" << status.last_error << "\""
+       << ",\"available_bandwidths\":[";
+    for (size_t b = 0; b < status.available_bandwidths.size(); ++b) {
+        if (b > 0) ss << ",";
+        ss << status.available_bandwidths[b];
+    }
+    ss << "]}";
+    sendAll(client_fd, httpResponse("200 OK", "application/json; charset=utf-8", ss.str()));
+}
+
+void WebServer::handleCfrDownload(int client_fd) {
+    if (!cfr_controller_) {
+        sendAll(client_fd,
+                httpResponse("503 Service Unavailable",
+                             "application/json; charset=utf-8",
+                             "{\"error\":\"CFR controller not initialized\"}"));
+        return;
+    }
+
+    size_t file_size = 0;
+    std::string filepath = cfr_controller_->getLatestCaptureFilePath(&file_size);
+    if (filepath.empty()) {
+        sendAll(client_fd,
+                httpResponse("404 Not Found", "application/json; charset=utf-8",
+                             "{\"error\":\"No capture file available for download\"}"));
+        return;
+    }
+
+    namespace fs = std::filesystem;
+    std::error_code ec;
+    if (!fs::exists(filepath, ec) || !fs::is_regular_file(filepath, ec)) {
+        sendAll(client_fd,
+                httpResponse("404 Not Found", "application/json; charset=utf-8",
+                             "{\"error\":\"Capture file does not exist on disk\"}"));
+        return;
+    }
+
+    file_size = static_cast<size_t>(fs::file_size(filepath, ec));
+    std::string filename = fs::path(filepath).filename().string();
+
+    std::ostringstream header;
+    header << "HTTP/1.1 200 OK\r\n"
+           << "Content-Type: application/octet-stream\r\n"
+           << "Content-Disposition: attachment; filename=\"" << filename << "\"\r\n"
+           << "Content-Length: " << file_size << "\r\n"
+           << "Access-Control-Allow-Origin: *\r\n"
+           << "Cache-Control: no-cache\r\n"
+           << "Connection: close\r\n\r\n";
+
+    if (!sendAll(client_fd, header.str())) {
+        return;
+    }
+
+    std::ifstream file(filepath, std::ios::binary);
+    if (!file) return;
+
+    std::vector<char> buffer(65536);
+    size_t remaining = file_size;
+    while (remaining > 0 && file) {
+        const size_t to_read = std::min(remaining, buffer.size());
+        file.read(buffer.data(), static_cast<std::streamsize>(to_read));
+        const std::streamsize bytes_read = file.gcount();
+        if (bytes_read <= 0) break;
+        if (!sendAllBytes(client_fd, buffer.data(), static_cast<size_t>(bytes_read))) {
+            break;
+        }
+        remaining -= static_cast<size_t>(bytes_read);
+    }
 }
 
 void WebServer::handleIngestClient(int client_fd) {
@@ -621,6 +947,8 @@ void WebServer::handleEventStream(int client_fd) {
         return;
 
     uint64_t last_sequence = 0;
+    auto last_send_time = std::chrono::steady_clock::now();
+
     while (is_running_) {
         CSIData frame;
         uint64_t current_sequence = 0;
@@ -640,15 +968,27 @@ void WebServer::handleEventStream(int client_fd) {
         }
 
         if (has_frame && current_sequence != last_sequence) {
-            const std::string event =
-                "id: " + std::to_string(current_sequence) +
-                "\n"
-                "event: csi\n"
-                "data: " +
-                frame.toJson() + "\n\n";
-            if (!sendAll(client_fd, event))
-                break;
-            last_sequence = current_sequence;
+            const auto now = std::chrono::steady_clock::now();
+            const auto elapsed_ms =
+                std::chrono::duration_cast<std::chrono::milliseconds>(now - last_send_time).count();
+
+            // Giới hạn tần suất đẩy SSE tối đa ~30 FPS (mỗi 33ms) để không làm nghẽn Wi-Fi và CPU browser
+            if (elapsed_ms >= 33) {
+                last_send_time = now;
+                const std::string event =
+                    "id: " + std::to_string(current_sequence) +
+                    "\n"
+                    "event: csi\n"
+                    "data: " +
+                    frame.toJson() + "\n\n";
+                if (!sendAll(client_fd, event))
+                    break;
+                last_sequence = current_sequence;
+            } else {
+                // Đã có frame mới nhưng chưa đến nhịp 33ms: ngủ ngắn bù nhịp để không chạy loop rỗng
+                std::this_thread::sleep_for(
+                    std::chrono::milliseconds(std::max<int64_t>(1, 33 - elapsed_ms)));
+            }
         } else if (!sendAll(client_fd, ": keep-alive\n\n")) {
             break;
         }

@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <cstdio>
 #include <cstring>
+#include <filesystem>
 #include <fstream>
 #include <iostream>
 #include <map>
@@ -127,7 +128,7 @@ void ActiveProber::setConfig(bool enabled, const std::string &mode,
     cv_.notify_all();
 }
 
-ProberStatus ActiveProber::getStatus() {
+ProberStatus ActiveProber::getStatus(bool scan_network) {
     ProberStatus status;
     {
         std::lock_guard<std::mutex> lock(mutex_);
@@ -140,7 +141,38 @@ ProberStatus ActiveProber::getStatus() {
         status.packets_sent = packets_sent_;
         status.active = enabled_ && is_running_;
     }
-    scanNetwork(status.cards, status.clients);
+
+    if (!scan_network) {
+        std::lock_guard<std::mutex> lock(scan_cache_mutex_);
+        status.cards = cached_cards_;
+        status.clients = cached_clients_;
+        return status;
+    }
+
+    const auto now = std::chrono::steady_clock::now();
+    {
+        std::lock_guard<std::mutex> lock(scan_cache_mutex_);
+        if (!cached_cards_.empty() &&
+            std::chrono::duration_cast<std::chrono::milliseconds>(now - last_scan_time_).count() < 5000) {
+            status.cards = cached_cards_;
+            status.clients = cached_clients_;
+            return status;
+        }
+    }
+
+    std::vector<WifiCardInfo> new_cards;
+    std::vector<ClientInfo> new_clients;
+    scanNetwork(new_cards, new_clients);
+
+    {
+        std::lock_guard<std::mutex> lock(scan_cache_mutex_);
+        cached_cards_ = std::move(new_cards);
+        cached_clients_ = std::move(new_clients);
+        last_scan_time_ = std::chrono::steady_clock::now();
+        status.cards = cached_cards_;
+        status.clients = cached_clients_;
+    }
+
     return status;
 }
 
@@ -440,6 +472,100 @@ void ActiveProber::scanNetwork(std::vector<WifiCardInfo> &cards,
             }
         }
         cards.push_back(test_card);
+    }
+
+    // 4. Xác định băng thông hoạt động thực tế (Width) cho từng Card Wi-Fi
+    for (auto &card : cards) {
+        int max_bw = (card.band == "5GHz") ? 2 : 0;
+        std::string w_str = (card.band == "5GHz") ? "80 MHz" : "20 MHz";
+        std::vector<int> supp = (card.band == "5GHz") ? std::vector<int>{0, 1, 2} : std::vector<int>{0};
+
+        std::string iw_cmd = "iw dev " + card.iface + " info 2>/dev/null";
+        FILE *iw_p = popen(iw_cmd.c_str(), "r");
+        if (iw_p) {
+            char iw_buf[256];
+            while (fgets(iw_buf, sizeof(iw_buf), iw_p)) {
+                std::string iw_line(iw_buf);
+                size_t w_pos = iw_line.find("width:");
+                if (w_pos != std::string::npos) {
+                    if (iw_line.find("320 MHz", w_pos) != std::string::npos) {
+                        max_bw = 4; w_str = "320 MHz"; supp = {0, 1, 2, 3, 4};
+                    } else if (iw_line.find("160 MHz", w_pos) != std::string::npos) {
+                        max_bw = 3; w_str = "160 MHz"; supp = {0, 1, 2, 3};
+                    } else if (iw_line.find("80 MHz", w_pos) != std::string::npos) {
+                        max_bw = 2; w_str = "80 MHz"; supp = {0, 1, 2};
+                    } else if (iw_line.find("40 MHz", w_pos) != std::string::npos) {
+                        max_bw = 1; w_str = "40 MHz"; supp = {0, 1};
+                    } else if (iw_line.find("20 MHz", w_pos) != std::string::npos) {
+                        max_bw = 0; w_str = "20 MHz"; supp = {0};
+                    }
+                    break;
+                }
+            }
+            pclose(iw_p);
+        }
+        card.max_bandwidth = max_bw;
+        card.width_str = w_str;
+        card.supported_bandwidths = supp;
+    }
+
+    // 5. Xác định băng thông khả dụng cho từng thiết bị Client dựa trên năng lực card & station
+    for (auto &client : clients) {
+        int card_max = 0;
+        for (const auto &card : cards) {
+            if (card.iface == client.iface) {
+                card_max = card.max_bandwidth;
+                break;
+            }
+        }
+        if (card_max == 0 && client.band == "5GHz")
+            card_max = 2;
+
+        int client_max = card_max;
+        if (!client.mac.empty()) {
+            std::string mac_lower = normalizeMacLower(client.mac);
+            std::string phy = client.iface.substr(0, client.iface.find('.'));
+            if (phy.empty()) phy = "phy00";
+            std::string base = "/sys/kernel/debug/ieee80211/" + phy + "/netdev:" + client.iface + "/stations/" + mac_lower + "/link-0/";
+            namespace fs = std::filesystem;
+            std::error_code ec;
+            if (!fs::is_directory(base, ec)) {
+                base = "/sys/kernel/debug/ieee80211/" + phy + "/netdev:" + client.iface + "/stations/" + mac_lower + "/";
+            }
+
+            if (fs::is_directory(base, ec)) {
+                auto readCap = [&](const std::string &fname) -> std::string {
+                    std::ifstream f(base + fname);
+                    if (!f) return "";
+                    std::string s((std::istreambuf_iterator<char>(f)), std::istreambuf_iterator<char>());
+                    return s;
+                };
+
+                std::string eht = readCap("eht_capa");
+                std::string he = readCap("he_capa");
+                std::string vht = readCap("vht_capa");
+                std::string ht = readCap("ht_capa");
+
+                int sta_cap = 0;
+                if (!eht.empty() && eht.find("not supported") == std::string::npos) {
+                    sta_cap = (eht.find("320") != std::string::npos) ? 4 : 3;
+                } else if (!he.empty() && he.find("not supported") == std::string::npos) {
+                    sta_cap = (he.find("160") != std::string::npos) ? 3 : 2;
+                } else if (!vht.empty() && vht.find("not supported") == std::string::npos) {
+                    sta_cap = (vht.find("160") != std::string::npos) ? 3 : 2;
+                } else if (!ht.empty()) {
+                    sta_cap = (ht.find("HT40") != std::string::npos && ht.find("No DSSS/CCK HT40") == std::string::npos) ? 1 : 0;
+                }
+                client_max = std::min(card_max, sta_cap);
+            }
+        }
+        client.max_bandwidth = client_max;
+        const char *bw_names[] = {"20 MHz", "40 MHz", "80 MHz", "160 MHz", "320 MHz"};
+        client.width_str = (client_max >= 0 && client_max <= 4) ? bw_names[client_max] : "20 MHz";
+        client.supported_bandwidths.clear();
+        for (int b = 0; b <= client_max; ++b) {
+            client.supported_bandwidths.push_back(b);
+        }
     }
 }
 

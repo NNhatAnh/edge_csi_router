@@ -12,6 +12,7 @@ add_executable(edge_csi_daemon
   src/motion.cpp
   src/breath.cpp
   src/prober.cpp
+  src/cfr_controller.cpp
   src/web_server.cpp
 )
 

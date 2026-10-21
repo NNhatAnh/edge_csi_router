@@ -1,3 +1,4 @@
+#include "cfr_controller.hpp"
 #include "csi_parser.hpp"
 #include "prober.hpp"
 #include "web_server.hpp"
@@ -245,64 +246,73 @@ void followRelayDirectory(const Options &options, WebServer &server) {
     CSIParser parser;
     std::vector<uint8_t> buffer(65536);
     auto last_writer_search = std::chrono::steady_clock::now();
+    auto last_dir_scan = std::chrono::steady_clock::time_point{};
     int fdinfo_fail_count = 0;
     std::cout << "[Relay] Watching " << options.watch_directory
               << " for files beginning with " << options.filename_prefix
               << '\n';
 
     while (!stop_requested) {
-        fs::path newest_file;
-        fs::file_time_type newest_time{};
-        std::error_code error;
-        fs::directory_iterator iterator(
-            options.watch_directory,
-            fs::directory_options::skip_permission_denied, error);
-        if (error) {
-            std::cerr << "[Relay] Cannot read directory "
-                      << options.watch_directory << ": " << error.message()
-                      << '\n';
-            std::this_thread::sleep_for(std::chrono::seconds(1));
-            continue;
-        }
-        for (const fs::directory_entry &entry : iterator) {
-            if (!entry.is_regular_file(error) || error) {
-                error.clear();
-                continue;
-            }
-            const std::string filename = entry.path().filename().string();
-            if (filename.compare(0, options.filename_prefix.size(),
-                                 options.filename_prefix) != 0 ||
-                entry.path().extension() != ".bin")
-                continue;
-            const fs::file_time_type modified = entry.last_write_time(error);
+        const auto now = std::chrono::steady_clock::now();
+        if (active_file.empty() || (now - last_dir_scan > std::chrono::seconds(2))) {
+            last_dir_scan = now;
+            fs::path newest_file;
+            fs::file_time_type newest_time{};
+            std::error_code error;
+            fs::directory_iterator iterator(
+                options.watch_directory,
+                fs::directory_options::skip_permission_denied, error);
             if (error) {
-                error.clear();
+                std::cerr << "[Relay] Cannot read directory "
+                          << options.watch_directory << ": " << error.message()
+                          << '\n';
+                std::this_thread::sleep_for(std::chrono::seconds(1));
                 continue;
             }
-            if (newest_file.empty() || modified > newest_time) {
-                newest_file = entry.path();
-                newest_time = modified;
+            for (const fs::directory_entry &entry : iterator) {
+                if (!entry.is_regular_file(error) || error) {
+                    error.clear();
+                    continue;
+                }
+                const std::string filename = entry.path().filename().string();
+                if (filename.compare(0, options.filename_prefix.size(),
+                                     options.filename_prefix) != 0 ||
+                    entry.path().extension() != ".bin")
+                    continue;
+                const fs::file_time_type modified = entry.last_write_time(error);
+                if (error) {
+                    error.clear();
+                    continue;
+                }
+                if (newest_file.empty() || modified > newest_time) {
+                    newest_file = entry.path();
+                    newest_time = modified;
+                }
             }
-        }
 
-        if (!newest_file.empty() && newest_file != active_file) {
-            active_file = newest_file;
-            offset = 0;
-            writer_fdinfo = findRelayWriter(active_file);
-            parser.reset();
-            uintmax_t writer_position = 0;
-            if (!writer_fdinfo.empty() &&
-                readWriterPosition(writer_fdinfo, writer_position)) {
-                // Khởi đầu stream trực tiếp gần vị trí hiện tại của writer để tránh dồn ứ hàng MB dữ liệu cũ
-                offset = (writer_position > 65536) ? (writer_position - 65536) : 0;
-                std::cerr << "[Relay] Following live cfr_test_app ring "
-                          << active_file.string()
-                          << " from offset " << offset
-                          << " through writer pos " << writer_position << '\n';
-            } else {
-                writer_fdinfo.clear();
-                std::cerr << "[Relay] Following append-only relay file "
-                          << active_file.string() << '\n';
+            if (!newest_file.empty() && newest_file != active_file) {
+                active_file = newest_file;
+                offset = 0;
+                writer_fdinfo = findRelayWriter(active_file);
+                parser.reset();
+                uintmax_t writer_position = 0;
+                if (!writer_fdinfo.empty() &&
+                    readWriterPosition(writer_fdinfo, writer_position)) {
+                    // Khởi đầu stream trực tiếp gần vị trí hiện tại của writer để tránh dồn ứ hàng MB dữ liệu cũ
+                    offset = (writer_position > 32768) ? (writer_position - 32768) : 0;
+                    std::cerr << "[Relay] Following live cfr_test_app ring "
+                              << active_file.string()
+                              << " from offset " << offset
+                              << " through writer pos " << writer_position << '\n';
+                } else {
+                    writer_fdinfo.clear();
+                    // Nếu là file cũ tồn đọng khi daemon khởi động và chưa có writer nào ghi:
+                    // Đặt offset bằng kích thước file để KHÔNG tự động replay dữ liệu cũ vào luồng live!
+                    std::error_code sz_err;
+                    offset = fs::file_size(active_file, sz_err);
+                    std::cerr << "[Relay] Waiting for live cfr_test_app writer on "
+                              << active_file.string() << '\n';
+                }
             }
         }
 
@@ -321,6 +331,7 @@ void followRelayDirectory(const Options &options, WebServer &server) {
                 }
             }
 
+            std::error_code error;
             const uintmax_t file_size = fs::file_size(active_file, error);
             if (!error) {
                 uintmax_t available_size = file_size;
@@ -367,20 +378,36 @@ void followRelayDirectory(const Options &options, WebServer &server) {
                 };
 
                 if (writer_fdinfo.empty()) {
-                    if (file_size < offset) {
-                        offset = 0;
+                    // Không có tiến trình cfr_test_app nào đang ghi dữ liệu (chưa bấm Thu hoặc đã bấm Dừng):
+                    // Đặt offset ở cuối file để chờ đợt ghi mới, TUYỆT ĐỐI KHÔNG đọc vét file cũ đẩy lên web!
+                    offset = file_size;
+                    parser.reset();
+                } else {
+                    // LIVE WRITER MODE (ath12k ring buffer)
+                    // Nếu tụt lại sau con trỏ ghi quá 64 KB (do traffic Wi-Fi quá mạnh hoặc CPU bận):
+                    // Bỏ qua nợ dữ liệu cũ dồn ứ, nhảy thẳng tới vị trí gần con trỏ ghi hiện tại để giữ độ trễ thời gian thực < 30ms!
+                    constexpr uintmax_t kMaxBacklog = 65536;
+                    uintmax_t backlog = 0;
+                    if (available_size >= offset) {
+                        backlog = available_size - offset;
+                    } else {
+                        backlog = (file_size > offset ? file_size - offset : 0) + available_size;
+                    }
+
+                    if (backlog > kMaxBacklog) {
+                        offset = (available_size > 32768) ? (available_size - 32768) : 0;
                         parser.reset();
                     }
-                    readRange(offset, file_size);
-                    offset = file_size;
-                } else if (available_size < offset) {
-                    readRange(offset, file_size);
-                    offset = 0;
-                    readRange(offset, available_size);
-                    offset = available_size;
-                } else if (available_size > offset) {
-                    readRange(offset, available_size);
-                    offset = available_size;
+
+                    if (available_size < offset) {
+                        readRange(offset, file_size);
+                        offset = 0;
+                        readRange(offset, available_size);
+                        offset = available_size;
+                    } else if (available_size > offset) {
+                        readRange(offset, available_size);
+                        offset = available_size;
+                    }
                 }
             } else {
                 error.clear();
@@ -418,9 +445,11 @@ int main(int argc, char **argv) {
     }
     prober.start();
 
+    CFRController cfr_controller;
     WebServer server(options.web_port, options.ingest_port, options.web_root,
-                     &prober);
+                     &prober, &cfr_controller);
     if (!server.start()) {
+        cfr_controller.stopCapture();
         prober.stop();
         return 1;
     }
@@ -438,6 +467,7 @@ int main(int argc, char **argv) {
     while (!stop_requested)
         std::this_thread::sleep_for(std::chrono::milliseconds(200));
 
+    cfr_controller.stopCapture();
     server.stop();
     prober.stop();
     if (watcher.joinable())

@@ -299,28 +299,41 @@ h2 {
     display: flex;
     align-items: center;
     gap: 10px;
-    min-width: 148px;
-    padding: 10px 13px;
+    width: 220px;
+    min-width: 220px;
+    max-width: 220px;
+    flex-shrink: 0;
+    padding: 8px 12px;
     border: 1px solid var(--border);
     border-radius: 9px;
     background: rgba(16, 24, 39, 0.78);
+    overflow: hidden;
 }
 
-.connection strong,
-.connection small {
-    display: block;
+.connection-text {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    flex: 1;
+    overflow: hidden;
 }
 
 .connection strong {
     font-family: "DM Mono", monospace;
     font-size: 9px;
     letter-spacing: 0.08em;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .connection small {
-    margin-top: 4px;
+    margin-top: 3px;
     color: var(--muted);
-    font-size: 9px;
+    font-size: 8.5px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .status-dot.waiting {
@@ -397,6 +410,106 @@ h2 {
 .presence-value {
     font-size: 17px;
     letter-spacing: -0.03em;
+}
+
+.metric-value-row {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 8px;
+    margin-top: 14px;
+}
+
+.metric-value-row .metric-value {
+    margin-top: 0;
+}
+
+.motion-chip {
+    font-family: "DM Mono", monospace;
+    font-size: 8px;
+    font-weight: 700;
+    padding: 2px 6px;
+    border-radius: 3px;
+    background: rgba(131, 152, 185, 0.15);
+    border: 1px solid rgba(131, 152, 185, 0.25);
+    color: #8c9cb3;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+.motion-chip.motion-active {
+    background: rgba(255, 127, 157, 0.2);
+    border-color: rgba(255, 127, 157, 0.45);
+    color: #ff7f9d;
+    box-shadow: 0 0 8px rgba(255, 127, 157, 0.25);
+    animation: cfrPulse 1.2s infinite;
+}
+
+.motion-chip.motion-quiet {
+    background: rgba(75, 226, 208, 0.15);
+    border-color: rgba(75, 226, 208, 0.35);
+    color: #4be2d0;
+}
+
+.threshold-pill-container {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 6px;
+    margin-bottom: 2px;
+}
+
+.threshold-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-family: "DM Mono", monospace;
+    font-size: 8.5px;
+    font-weight: 600;
+    background: rgba(13, 21, 34, 0.7);
+    border: 1px solid rgba(131, 152, 185, 0.2);
+    color: #c5d3e8;
+}
+
+.threshold-pill small {
+    font-size: 7.5px;
+    color: #7b8ea6;
+    text-transform: uppercase;
+    font-weight: 500;
+}
+
+.threshold-pill.pill-high {
+    border-color: rgba(255, 127, 157, 0.35);
+}
+
+.threshold-pill.pill-high .thres-indicator {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #ff7f9d;
+    box-shadow: 0 0 6px #ff7f9d;
+}
+
+.threshold-pill.pill-high span {
+    color: #ff9cb3;
+}
+
+.threshold-pill.pill-low {
+    border-color: rgba(75, 226, 208, 0.35);
+}
+
+.threshold-pill.pill-low .thres-indicator {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #4be2d0;
+    box-shadow: 0 0 6px #4be2d0;
+}
+
+.threshold-pill.pill-low span {
+    color: #6ef5e4;
 }
 
 .metric-caption {
@@ -641,7 +754,7 @@ footer {
 }
 
 /* ==========================================================================
-   Active Prober Control Panel (Hướng 1: Ping Giữ Nhịp Vô Tuyến)
+   Active Prober Control Panel
    ========================================================================== */
 .prober-panel {
     margin-top: 14px;
@@ -1366,4 +1479,443 @@ footer {
         grid-template-columns: 1fr;
         gap: 12px;
     }
+}
+
+
+/* CFR Capture Panel */
+.cfr-panel {
+    margin-top: 14px;
+    margin-bottom: 14px;
+    padding: 16px 20px;
+    background: linear-gradient(135deg, rgba(16, 26, 43, 0.95), rgba(12, 19, 32, 0.98));
+    border: 1px solid rgba(75, 226, 208, 0.25);
+    border-left: 4px solid #4be2d0;
+    border-radius: var(--radius);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
+}
+
+.cfr-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 16px;
+    margin-bottom: 12px;
+}
+
+.cfr-title-wrap {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+
+.cfr-badge {
+    display: inline-block;
+    align-self: flex-start;
+    font-family: "DM Mono", monospace;
+    font-size: 8px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    padding: 2px 6px;
+    border-radius: 3px;
+    background: rgba(75, 226, 208, 0.12);
+    border: 1px solid rgba(75, 226, 208, 0.3);
+    color: #4be2d0;
+}
+
+.cfr-title-wrap h2 {
+    margin: 0;
+    font-size: 13px;
+    font-weight: 600;
+    color: #e4edf8;
+}
+
+.cfr-desc {
+    margin: 0;
+    font-size: 10px;
+    color: #8c9cb3;
+    line-height: 1.5;
+    max-width: 680px;
+}
+
+.cfr-status-wrap {
+    display: flex;
+    align-items: center;
+}
+
+.status-indicator-dot {
+    display: inline-block;
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    margin-right: 6px;
+    background: #63738a;
+}
+
+.badge-active .status-indicator-dot {
+    background: #4be2d0;
+    box-shadow: 0 0 8px #4be2d0;
+    animation: cfrPulse 1.5s infinite;
+}
+
+.badge-error .status-indicator-dot {
+    background: #ff7f9d;
+    box-shadow: 0 0 8px #ff7f9d;
+}
+
+@keyframes cfrPulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.4; transform: scale(1.2); }
+}
+
+.cfr-action-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+    padding: 10px 14px;
+    background: rgba(13, 21, 34, 0.6);
+    border: 1px solid rgba(131, 152, 185, 0.15);
+    border-radius: 6px;
+    margin-bottom: 12px;
+}
+
+.cfr-buttons-group {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.cfr-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 14px;
+    border-radius: 5px;
+    font-family: inherit;
+    font-size: 10px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border: 1px solid transparent;
+}
+
+.cfr-start-btn {
+    background: rgba(75, 226, 208, 0.15);
+    border-color: rgba(75, 226, 208, 0.4);
+    color: #4be2d0;
+}
+
+.cfr-start-btn:hover:not(:disabled) {
+    background: rgba(75, 226, 208, 0.25);
+    border-color: #4be2d0;
+    box-shadow: 0 0 10px rgba(75, 226, 208, 0.3);
+}
+
+.cfr-start-btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+.cfr-stop-btn {
+    background: rgba(255, 127, 157, 0.12);
+    border-color: rgba(255, 127, 157, 0.3);
+    color: #ff7f9d;
+}
+
+.cfr-stop-btn:hover:not(:disabled) {
+    background: rgba(255, 127, 157, 0.22);
+    border-color: #ff7f9d;
+    box-shadow: 0 0 10px rgba(255, 127, 157, 0.3);
+}
+
+.cfr-stop-btn:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+    border-color: transparent;
+}
+
+.cfr-download-btn {
+    background: rgba(84, 160, 255, 0.15);
+    border-color: rgba(84, 160, 255, 0.35);
+    color: #70a1ff;
+}
+
+.cfr-download-btn:hover:not(:disabled) {
+    background: rgba(84, 160, 255, 0.25);
+    border-color: #70a1ff;
+    box-shadow: 0 0 10px rgba(84, 160, 255, 0.3);
+}
+
+.cfr-download-btn:disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+    border-color: transparent;
+}
+
+.cfr-bw-group {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 6px;
+}
+
+@media (max-width: 860px) {
+    .cfr-bw-group {
+        align-items: flex-start;
+        width: 100%;
+        margin-top: 6px;
+    }
+}
+
+.cfr-bw-meta {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.cfr-bw-title {
+    font-size: 10px;
+    font-weight: 500;
+    color: #8c9cb3;
+    font-family: "DM Mono", monospace;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.cfr-bw-hint {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 9.5px;
+    font-family: "DM Mono", monospace;
+    color: #4be2d0;
+    padding: 2px 8px;
+    background: rgba(75, 226, 208, 0.08);
+    border: 1px solid rgba(75, 226, 208, 0.25);
+    border-radius: 12px;
+    white-space: nowrap;
+    transition: all 0.25s ease;
+}
+
+.cfr-bw-hint .bw-hint-dot {
+    display: inline-block;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #4be2d0;
+    box-shadow: 0 0 6px rgba(75, 226, 208, 0.7);
+}
+
+.cfr-bw-hint.warning {
+    color: #ffb86b;
+    background: rgba(255, 184, 107, 0.08);
+    border-color: rgba(255, 184, 107, 0.28);
+}
+
+.cfr-bw-hint.warning .bw-hint-dot {
+    background: #ffb86b;
+    box-shadow: 0 0 6px rgba(255, 184, 107, 0.7);
+}
+
+.cfr-bw-chips {
+    display: inline-flex;
+    align-items: center;
+    background: rgba(8, 14, 23, 0.7);
+    padding: 3px;
+    border-radius: 6px;
+    border: 1px solid rgba(131, 152, 185, 0.2);
+    gap: 3px;
+}
+
+.cfr-bw-chip {
+    padding: 4px 10px;
+    font-family: "DM Mono", monospace;
+    font-size: 10px;
+    font-weight: 500;
+    color: #8c9cb3;
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.18s cubic-bezier(0.4, 0, 0.2, 1);
+    white-space: nowrap;
+    user-select: none;
+    line-height: 1.2;
+}
+
+.cfr-bw-chip:hover:not(:disabled):not(.active) {
+    color: #e4edf8;
+    background: rgba(255, 255, 255, 0.05);
+    border-color: rgba(131, 152, 185, 0.28);
+}
+
+.cfr-bw-chip.active {
+    color: #4be2d0;
+    background: rgba(75, 226, 208, 0.15);
+    border-color: rgba(75, 226, 208, 0.5);
+    box-shadow: 0 0 10px rgba(75, 226, 208, 0.22);
+    font-weight: 700;
+}
+
+.cfr-bw-chip:disabled,
+.cfr-bw-chip.unsupported {
+    color: #4a5768;
+    background: transparent;
+    border-color: transparent;
+    opacity: 0.35;
+    cursor: not-allowed;
+    text-decoration: line-through rgba(131, 152, 185, 0.25);
+}
+
+.cfr-select-sync {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    border: 0;
+}
+
+.card-bw-badge {
+    display: inline-block;
+    padding: 1px 6px;
+    border-radius: 3px;
+    font-size: 9.5px;
+    font-family: "DM Mono", monospace;
+    background: rgba(75, 226, 208, 0.12);
+    color: #4be2d0;
+    border: 1px solid rgba(75, 226, 208, 0.3);
+    margin-left: 4px;
+}
+
+.station-bw-badge {
+    display: inline-block;
+    padding: 1px 5px;
+    border-radius: 3px;
+    font-size: 9px;
+    font-family: "DM Mono", monospace;
+    background: rgba(140, 156, 179, 0.12);
+    color: #a4b3c7;
+    border: 1px solid rgba(140, 156, 179, 0.25);
+    margin-left: 6px;
+}
+
+.cfr-checkbox-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 10px;
+    color: #8c9cb3;
+    cursor: pointer;
+    user-select: none;
+}
+
+.cfr-checkbox-label input {
+    cursor: pointer;
+    accent-color: #4be2d0;
+}
+
+.cfr-telemetry-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+    gap: 8px;
+}
+
+.cfr-telemetry-item {
+    background: rgba(13, 21, 34, 0.45);
+    border: 1px solid rgba(131, 152, 185, 0.1);
+    border-radius: 5px;
+    padding: 6px 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+
+.cfr-telemetry-item-wide {
+    grid-column: span 2;
+}
+
+@media (max-width: 680px) {
+    .cfr-telemetry-item-wide {
+        grid-column: span 1;
+    }
+}
+
+.cfr-telemetry-label {
+    font-family: "DM Mono", monospace;
+    font-size: 8px;
+    color: #63738a;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.cfr-telemetry-value {
+    font-family: "DM Mono", monospace;
+    font-size: 10px;
+    font-weight: 600;
+    color: #e4edf8;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.cfr-telemetry-value code {
+    background: rgba(75, 226, 208, 0.1);
+    color: #4be2d0;
+    padding: 1px 4px;
+    border-radius: 3px;
+    font-size: 9.5px;
+}
+
+.cfr-error-banner {
+    margin-top: 8px;
+    padding: 6px 10px;
+    background: rgba(255, 127, 157, 0.12);
+    border: 1px solid rgba(255, 127, 157, 0.3);
+    border-radius: 4px;
+    color: #ff7f9d;
+    font-size: 9.5px;
+    font-family: "DM Mono", monospace;
+}
+
+/* Quick capture button in client table */
+.quick-capture-btn {
+    background: rgba(75, 226, 208, 0.1);
+    border: 1px solid rgba(75, 226, 208, 0.25);
+    color: #4be2d0;
+    padding: 2px 7px;
+    border-radius: 3px;
+    font-size: 8.5px;
+    font-weight: 600;
+    font-family: inherit;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.quick-capture-btn:hover {
+    background: rgba(75, 226, 208, 0.25);
+    border-color: #4be2d0;
+}
+
+.capturing-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: rgba(75, 226, 208, 0.2);
+    border: 1px solid #4be2d0;
+    color: #4be2d0;
+    padding: 1px 6px;
+    border-radius: 10px;
+    font-size: 8px;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    animation: cfrPulse 1.5s infinite;
+}
+
+.wifi-client-table tbody tr.capturing-row {
+    background: rgba(75, 226, 208, 0.12) !important;
+    border-left: 2px solid #4be2d0;
 }

@@ -148,67 +148,70 @@ bool CSIParser::feed(const uint8_t *data, size_t size,
     if (size != 0)
         pending_.insert(pending_.end(), data, data + size);
 
+    size_t read_offset = 0;
     while (true) {
-        const size_t relay_start = findMagic(pending_, kRelayMagic, 0);
+        const size_t relay_start = findMagic(pending_, kRelayMagic, read_offset);
         if (relay_start == std::string::npos) {
-            if (pending_.size() > 3)
-                pending_.erase(pending_.begin(), pending_.end() - 3);
+            read_offset = (pending_.size() > 3) ? (pending_.size() - 3) : 0;
             break;
         }
-        if (relay_start != 0)
-            pending_.erase(pending_.begin(),
-                           pending_.begin() +
-                               static_cast<std::ptrdiff_t>(relay_start));
-        if (pending_.size() < kRelayHeaderSize)
+        read_offset = relay_start;
+        if (pending_.size() - read_offset < kRelayHeaderSize)
             break;
 
-        const uint32_t metadata_size = readU32(pending_.data() + 10);
+        const uint32_t metadata_size = readU32(pending_.data() + read_offset + 10);
         if (metadata_size > kMaximumMetadataSize) {
-            pending_.erase(pending_.begin());
+            read_offset += 1;
             continue;
         }
         const size_t cfr_offset = kRelayHeaderSize + metadata_size;
-        if (pending_.size() < cfr_offset + 12)
+        if (pending_.size() - read_offset < cfr_offset + 12)
             break;
         if (!std::equal(kCfrMagic, kCfrMagic + 4,
-                        pending_.begin() +
-                            static_cast<std::ptrdiff_t>(cfr_offset))) {
-            pending_.erase(pending_.begin());
+                        pending_.data() + read_offset + cfr_offset)) {
+            read_offset += 1;
             continue;
         }
 
-        const uint8_t *cfr_header = pending_.data() + cfr_offset;
+        const uint8_t *cfr_header = pending_.data() + read_offset + cfr_offset;
         const size_t cfr_header_size = static_cast<size_t>(cfr_header[7]) * 4;
         const uint32_t payload_size = readU32(cfr_header + 8);
         if (cfr_header_size < kMinimumCfrHeaderSize ||
             cfr_header_size > kMaximumCfrHeaderSize || payload_size == 0 ||
             payload_size > kMaximumPayloadSize) {
-            pending_.erase(pending_.begin());
+            read_offset += 1;
             continue;
         }
 
         const size_t record_size =
             cfr_offset + cfr_header_size + payload_size + 4;
         if (record_size > kMaximumPendingSize) {
-            pending_.erase(pending_.begin());
+            read_offset += 1;
             continue;
         }
-        if (pending_.size() < record_size)
+        if (pending_.size() - read_offset < record_size)
             break;
         if (!std::equal(kRelayEndMagic, kRelayEndMagic + 4,
-                        pending_.begin() +
-                            static_cast<std::ptrdiff_t>(record_size - 4))) {
-            pending_.erase(pending_.begin());
+                        pending_.data() + read_offset + record_size - 4)) {
+            read_offset += 1;
             continue;
         }
 
         CSIData frame;
-        if (decodeRecord(pending_.data(), record_size, frame))
+        if (decodeRecord(pending_.data() + read_offset, record_size, frame))
             frames.push_back(std::move(frame));
 
-        pending_.erase(pending_.begin(),
-                       pending_.begin() +
-                           static_cast<std::ptrdiff_t>(record_size));
+        read_offset += record_size;
+    }
+
+    if (read_offset > 0) {
+        if (read_offset >= pending_.size()) {
+            pending_.clear();
+        } else {
+            pending_.erase(pending_.begin(),
+                           pending_.begin() +
+                               static_cast<std::ptrdiff_t>(read_offset));
+        }
     }
     return true;
 }

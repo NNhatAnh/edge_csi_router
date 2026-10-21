@@ -51,7 +51,7 @@ const i18n = {
         footer_title: 'EDGE CSI DASHBOARD',
         footer_right: 'DỮ LIỆU XỬ LÝ TRỰC TIẾP TRÊN ROUTER',
         // Prober panel
-        prober_badge: 'HƯỚNG 1 · ACTIVE PROBING',
+        prober_badge: 'ACTIVE PROBING',
         prober_title: 'Ping Giữ Nhịp Vô Tuyến (Device Keep-alive)',
         prober_desc: 'Router tự động phát gói tin thăm dò (ARP / UDP) để kích thích gói phản hồi từ điện thoại, duy trì luồng CSI liên tục ngay cả khi người dùng không chạm vào máy.',
         prober_on: 'Đang phát',
@@ -89,10 +89,43 @@ const i18n = {
         interval_label: 'Chu kỳ phát (Interval):',
         apply_btn: 'Áp dụng',
         applying: 'Đang lưu…',
+        saved_btn: 'Đã lưu!',
         stat_sent: 'Đã gửi',
         stat_status: 'Trạng thái',
         prober_active: 'Đang ping',
         prober_idle: 'Tạm dừng',
+        col_action: 'Thao tác',
+        // CFR Panel
+        cfr_badge: 'ATH12K · HARDWARE CFR PIPELINE',
+        cfr_title: 'Điều Khiển Thu Thập CSI (CFR Capture Control)',
+        cfr_desc: 'Tự động cấu hình thanh ghi debugfs nhân Linux (enable_cfr, cfr_capture) và điều khiển tiến trình cfr_test_app trên router để thu thập luồng CSI trực tiếp.',
+        cfr_status_idle: 'Chưa thu thập',
+        cfr_status_running: 'Đang thu thập',
+        cfr_status_error: 'Lỗi khởi chạy',
+        cfr_btn_start: 'Bắt đầu thu CSI',
+        cfr_btn_stop: 'Dừng thu',
+        cfr_btn_download: 'Tải file vừa thu (.bin)',
+        cfr_bw_label: 'Băng thông CFR:',
+        cfr_bw_20: '20 MHz (Chuẩn)',
+        cfr_bw_320: '320 MHz (Wi-Fi 7)',
+        cfr_bandwidth: 'Băng thông',
+        cfr_file: 'Tệp tin vừa thu',
+        cfr_no_file: 'Chưa có file',
+        download_btn_title: 'Nhấp để tải file',
+        bw_supported: 'Khả dụng',
+        bw_unsupported: 'Không hỗ trợ',
+        bw_available_prefix: 'Khả dụng',
+        cfr_auto_probe_label: 'Tự động Ping giữ nhịp (Active Probing) để duy trì luồng CSI liên tục',
+        cfr_target_device: 'Thiết bị mục tiêu',
+        cfr_iface: 'Giao diện Wi-Fi',
+        cfr_chipset: 'Phần cứng / Driver',
+        cfr_pid: 'Tiến trình (PID)',
+        cfr_uptime: 'Thời gian thu',
+        btn_quick_capture: 'Thu CSI',
+        pill_capturing: 'ĐANG THU',
+        cfr_no_client_alert: 'Không tìm thấy thiết bị Wi-Fi nào đang kết nối. Vui lòng kết nối thiết bị vào Wi-Fi trước.',
+        thres_high_short: 'Cao',
+        thres_low_short: 'Thấp',
         // Views
         views: {
             overview: { title: 'Tổng quan tín hiệu', kicker: 'LIVE ACTIVITY', chart: 'Motion score & ngưỡng phát hiện' },
@@ -190,10 +223,43 @@ const i18n = {
         interval_label: 'Ping Interval:',
         apply_btn: 'Apply Settings',
         applying: 'Saving…',
+        saved_btn: 'Saved!',
         stat_sent: 'Packets sent',
         stat_status: 'Status',
         prober_active: 'Probing',
         prober_idle: 'Idle',
+        col_action: 'Action',
+        // CFR Panel
+        cfr_badge: 'ATH12K · HARDWARE CFR PIPELINE',
+        cfr_title: 'CSI CFR Capture Control',
+        cfr_desc: 'Automatically configures Linux kernel debugfs registers (enable_cfr, cfr_capture) and orchestrates cfr_test_app on the router for direct live CSI streaming.',
+        cfr_status_idle: 'Idle',
+        cfr_status_running: 'Capturing',
+        cfr_status_error: 'Launch Error',
+        cfr_btn_start: 'Start CSI Capture',
+        cfr_btn_stop: 'Stop Capture',
+        cfr_btn_download: 'Download capture (.bin)',
+        cfr_bw_label: 'CFR Bandwidth:',
+        cfr_bw_20: '20 MHz (Default)',
+        cfr_bw_320: '320 MHz (Wi-Fi 7)',
+        cfr_bandwidth: 'Bandwidth',
+        cfr_file: 'Captured file',
+        cfr_no_file: 'No file yet',
+        download_btn_title: 'Click to download file',
+        bw_supported: 'Supported',
+        bw_unsupported: 'Not supported',
+        bw_available_prefix: 'Available',
+        cfr_auto_probe_label: 'Auto-enable Active Probing keep-alive to maintain continuous CSI stream',
+        cfr_target_device: 'Target Station',
+        cfr_iface: 'Wi-Fi Interface',
+        cfr_chipset: 'Hardware / Driver',
+        cfr_pid: 'Process PID',
+        cfr_uptime: 'Capture Uptime',
+        btn_quick_capture: 'Capture',
+        pill_capturing: 'CAPTURING',
+        cfr_no_client_alert: 'No connected Wi-Fi station found. Please connect a phone/laptop to Wi-Fi first.',
+        thres_high_short: 'High',
+        thres_low_short: 'Low',
         // Views
         views: {
             overview: { title: 'Signal Overview', kicker: 'LIVE ACTIVITY', chart: 'Motion score & detection thresholds' },
@@ -233,14 +299,16 @@ function applyLanguage(lang) {
         }
     });
 
-    const customInput = document.getElementById('prober-ip-custom');
-    if (customInput) customInput.placeholder = t('custom_ip_placeholder');
-
     setView(activeView);
     if (latestFrame) {
         updateDomMetrics(latestFrame, false, performance.now());
     }
     renderProberUI(currentProberConfig);
+    renderCfrUI();
+    updateAvailableBandwidths();
+    if (proberElements.applyBtn && !isSavingProber) {
+        proberElements.applyBtn.textContent = t('apply_btn');
+    }
 }
 
 const colors = ['#4be2d0', '#a98cff', '#ffb86b', '#71a7ff', '#ff7f9d'];
@@ -297,6 +365,35 @@ function updateDomMetrics(frame, isNewFrame, now) {
             ? (Number(frame.motion_score) || 0).toFixed(4)
             : '—';
     }
+
+    const thresHigh = Number(frame.motion_threshold_high) || 0;
+    const thresLow = Number(frame.motion_threshold_low) || 0;
+    const thresHighEl = document.getElementById('thres-high-val');
+    const thresLowEl = document.getElementById('thres-low-val');
+    const motionChipEl = document.getElementById('motion-chip');
+
+    if (thresHighEl) {
+        thresHighEl.textContent = thresHigh > 0 ? thresHigh.toFixed(4) : '—';
+    }
+    if (thresLowEl) {
+        thresLowEl.textContent = thresLow > 0 ? thresLow.toFixed(4) : '—';
+    }
+    if (motionChipEl) {
+        if (!frame.motion_calibrated) {
+            motionChipEl.className = 'motion-chip';
+            motionChipEl.textContent = currentLang === 'vi' ? 'CHỜ NỀN' : 'CALIB';
+        } else {
+            const score = Number(frame.motion_score) || 0;
+            if (score >= thresHigh) {
+                motionChipEl.className = 'motion-chip motion-active';
+                motionChipEl.textContent = currentLang === 'vi' ? 'ĐỘNG' : 'MOTION';
+            } else {
+                motionChipEl.className = 'motion-chip motion-quiet';
+                motionChipEl.textContent = currentLang === 'vi' ? 'TĨNH' : 'QUIET';
+            }
+        }
+    }
+
     if (domElements.motionCaption) {
         if (!frame.motion_ready) {
             domElements.motionCaption.textContent = currentLang === 'vi'
@@ -304,12 +401,12 @@ function updateDomMetrics(frame, isNewFrame, now) {
                 : `Median window ${frame.motion_window_samples || 0}/30 frames`;
         } else if (!frame.motion_calibrated) {
             domElements.motionCaption.textContent = frame.motion_calibration_stable
-                ? (currentLang === 'vi' ? `Tín hiệu ổn định · ${frame.motion_calibration_frames || 0}/40 mẫu` : `Stable signal · ${frame.motion_calibration_frames || 0}/40 samples`)
+                ? (currentLang === 'vi' ? `Hiệu chuẩn nền · ${frame.motion_calibration_frames || 0}/40 mẫu ổn định` : `Calibrating baseline · ${frame.motion_calibration_frames || 0}/40 stable`)
                 : (currentLang === 'vi' ? `Tín hiệu dao động · chờ ổn định ${frame.motion_calibration_frames || 0}/40` : `Jittering · awaiting baseline ${frame.motion_calibration_frames || 0}/40`);
         } else {
             domElements.motionCaption.textContent = currentLang === 'vi'
-                ? `Ngưỡng cao ${Number(frame.motion_threshold_high).toFixed(4)} · thấp ${Number(frame.motion_threshold_low).toFixed(4)}`
-                : `High threshold ${Number(frame.motion_threshold_high).toFixed(4)} · low ${Number(frame.motion_threshold_low).toFixed(4)}`;
+                ? `Nền ổn định · Độ lệch chuẩn ≤ 0.035`
+                : `Baseline calibrated · StdDev ≤ 0.035`;
         }
     }
 
@@ -355,9 +452,13 @@ function updateDomMetrics(frame, isNewFrame, now) {
 function setStatus(status, description) {
     const dot = document.getElementById('status-dot');
     const label = document.getElementById('status');
-    dot.className = `status-dot ${status}`;
-    label.textContent = status === 'live' ? t('status_live') : status === 'waiting' ? t('status_waiting') : t('status_offline');
-    document.getElementById('last-update').textContent = description;
+    const lastUpdate = document.getElementById('last-update');
+    if (dot) dot.className = `status-dot ${status}`;
+    if (label) label.textContent = status === 'live' ? t('status_live') : status === 'waiting' ? t('status_waiting') : t('status_offline');
+    if (lastUpdate) {
+        lastUpdate.textContent = description;
+        lastUpdate.title = description;
+    }
 }
 
 function setView(view) {
@@ -510,15 +611,50 @@ function drawCurrent() {
 
     if (activeView === 'overview') {
         const values = motionHistory.map(entry => entry.score);
-        drawLineChart(values, '#ffb86b', width, height, 'Motion score', false);
-        const legend = [{ name: 'Motion score', color: '#ffb86b' }];
-        if (latestFrame.motion_calibrated) {
-            drawLineChart([latestFrame.motion_threshold_high], '#ff7f9d', width, height, 'Ngưỡng cao', true);
-            drawLineChart([latestFrame.motion_threshold_low], '#4be2d0', width, height, 'Ngưỡng thấp', true);
-            legend.push(
-                { name: `${currentLang === 'vi' ? 'Ngưỡng cao' : 'High thres'} (${latestFrame.motion_threshold_high.toFixed(3)})`, color: '#ff7f9d' },
-                { name: `${currentLang === 'vi' ? 'Ngưỡng thấp' : 'Low thres'} (${latestFrame.motion_threshold_low.toFixed(3)})`, color: '#4be2d0' }
-            );
+        const thresHigh = Number(latestFrame.motion_threshold_high) || 0;
+        const thresLow = Number(latestFrame.motion_threshold_low) || 0;
+        const isCalibrated = Boolean(latestFrame.motion_calibrated);
+
+        const refs = [];
+        if (thresHigh > 0) {
+            refs.push({
+                value: thresHigh,
+                color: '#ff7f9d',
+                label: currentLang === 'vi' ? 'Ngưỡng cao' : 'High thres',
+                dashed: true
+            });
+        }
+        if (thresLow > 0) {
+            refs.push({
+                value: thresLow,
+                color: '#4be2d0',
+                label: currentLang === 'vi' ? 'Ngưỡng thấp' : 'Low thres',
+                dashed: true
+            });
+        }
+
+        drawLineChart(values, '#ffb86b', width, height, 'Motion score', false, refs);
+
+        const legend = [
+            { name: `Motion score: ${(Number(latestFrame.motion_score) || 0).toFixed(4)}`, color: '#ffb86b' }
+        ];
+        if (thresHigh > 0) {
+            legend.push({
+                name: `${currentLang === 'vi' ? 'Ngưỡng cao' : 'High Thres'}: ${thresHigh.toFixed(4)}`,
+                color: '#ff7f9d'
+            });
+        }
+        if (thresLow > 0) {
+            legend.push({
+                name: `${currentLang === 'vi' ? 'Ngưỡng thấp' : 'Low Thres'}: ${thresLow.toFixed(4)}`,
+                color: '#4be2d0'
+            });
+        }
+        if (!isCalibrated) {
+            legend.push({
+                name: currentLang === 'vi' ? `Đang hiệu chuẩn (${latestFrame.motion_calibration_frames || 0}/40)` : `Calibrating (${latestFrame.motion_calibration_frames || 0}/40)`,
+                color: '#8fa0b7'
+            });
         }
         setLegend(legend);
     } else if (activeView === 'breath') {
@@ -604,6 +740,35 @@ function drawLineChart(values, color, width, height, label, overlay = false, ref
             context.lineTo(width - right, y);
             context.stroke();
         }
+
+        // Vẽ các đường ngưỡng tham chiếu (Reference Threshold Lines)
+        if (references && references.length) {
+            references.forEach(ref => {
+                if (Number.isFinite(ref.value) && ref.value >= min && ref.value <= max) {
+                    const y = top + ((max - ref.value) / (max - min)) * plotHeight;
+                    context.save();
+                    context.strokeStyle = ref.color || 'rgba(255, 255, 255, 0.4)';
+                    context.lineWidth = (ref.lineWidth || 1.3) * ratio;
+                    if (ref.dashed !== false) {
+                        context.setLineDash([7 * ratio, 5 * ratio]);
+                    }
+                    context.beginPath();
+                    context.moveTo(left, y);
+                    context.lineTo(width - right, y);
+                    context.stroke();
+
+                    // Nhãn ngưỡng hiển thị trực quan ngay trên đường vẽ
+                    if (ref.label) {
+                        context.fillStyle = ref.color || '#fff';
+                        context.font = `bold ${8.5 * ratio}px "DM Mono", monospace`;
+                        context.textAlign = 'right';
+                        context.textBaseline = 'bottom';
+                        context.fillText(`${ref.label}: ${ref.value.toFixed(4)}`, width - right, y - 2 * ratio);
+                    }
+                    context.restore();
+                }
+            });
+        }
     }
 
     context.strokeStyle = color;
@@ -679,6 +844,382 @@ function setLegend(items) {
 }
 
 // ============================================================================
+// CFR Capture Controller (ATH12K Hardware Capture & Background Daemon)
+// ============================================================================
+let cfrState = {
+    running: false,
+    target_mac: '',
+    target_ip: '',
+    iface: '',
+    phy: 'phy00',
+    hw: '',
+    mac_dev: '',
+    pid: -1,
+    uptime_sec: 0,
+    last_error: '',
+    bandwidth: 0,
+    latest_file: '',
+    latest_file_size: 0,
+    available_bandwidths: [0, 1, 2]
+};
+
+const cfrElements = {
+    panel: document.getElementById('cfr-panel'),
+    badge: document.getElementById('cfr-status-badge'),
+    statusText: document.getElementById('cfr-status-text'),
+    startBtn: document.getElementById('cfr-start-btn'),
+    stopBtn: document.getElementById('cfr-stop-btn'),
+    downloadBtn: document.getElementById('cfr-download-btn'),
+    bandwidthSelect: document.getElementById('cfr-bandwidth-select'),
+    bandwidthDisplay: document.getElementById('cfr-bandwidth-display'),
+    bwHint: document.getElementById('cfr-bw-hint'),
+    fileDisplay: document.getElementById('cfr-file-display'),
+    targetDisplay: document.getElementById('cfr-target-display'),
+    ifaceDisplay: document.getElementById('cfr-iface-display'),
+    chipsetDisplay: document.getElementById('cfr-chipset-display'),
+    pidDisplay: document.getElementById('cfr-pid-display'),
+    uptimeDisplay: document.getElementById('cfr-uptime-display'),
+    errorBanner: document.getElementById('cfr-error-banner')
+};
+
+function formatUptime(seconds) {
+    const s = Number(seconds) || 0;
+    const mins = Math.floor(s / 60);
+    const secs = s % 60;
+    if (mins >= 60) {
+        const hrs = Math.floor(mins / 60);
+        const remMins = mins % 60;
+        return `${String(hrs).padStart(2, '0')}:${String(remMins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+    }
+    return `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+}
+
+const bwMap = { 0: '20 MHz', 1: '40 MHz', 2: '80 MHz', 3: '160 MHz', 4: '320 MHz' };
+
+function updateAvailableBandwidths(targetClient, targetCard) {
+    if (!cfrElements.bandwidthSelect) return;
+
+    if (!targetClient && !targetCard && currentProberConfig) {
+        if (Array.isArray(currentProberConfig.clients) && currentProberConfig.clients.length > 0) {
+            if (currentProberConfig.target_ip && currentProberConfig.target_ip !== 'auto') {
+                targetClient = currentProberConfig.clients.find(c => c.ip === currentProberConfig.target_ip || c.mac === currentProberConfig.target_ip);
+            }
+            if (!targetClient) targetClient = currentProberConfig.clients[0];
+        }
+        if (targetClient && Array.isArray(currentProberConfig.cards)) {
+            targetCard = currentProberConfig.cards.find(c => c.iface === targetClient.iface);
+        }
+        if (!targetCard && Array.isArray(currentProberConfig.cards) && currentProberConfig.cards.length > 0) {
+            targetCard = currentProberConfig.cards[0];
+        }
+    }
+
+    let supported = [0];
+    if (targetClient && Array.isArray(targetClient.supported_bandwidths) && targetClient.supported_bandwidths.length > 0) {
+        supported = targetClient.supported_bandwidths;
+    } else if (targetCard && Array.isArray(targetCard.supported_bandwidths) && targetCard.supported_bandwidths.length > 0) {
+        supported = targetCard.supported_bandwidths;
+    } else if (Array.isArray(cfrState.available_bandwidths) && cfrState.available_bandwidths.length > 0) {
+        supported = cfrState.available_bandwidths;
+    } else {
+        const band = targetClient?.band || targetCard?.band || '';
+        supported = (band === '2.4GHz') ? [0] : [0, 1, 2];
+    }
+
+    let currentVal = parseInt(cfrElements.bandwidthSelect.value, 10);
+    if (!supported.includes(currentVal)) {
+        currentVal = supported[supported.length - 1];
+        cfrElements.bandwidthSelect.value = String(currentVal);
+        cfrState.bandwidth = currentVal;
+    }
+
+    // 1. Native select options: strictly clean text (e.g. "20 MHz", "40 MHz") without clutter
+    Array.from(cfrElements.bandwidthSelect.options).forEach(opt => {
+        const val = parseInt(opt.value, 10);
+        const isSupported = supported.includes(val);
+        opt.disabled = !isSupported;
+        opt.textContent = bwMap[val] || (val + ' code');
+    });
+
+    // 2. Interactive Bandwidth Chips
+    const chips = document.querySelectorAll('.cfr-bw-chip');
+    chips.forEach(chip => {
+        const val = parseInt(chip.dataset.bw, 10);
+        const isSupported = supported.includes(val);
+        const isSelected = (val === currentVal);
+
+        chip.classList.toggle('unsupported', !isSupported);
+        chip.classList.toggle('active', isSelected);
+        chip.disabled = !isSupported || cfrState.running;
+
+        if (!isSupported) {
+            chip.title = (currentLang === 'vi') ? 'Băng thông không được hỗ trợ bởi card hoặc thiết bị này' : 'Bandwidth not supported by card or client device';
+        } else {
+            chip.title = bwMap[val] || '';
+        }
+    });
+
+    // 3. Available Bandwidths Hint Badge
+    if (cfrElements.bwHint) {
+        const availNames = supported.map(b => bwMap[b]).join(' · ');
+        const textSpan = cfrElements.bwHint.querySelector('.bw-hint-text');
+        if (textSpan) {
+            textSpan.textContent = `${t('bw_available_prefix')}: ${availNames}`;
+        } else {
+            cfrElements.bwHint.textContent = `${t('bw_available_prefix')}: ${availNames}`;
+        }
+        cfrElements.bwHint.className = 'cfr-bw-hint' + (supported.length === 1 ? ' warning' : '');
+    }
+
+    if (cfrElements.bandwidthDisplay) {
+        cfrElements.bandwidthDisplay.textContent = bwMap[currentVal] || '20 MHz';
+    }
+}
+
+function renderCfrUI() {
+    if (!cfrElements.badge) return;
+
+    if (cfrState.running) {
+        cfrElements.badge.className = 'badge-active';
+        cfrElements.statusText.textContent = t('cfr_status_running');
+        if (cfrElements.startBtn) cfrElements.startBtn.disabled = true;
+        if (cfrElements.stopBtn) cfrElements.stopBtn.disabled = false;
+    } else if (cfrState.last_error) {
+        cfrElements.badge.className = 'badge-error';
+        cfrElements.statusText.textContent = t('cfr_status_error');
+        if (cfrElements.startBtn) cfrElements.startBtn.disabled = false;
+        if (cfrElements.stopBtn) cfrElements.stopBtn.disabled = true;
+    } else {
+        cfrElements.badge.className = 'badge-idle';
+        cfrElements.statusText.textContent = t('cfr_status_idle');
+        if (cfrElements.startBtn) cfrElements.startBtn.disabled = false;
+        if (cfrElements.stopBtn) cfrElements.stopBtn.disabled = true;
+    }
+
+    // Bandwidth display & select state
+    const bwMap = { 0: '20 MHz', 1: '40 MHz', 2: '80 MHz', 3: '160 MHz', 4: '320 MHz' };
+    if (cfrElements.bandwidthDisplay) {
+        cfrElements.bandwidthDisplay.textContent = bwMap[cfrState.bandwidth] || (cfrState.bandwidth + ' code');
+    }
+    if (cfrElements.bandwidthSelect) {
+        cfrElements.bandwidthSelect.disabled = cfrState.running;
+        if (cfrState.running) {
+            cfrElements.bandwidthSelect.value = String(cfrState.bandwidth);
+        }
+    }
+    document.querySelectorAll('.cfr-bw-chip').forEach(chip => {
+        const chipVal = parseInt(chip.dataset.bw, 10);
+        const isSelected = (chipVal === cfrState.bandwidth);
+        chip.classList.toggle('active', isSelected);
+        if (cfrState.running) {
+            chip.disabled = true;
+        } else {
+            chip.disabled = chip.classList.contains('unsupported');
+        }
+    });
+
+    // Download button & file display
+    if (cfrElements.fileDisplay) {
+        if (cfrState.latest_file) {
+            const sizeMb = cfrState.latest_file_size ? (cfrState.latest_file_size / (1024 * 1024)).toFixed(1) + ' MB' : '';
+            cfrElements.fileDisplay.textContent = cfrState.latest_file + (sizeMb ? ` (${sizeMb})` : '');
+            cfrElements.fileDisplay.title = `${cfrState.latest_file} (${cfrState.latest_file_size} bytes)`;
+        } else {
+            cfrElements.fileDisplay.textContent = '—';
+            cfrElements.fileDisplay.title = t('cfr_no_file');
+        }
+    }
+
+    if (cfrElements.downloadBtn) {
+        const hasFile = Boolean(cfrState.latest_file);
+        cfrElements.downloadBtn.disabled = !hasFile;
+        cfrElements.downloadBtn.title = hasFile ? `${t('download_btn_title')}: ${cfrState.latest_file}` : t('cfr_no_file');
+    }
+
+    // Target display
+    if (cfrElements.targetDisplay) {
+        if (cfrState.running && cfrState.target_mac) {
+            const ipPart = cfrState.target_ip ? ` (${cfrState.target_ip})` : '';
+            cfrElements.targetDisplay.textContent = `${cfrState.target_mac}${ipPart}`;
+        } else {
+            if (currentProberConfig.target_ip && currentProberConfig.target_ip !== 'auto') {
+                const matched = Array.isArray(currentProberConfig.clients) ? currentProberConfig.clients.find(c => c.ip === currentProberConfig.target_ip) : null;
+                if (matched) {
+                    cfrElements.targetDisplay.textContent = `${matched.hostname || matched.ip} [${matched.mac}]`;
+                } else {
+                    cfrElements.targetDisplay.textContent = currentProberConfig.target_ip;
+                }
+            } else {
+                cfrElements.targetDisplay.textContent = t('auto_select_wifi');
+            }
+        }
+    }
+
+    if (cfrElements.ifaceDisplay) {
+        cfrElements.ifaceDisplay.textContent = cfrState.iface || (cfrState.running ? 'phy00.1-0' : '—');
+    }
+
+    if (cfrElements.chipsetDisplay) {
+        cfrElements.chipsetDisplay.textContent = cfrState.hw ? `${cfrState.hw} (${cfrState.mac_dev || 'mac'})` : 'ath12k';
+    }
+
+    if (cfrElements.pidDisplay) {
+        cfrElements.pidDisplay.textContent = cfrState.pid > 0 ? String(cfrState.pid) : '—';
+    }
+
+    if (cfrElements.uptimeDisplay) {
+        cfrElements.uptimeDisplay.textContent = formatUptime(cfrState.uptime_sec);
+    }
+
+    if (cfrElements.errorBanner) {
+        if (cfrState.last_error && !cfrState.running) {
+            cfrElements.errorBanner.textContent = `[Lỗi] ${cfrState.last_error}`;
+            cfrElements.errorBanner.hidden = false;
+        } else {
+            cfrElements.errorBanner.hidden = true;
+        }
+    }
+}
+
+async function fetchCfrStatus() {
+    try {
+        const res = await fetch('/api/cfr');
+        if (!res.ok) return;
+        const data = await res.json();
+        const prevRunning = cfrState.running;
+        cfrState.running = Boolean(data.running);
+        cfrState.target_mac = data.target_mac || '';
+        cfrState.target_ip = data.target_ip || '';
+        cfrState.iface = data.iface || '';
+        cfrState.phy = data.phy || 'phy00';
+        cfrState.hw = data.hw || '';
+        cfrState.mac_dev = data.mac_dev || '';
+        cfrState.pid = Number(data.pid) || -1;
+        cfrState.uptime_sec = Number(data.uptime_sec) || 0;
+        cfrState.last_error = data.last_error || '';
+        cfrState.bandwidth = Number(data.bandwidth) || 0;
+        cfrState.latest_file = data.latest_file || '';
+        cfrState.latest_file_size = Number(data.latest_file_size) || 0;
+        if (Array.isArray(data.available_bandwidths)) {
+            cfrState.available_bandwidths = data.available_bandwidths;
+            updateAvailableBandwidths();
+        }
+
+        renderCfrUI();
+
+        if (prevRunning !== cfrState.running && currentProberConfig.cards) {
+            renderCardsTables(currentProberConfig.cards, currentProberConfig.clients, currentProberConfig.mode, currentProberConfig.target_ip);
+        }
+    } catch (e) {
+        console.warn('Failed to fetch CFR status:', e);
+    }
+}
+
+async function startCfrCapture(target = null) {
+    if (cfrElements.startBtn) cfrElements.startBtn.disabled = true;
+
+    let mac = '';
+    let ip = '';
+    let iface = '';
+
+    if (target && target.mac) {
+        mac = target.mac;
+        ip = target.ip || '';
+        iface = target.iface || '';
+    } else if (currentProberConfig.target_ip && currentProberConfig.target_ip !== 'auto') {
+        const matched = Array.isArray(currentProberConfig.clients) ? currentProberConfig.clients.find(c => c.ip === currentProberConfig.target_ip) : null;
+        if (matched) {
+            mac = matched.mac;
+            ip = matched.ip;
+            iface = matched.iface;
+        } else {
+            ip = currentProberConfig.target_ip;
+        }
+    }
+
+    const autoProbe = true;
+    let bandwidth = 0;
+    if (cfrElements.bandwidthSelect) {
+        bandwidth = parseInt(cfrElements.bandwidthSelect.value, 10) || 0;
+    }
+
+    try {
+        const res = await fetch('/api/cfr', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                action: 'start',
+                mac: mac || 'auto',
+                ip: ip,
+                iface: iface,
+                bandwidth: bandwidth,
+                auto_probe: autoProbe
+            })
+        });
+        const data = await res.json();
+        if (res.ok && data.status === 'ok') {
+            cfrState.running = true;
+            cfrState.target_mac = data.target_mac || mac;
+            cfrState.target_ip = data.target_ip || ip;
+            cfrState.iface = data.iface || iface;
+            cfrState.hw = data.hw || '';
+            cfrState.pid = data.pid || -1;
+            cfrState.uptime_sec = 0;
+            cfrState.last_error = '';
+            cfrState.bandwidth = Number(data.bandwidth) || bandwidth;
+            if (data.latest_file) cfrState.latest_file = data.latest_file;
+            if (data.latest_file_size) cfrState.latest_file_size = Number(data.latest_file_size);
+            renderCfrUI();
+            if (autoProbe) loadProberStatus();
+        } else {
+            cfrState.last_error = data.error || data.message || 'Lỗi khởi chạy capture';
+            renderCfrUI();
+        }
+    } catch (err) {
+        cfrState.last_error = String(err.message || err);
+        renderCfrUI();
+    } finally {
+        if (cfrElements.startBtn) cfrElements.startBtn.disabled = cfrState.running;
+        if (currentProberConfig.cards) {
+            renderCardsTables(currentProberConfig.cards, currentProberConfig.clients, currentProberConfig.mode, currentProberConfig.target_ip);
+        }
+    }
+}
+
+async function stopCfrCapture() {
+    if (cfrElements.stopBtn) cfrElements.stopBtn.disabled = true;
+    try {
+        const res = await fetch('/api/cfr', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action: 'stop' })
+        });
+        const data = await res.json();
+        if (res.ok) {
+            cfrState.running = false;
+            cfrState.uptime_sec = 0;
+            latestFrame = null;
+            frameRate = 0;
+            receiveTimes = [];
+            motionHistory = [];
+            breathWaveHistory = [];
+            setStatus('waiting', t('caption_waiting_csi'));
+            scheduleRender();
+            await fetchCfrStatus();
+            renderCfrUI();
+        }
+    } catch (err) {
+        console.warn('Failed to stop CFR capture:', err);
+    } finally {
+        if (cfrElements.stopBtn) cfrElements.stopBtn.disabled = !cfrState.running;
+        if (cfrElements.startBtn) cfrElements.startBtn.disabled = cfrState.running;
+        if (currentProberConfig.cards) {
+            renderCardsTables(currentProberConfig.cards, currentProberConfig.clients, currentProberConfig.mode, currentProberConfig.target_ip);
+        }
+    }
+}
+
+// ============================================================================
 // Active Prober Controller (Grouped by Wi-Fi Card, Single & Multi Mode)
 // ============================================================================
 const proberElements = {
@@ -693,9 +1234,6 @@ const proberElements = {
     statusBadge: document.getElementById('prober-status-badge'),
     selectionBadge: document.getElementById('prober-selection-badge'),
     quickAutoBtn: document.getElementById('quick-auto-btn'),
-    quickManualToggle: document.getElementById('quick-manual-toggle'),
-    manualIpWrap: document.getElementById('manual-ip-wrap'),
-    ipCustom: document.getElementById('prober-ip-custom'),
     refreshBtn: document.getElementById('prober-refresh-btn'),
     multiActionsBar: document.getElementById('multi-actions-bar'),
     multiCount: document.getElementById('multi-count'),
@@ -716,7 +1254,6 @@ let currentProberConfig = {
 };
 
 let selectedMultiIps = new Set();
-let isManualIpMode = false;
 let multiSelectionUserModified = false;
 
 function updateRateBadge(ms) {
@@ -733,10 +1270,6 @@ function setProberMode(mode) {
     if (proberElements.multiBtn) proberElements.multiBtn.classList.toggle('active', mode === 'multi');
     if (proberElements.multiActionsBar) proberElements.multiActionsBar.hidden = (mode !== 'multi');
     if (proberElements.quickAutoBtn) proberElements.quickAutoBtn.hidden = (mode !== 'single');
-    if (proberElements.quickManualToggle) proberElements.quickManualToggle.hidden = (mode !== 'single');
-    if (mode === 'multi') {
-        if (proberElements.manualIpWrap) proberElements.manualIpWrap.hidden = true;
-    }
 }
 
 function getSignalClass(snrStr, signalStr) {
@@ -800,29 +1333,15 @@ function renderProberUI(data) {
         const targetIp = data.target_ip || 'auto';
         if (targetIp === 'auto' || !targetIp) {
             if (proberElements.quickAutoBtn) proberElements.quickAutoBtn.classList.add('active');
-            if (proberElements.quickManualToggle) proberElements.quickManualToggle.classList.remove('active');
-            if (proberElements.manualIpWrap && !isManualIpMode) proberElements.manualIpWrap.hidden = true;
             if (proberElements.selectionBadge) proberElements.selectionBadge.textContent = t('selecting_auto');
         } else {
-            // Check if matches an existing client
+            if (proberElements.quickAutoBtn) proberElements.quickAutoBtn.classList.remove('active');
             const matchedClient = Array.isArray(data.clients) ? data.clients.find(c => c.ip === targetIp) : null;
-            if (matchedClient) {
-                if (proberElements.quickAutoBtn) proberElements.quickAutoBtn.classList.remove('active');
-                if (proberElements.quickManualToggle) proberElements.quickManualToggle.classList.remove('active');
-                if (proberElements.manualIpWrap && !isManualIpMode) proberElements.manualIpWrap.hidden = true;
-                if (proberElements.selectionBadge) {
+            if (proberElements.selectionBadge) {
+                if (matchedClient) {
                     proberElements.selectionBadge.textContent = `${t('selecting_device')}${matchedClient.hostname || matchedClient.ip} (${matchedClient.ip})`;
-                }
-            } else {
-                // Manual IP
-                if (proberElements.quickAutoBtn) proberElements.quickAutoBtn.classList.remove('active');
-                if (proberElements.quickManualToggle) proberElements.quickManualToggle.classList.add('active');
-                if (proberElements.manualIpWrap) proberElements.manualIpWrap.hidden = false;
-                if (proberElements.ipCustom && document.activeElement !== proberElements.ipCustom) {
-                    proberElements.ipCustom.value = targetIp;
-                }
-                if (proberElements.selectionBadge) {
-                    proberElements.selectionBadge.textContent = `${t('selecting_manual')}${targetIp}`;
+                } else {
+                    proberElements.selectionBadge.textContent = `${t('selecting_device')}${targetIp}`;
                 }
             }
         }
@@ -831,6 +1350,24 @@ function renderProberUI(data) {
     }
 
     renderCardsTables(data.cards, data.clients, mode, data.target_ip);
+
+    let activeClient = null;
+    let activeCard = null;
+    if (Array.isArray(data.clients)) {
+        if (data.target_ip && data.target_ip !== 'auto') {
+            activeClient = data.clients.find(c => c.ip === data.target_ip || c.mac === data.target_ip);
+        }
+        if (!activeClient && data.clients.length > 0) {
+            activeClient = data.clients[0];
+        }
+    }
+    if (activeClient && Array.isArray(data.cards)) {
+        activeCard = data.cards.find(c => c.iface === activeClient.iface);
+    }
+    if (!activeCard && Array.isArray(data.cards) && data.cards.length > 0) {
+        activeCard = data.cards[0];
+    }
+    updateAvailableBandwidths(activeClient, activeCard);
 }
 
 function updateMultiCount() {
@@ -932,7 +1469,11 @@ function renderCardsTables(cards, clients, mode, currentTargetIp) {
         ssidBadge.className = 'card-ssid-badge';
         ssidBadge.textContent = card.ssid ? `SSID: ${card.ssid}` : 'SSID: —';
 
-        left.append(radioSvg, devBadge, bandTag, ssidBadge);
+        const widthBadge = document.createElement('span');
+        widthBadge.className = 'card-bw-badge';
+        widthBadge.textContent = card.width_str || (card.band === '2.4GHz' ? '20 MHz' : '80 MHz');
+
+        left.append(radioSvg, devBadge, bandTag, ssidBadge, widthBadge);
 
         const right = document.createElement('div');
         right.className = 'wifi-card-info-right';
@@ -985,6 +1526,7 @@ function renderCardsTables(cards, clients, mode, currentTargetIp) {
                 <th>${t('col_signal')}</th>
                 <th>${t('col_bitrate')}</th>
                 <th>${t('col_activity')}</th>
+                <th style="width: 80px; text-align: center;">${t('col_action')}</th>
             </tr>
         `;
         table.appendChild(thead);
@@ -994,7 +1536,7 @@ function renderCardsTables(cards, clients, mode, currentTargetIp) {
         if (cardStations.length === 0) {
             const emptyTr = document.createElement('tr');
             emptyTr.className = 'card-empty-row';
-            emptyTr.innerHTML = `<td colspan="7" class="card-empty-cell">${t('no_card_stations')}</td>`;
+            emptyTr.innerHTML = `<td colspan="8" class="card-empty-cell">${t('no_card_stations')}</td>`;
             tbody.appendChild(emptyTr);
         } else {
             cardStations.forEach(c => {
@@ -1029,15 +1571,16 @@ function renderCardsTables(cards, clients, mode, currentTargetIp) {
                             currentProberConfig.target_ip = 'auto';
                             input.checked = false;
                             document.querySelectorAll('.wifi-station-row').forEach(r => r.classList.remove('selected-row'));
+                            updateAvailableBandwidths(null, card);
                         } else {
                             // Chưa chọn -> CHỌN thiết bị này
                             currentProberConfig.target_ip = c.ip;
                             input.checked = true;
                             document.querySelectorAll('.wifi-station-row').forEach(r => r.classList.remove('selected-row'));
                             tr.classList.add('selected-row');
+                            updateAvailableBandwidths(c, card);
                         }
-                        if (proberElements.ipCustom) proberElements.ipCustom.value = '';
-                        isManualIpMode = false;
+                        renderCfrUI();
                         saveProberConfig();
                     } else {
                         // Multi mode: tích hoặc bỏ tích
@@ -1064,7 +1607,7 @@ function renderCardsTables(cards, clients, mode, currentTargetIp) {
                 });
 
                 tr.addEventListener('click', e => {
-                    if (e.target.tagName.toLowerCase() === 'input') return;
+                    if (e.target.tagName.toLowerCase() === 'input' || e.target.tagName.toLowerCase() === 'button') return;
                     toggleSelection();
                 });
 
@@ -1095,13 +1638,47 @@ function renderCardsTables(cards, clients, mode, currentTargetIp) {
 
                 // 6. Bitrate cell
                 const tdRate = document.createElement('td');
-                tdRate.textContent = (c.bitrate && c.bitrate !== '—') ? c.bitrate : '—';
+                const bwBadge = c.width_str ? `<span class="station-bw-badge">${c.width_str}</span>` : '';
+                const rateText = (c.bitrate && c.bitrate !== '—') ? c.bitrate : '—';
+                tdRate.innerHTML = `<span>${rateText}</span>${bwBadge}`;
 
                 // 7. Activity cell
                 const tdActive = document.createElement('td');
                 tdActive.textContent = (c.inactive_ms && c.inactive_ms !== '—') ? c.inactive_ms : 'Active';
 
-                tr.append(tdSelect, tdDevice, tdIp, tdMac, tdSignal, tdRate, tdActive);
+                // 8. Quick Action (CFR Capture) cell
+                const tdAction = document.createElement('td');
+                tdAction.style.textAlign = 'center';
+                const isCapturingThis = cfrState.running && (
+                    (cfrState.target_mac && c.mac && cfrState.target_mac.toUpperCase() === c.mac.toUpperCase()) ||
+                    (cfrState.target_ip && c.ip && cfrState.target_ip === c.ip)
+                );
+                if (isCapturingThis) {
+                    tr.classList.add('capturing-row');
+                    const pill = document.createElement('span');
+                    pill.className = 'capturing-pill';
+                    pill.textContent = t('pill_capturing');
+                    tdAction.appendChild(pill);
+                } else {
+                    const btnCapture = document.createElement('button');
+                    btnCapture.type = 'button';
+                    btnCapture.className = 'quick-capture-btn';
+                    btnCapture.textContent = t('btn_quick_capture');
+                    btnCapture.title = t('cfr_btn_start');
+                    btnCapture.addEventListener('click', e => {
+                        e.stopPropagation();
+                        updateAvailableBandwidths(c, card);
+                        startCfrCapture({
+                            mac: c.mac,
+                            ip: c.ip,
+                            iface: c.iface || card.iface,
+                            name: c.hostname
+                        });
+                    });
+                    tdAction.appendChild(btnCapture);
+                }
+
+                tr.append(tdSelect, tdDevice, tdIp, tdMac, tdSignal, tdRate, tdActive, tdAction);
                 tbody.appendChild(tr);
             });
         }
@@ -1130,9 +1707,15 @@ async function loadProberStatus() {
     }
 }
 
+let isSavingProber = false;
+let saveSuccessTimeout = null;
+
 async function saveProberConfig() {
+    if (isSavingProber) return;
     if (!proberElements.applyBtn) return;
-    const prevText = proberElements.applyBtn.textContent;
+    isSavingProber = true;
+
+    clearTimeout(saveSuccessTimeout);
     proberElements.applyBtn.textContent = t('applying');
     proberElements.applyBtn.disabled = true;
 
@@ -1143,9 +1726,6 @@ async function saveProberConfig() {
         let target_ips = [];
 
         if (mode === 'single') {
-            if (proberElements.ipCustom && isManualIpMode && proberElements.ipCustom.value.trim() !== '') {
-                target_ip = proberElements.ipCustom.value.trim();
-            }
             target_ips = (target_ip && target_ip !== 'auto') ? [target_ip] : [];
         } else {
             target_ips = Array.from(selectedMultiIps);
@@ -1163,12 +1743,26 @@ async function saveProberConfig() {
             const data = await res.json();
             currentProberConfig = data;
             renderProberUI(data);
+
+            proberElements.applyBtn.textContent = t('saved_btn');
+            saveSuccessTimeout = setTimeout(() => {
+                if (proberElements.applyBtn) {
+                    proberElements.applyBtn.textContent = t('apply_btn');
+                    proberElements.applyBtn.disabled = false;
+                }
+            }, 800);
+        } else {
+            proberElements.applyBtn.textContent = t('apply_btn');
+            proberElements.applyBtn.disabled = false;
         }
     } catch (e) {
         console.error('Cannot save prober config', e);
+        if (proberElements.applyBtn) {
+            proberElements.applyBtn.textContent = t('apply_btn');
+            proberElements.applyBtn.disabled = false;
+        }
     } finally {
-        proberElements.applyBtn.textContent = prevText;
-        proberElements.applyBtn.disabled = false;
+        isSavingProber = false;
     }
 }
 
@@ -1190,43 +1784,11 @@ if (proberElements.multiBtn) {
 if (proberElements.quickAutoBtn) {
     proberElements.quickAutoBtn.addEventListener('click', () => {
         currentProberConfig.target_ip = 'auto';
-        isManualIpMode = false;
-        if (proberElements.manualIpWrap) proberElements.manualIpWrap.hidden = true;
-        if (proberElements.ipCustom) proberElements.ipCustom.value = '';
+        document.querySelectorAll('.wifi-station-row').forEach(r => r.classList.remove('selected-row'));
+        document.querySelectorAll('input[name="target-device-radio"]').forEach(r => r.checked = false);
+        updateAvailableBandwidths();
+        renderCfrUI();
         saveProberConfig();
-    });
-}
-
-// Quick Manual IP toggle listener
-if (proberElements.quickManualToggle) {
-    proberElements.quickManualToggle.addEventListener('click', () => {
-        isManualIpMode = !isManualIpMode;
-        if (proberElements.manualIpWrap) {
-            proberElements.manualIpWrap.hidden = !isManualIpMode;
-            if (isManualIpMode && proberElements.ipCustom) {
-                proberElements.ipCustom.focus();
-            }
-        }
-        proberElements.quickManualToggle.classList.toggle('active', isManualIpMode);
-    });
-}
-
-if (proberElements.ipCustom) {
-    proberElements.ipCustom.addEventListener('keydown', e => {
-        if (e.key === 'Enter') {
-            const val = proberElements.ipCustom.value.trim();
-            if (val) {
-                currentProberConfig.target_ip = val;
-                saveProberConfig();
-            }
-        }
-    });
-    proberElements.ipCustom.addEventListener('blur', () => {
-        const val = proberElements.ipCustom.value.trim();
-        if (val && val !== currentProberConfig.target_ip) {
-            currentProberConfig.target_ip = val;
-            saveProberConfig();
-        }
     });
 }
 
@@ -1252,14 +1814,6 @@ if (proberElements.deselectAllBtn) {
         updateMultiCount();
         renderCardsTables(currentProberConfig.cards, currentProberConfig.clients, 'multi', '');
         saveProberConfig();
-    });
-}
-
-if (proberElements.refreshBtn) {
-    proberElements.refreshBtn.addEventListener('click', () => {
-        proberElements.refreshBtn.style.transform = 'rotate(360deg)';
-        setTimeout(() => proberElements.refreshBtn.style.transform = '', 500);
-        loadProberStatus();
     });
 }
 
@@ -1302,11 +1856,63 @@ document.querySelectorAll('.lang-btn').forEach(btn => {
 window.addEventListener('resize', resizeCanvas);
 if ('ResizeObserver' in window) new ResizeObserver(resizeCanvas).observe(canvas);
 
+if (cfrElements.startBtn) {
+    cfrElements.startBtn.addEventListener('click', () => startCfrCapture());
+}
+if (cfrElements.stopBtn) {
+    cfrElements.stopBtn.addEventListener('click', () => stopCfrCapture());
+}
+if (cfrElements.downloadBtn) {
+    cfrElements.downloadBtn.addEventListener('click', () => {
+        window.location.href = '/api/cfr/download';
+    });
+}
+if (cfrElements.bandwidthSelect) {
+    cfrElements.bandwidthSelect.addEventListener('change', () => {
+        const val = parseInt(cfrElements.bandwidthSelect.value, 10) || 0;
+        cfrState.bandwidth = val;
+        const bwMap = { 0: '20 MHz', 1: '40 MHz', 2: '80 MHz', 3: '160 MHz', 4: '320 MHz' };
+        if (cfrElements.bandwidthDisplay) {
+            cfrElements.bandwidthDisplay.textContent = bwMap[val] || '20 MHz';
+        }
+        document.querySelectorAll('.cfr-bw-chip').forEach(chip => {
+            const chipVal = parseInt(chip.dataset.bw, 10);
+            chip.classList.toggle('active', chipVal === val);
+        });
+    });
+}
+
+document.querySelectorAll('.cfr-bw-chip').forEach(chip => {
+    chip.addEventListener('click', () => {
+        if (cfrState.running || chip.disabled || chip.classList.contains('unsupported')) return;
+        const val = parseInt(chip.dataset.bw, 10);
+        if (cfrElements.bandwidthSelect) {
+            cfrElements.bandwidthSelect.value = String(val);
+            cfrElements.bandwidthSelect.dispatchEvent(new Event('change'));
+        }
+    });
+});
+
 applyLanguage(currentLang);
 resizeCanvas();
 connectStream();
 loadProberStatus();
-window.setInterval(loadProberStatus, 3000);
+fetchCfrStatus();
+window.setInterval(() => {
+    if (!cfrState.running) {
+        loadProberStatus();
+    }
+}, 4000);
+window.setInterval(() => {
+    if (cfrState.running) {
+        loadProberStatus();
+    }
+}, 8000);
+window.setInterval(() => {
+    if (cfrState.running) {
+        fetchCfrStatus();
+    }
+}, 3000);
 window.setInterval(() => {
     if (lastFrameAt && performance.now() - lastFrameAt > 6000) {
         setStatus('waiting', t('status_packet_wait'));

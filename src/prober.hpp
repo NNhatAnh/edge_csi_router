@@ -15,6 +15,9 @@ struct WifiCardInfo {
     std::string ssid;         // Ví dụ: 10. VNPT Wifi 8 5GHz
     std::string band;         // Ví dụ: 5GHz hoặc 2.4GHz
     int station_count = 0;
+    int max_bandwidth = 0;    // 0: 20MHz, 1: 40MHz, 2: 80MHz, 3: 160MHz, 4: 320MHz
+    std::string width_str = "20 MHz";
+    std::vector<int> supported_bandwidths = {0};
 };
 
 struct ClientInfo {
@@ -29,6 +32,9 @@ struct ClientInfo {
     std::string bitrate;      // 96.3 MBit/s
     std::string inactive_ms;  // 180 ms
     bool is_wireless = true;
+    int max_bandwidth = 0;
+    std::string width_str = "20 MHz";
+    std::vector<int> supported_bandwidths = {0};
 };
 
 struct ProberStatus {
@@ -54,7 +60,7 @@ class ActiveProber {
 
     void setConfig(bool enabled, const std::string &mode,
                    const std::vector<std::string> &target_ips, int interval_ms);
-    ProberStatus getStatus();
+    ProberStatus getStatus(bool scan_network = true);
     void scanNetwork(std::vector<WifiCardInfo> &cards, std::vector<ClientInfo> &clients);
     std::vector<ClientInfo> scanClients();
 
@@ -62,6 +68,11 @@ class ActiveProber {
     std::string interface_name_;
     std::atomic<bool> is_running_{false};
     std::thread worker_thread_;
+
+    std::mutex scan_cache_mutex_;
+    std::vector<WifiCardInfo> cached_cards_;
+    std::vector<ClientInfo> cached_clients_;
+    std::chrono::steady_clock::time_point last_scan_time_{};
 
     std::mutex mutex_;
     std::condition_variable cv_;

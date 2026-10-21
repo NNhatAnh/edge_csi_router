@@ -46,44 +46,108 @@
                     <button class="calibrate-btn" id="calibrate-button" type="button" data-i18n="btn_calibrate">Hiệu chuẩn lại</button>
                     <div class="connection">
                         <span id="status-dot" class="status-dot"></span>
-                        <span><strong id="status" data-i18n="status_connecting">ĐANG KẾT NỐI</strong><small id="last-update">Chưa nhận frame</small></span>
+                        <div class="connection-text">
+                            <strong id="status" data-i18n="status_connecting">ĐANG KẾT NỐI</strong>
+                            <small id="last-update">Chưa nhận frame</small>
+                        </div>
                     </div>
                 </div>
             </header>
 
-            <section class="metric-grid" aria-label="CSI metrics">
-                <article class="metric-card">
-                    <div class="metric-heading"><span data-i18n="metric_sc">SUBCARRIERS</span><span class="metric-symbol cyan">⌁</span></div>
-                    <div class="metric-value" id="sc-count">—</div>
-                    <div class="metric-caption" id="sc-caption" data-i18n="caption_waiting_csi">Chờ dữ liệu CSI</div>
-                </article>
-                <article class="metric-card">
-                    <div class="metric-heading"><span data-i18n="metric_chains">ANTENNA CHAINS</span><span class="metric-symbol violet">≋</span></div>
-                    <div class="metric-value" id="chain-count">—</div>
-                    <div class="metric-caption" id="nss-caption">Spatial streams —</div>
-                </article>
-                <article class="metric-card">
-                    <div class="metric-heading"><span data-i18n="metric_motion">MOTION SCORE</span><span class="metric-symbol orange">⌁</span></div>
-                    <div class="metric-value" id="motion-value">—</div>
-                    <div class="metric-caption" id="motion-caption">Chờ đủ frame để tính tương quan</div>
-                </article>
-                <article class="metric-card">
-                    <div class="metric-heading"><span data-i18n="metric_presence">PRESENCE DETECTION</span><span class="metric-symbol orange">◉</span></div>
-                    <div class="metric-value presence-value" id="presence-value">CHỜ CSI</div>
-                    <div class="metric-caption" id="presence-caption">Chưa hiệu chuẩn nền</div>
-                </article>
-                <article class="metric-card">
-                    <div class="metric-heading"><span data-i18n="metric_framerate">FRAME RATE</span><span class="metric-symbol green">↗</span></div>
-                    <div class="metric-value"><span id="frame-rate">—</span><small>Hz</small></div>
-                    <div class="metric-caption" data-i18n="caption_framerate">Tốc độ nhận gần nhất</div>
-                </article>
+            <!-- Bảng Điều Khiển Thu Thập CSI (CFR Capture Control) -->
+            <section class="panel cfr-panel" id="cfr-panel">
+                <div class="cfr-header">
+                    <div class="cfr-title-wrap">
+                        <span class="cfr-badge" data-i18n="cfr_badge">ATH12K · HARDWARE CFR PIPELINE</span>
+                        <h2 data-i18n="cfr_title">Điều Khiển Thu Thập CSI (CFR Capture Control)</h2>
+                        <p class="cfr-desc" data-i18n="cfr_desc">Tự động cấu hình thanh ghi debugfs nhân Linux (enable_cfr, cfr_capture) và điều khiển tiến trình cfr_test_app trên router để thu thập luồng CSI trực tiếp.</p>
+                    </div>
+                    <div class="cfr-status-wrap">
+                        <div id="cfr-status-badge" class="badge-idle">
+                            <span class="status-indicator-dot"></span>
+                            <span id="cfr-status-text" data-i18n="cfr_status_idle">Chưa thu thập</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="cfr-action-bar">
+                    <div class="cfr-buttons-group">
+                        <button type="button" class="cfr-btn cfr-start-btn" id="cfr-start-btn">
+                            <span class="btn-symbol">▶</span>
+                            <span data-i18n="cfr_btn_start">Bắt đầu thu CSI</span>
+                        </button>
+                        <button type="button" class="cfr-btn cfr-stop-btn" id="cfr-stop-btn" disabled>
+                            <span class="btn-symbol">■</span>
+                            <span data-i18n="cfr_btn_stop">Dừng thu</span>
+                        </button>
+                        <button type="button" class="cfr-btn cfr-download-btn" id="cfr-download-btn" disabled>
+                            <span class="btn-symbol">⤓</span>
+                            <span data-i18n="cfr_btn_download">Tải file vừa thu (.bin)</span>
+                        </button>
+                    </div>
+                    <div class="cfr-bw-group">
+                        <div class="cfr-bw-meta">
+                            <span class="cfr-bw-title" data-i18n="cfr_bw_label">Băng thông CFR:</span>
+                            <div id="cfr-bw-hint" class="cfr-bw-hint" title="Băng thông khả dụng của kênh và thiết bị">
+                                <span class="bw-hint-dot"></span>
+                                <span class="bw-hint-text">—</span>
+                            </div>
+                        </div>
+                        <div class="cfr-bw-chips" id="cfr-bw-chips" role="radiogroup" aria-label="Băng thông CFR">
+                            <button type="button" class="cfr-bw-chip active" data-bw="0">20 MHz</button>
+                            <button type="button" class="cfr-bw-chip" data-bw="1">40 MHz</button>
+                            <button type="button" class="cfr-bw-chip" data-bw="2">80 MHz</button>
+                            <button type="button" class="cfr-bw-chip" data-bw="3">160 MHz</button>
+                            <button type="button" class="cfr-bw-chip" data-bw="4">320 MHz</button>
+                        </div>
+                        <select id="cfr-bandwidth-select" class="cfr-select-sync" aria-hidden="true" tabindex="-1">
+                            <option value="0">20 MHz</option>
+                            <option value="1">40 MHz</option>
+                            <option value="2">80 MHz</option>
+                            <option value="3">160 MHz</option>
+                            <option value="4">320 MHz</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="cfr-telemetry-grid">
+                    <div class="cfr-telemetry-item">
+                        <span class="cfr-telemetry-label" data-i18n="cfr_target_device">Thiết bị mục tiêu</span>
+                        <div class="cfr-telemetry-value" id="cfr-target-display">—</div>
+                    </div>
+                    <div class="cfr-telemetry-item">
+                        <span class="cfr-telemetry-label" data-i18n="cfr_iface">Giao diện Wi-Fi</span>
+                        <div class="cfr-telemetry-value"><code id="cfr-iface-display">—</code></div>
+                    </div>
+                    <div class="cfr-telemetry-item">
+                        <span class="cfr-telemetry-label" data-i18n="cfr_bandwidth">Băng thông</span>
+                        <div class="cfr-telemetry-value"><code id="cfr-bandwidth-display">20 MHz</code></div>
+                    </div>
+                    <div class="cfr-telemetry-item">
+                        <span class="cfr-telemetry-label" data-i18n="cfr_chipset">Phần cứng / Driver</span>
+                        <div class="cfr-telemetry-value"><code id="cfr-chipset-display">ath12k</code></div>
+                    </div>
+                    <div class="cfr-telemetry-item">
+                        <span class="cfr-telemetry-label" data-i18n="cfr_pid">Tiến trình (PID)</span>
+                        <div class="cfr-telemetry-value" id="cfr-pid-display">—</div>
+                    </div>
+                    <div class="cfr-telemetry-item">
+                        <span class="cfr-telemetry-label" data-i18n="cfr_uptime">Thời gian thu</span>
+                        <div class="cfr-telemetry-value mono" id="cfr-uptime-display">00:00</div>
+                    </div>
+                    <div class="cfr-telemetry-item cfr-telemetry-item-wide">
+                        <span class="cfr-telemetry-label" data-i18n="cfr_file">Tệp tin vừa thu</span>
+                        <div class="cfr-telemetry-value mono" id="cfr-file-display" title="Chưa có file">—</div>
+                    </div>
+                </div>
+                <div class="cfr-error-banner" id="cfr-error-banner" hidden></div>
             </section>
 
             <!-- Bảng điều khiển Ping Giữ Nhịp Vô Tuyến (Active Probing) -->
             <section class="panel prober-panel" id="prober-panel">
                 <div class="prober-header">
                     <div class="prober-title-wrap">
-                        <span class="prober-badge" data-i18n="prober_badge">HƯỚNG 1 · ACTIVE PROBING</span>
+                        <span class="prober-badge" data-i18n="prober_badge">ACTIVE PROBING</span>
                         <h2 data-i18n="prober_title">Ping Giữ Nhịp Vô Tuyến (Device Keep-alive)</h2>
                         <p class="prober-desc" data-i18n="prober_desc">Router tự động phát gói tin thăm dò (ARP / UDP) để kích thích gói phản hồi từ điện thoại, duy trì luồng CSI liên tục ngay cả khi người dùng không chạm vào máy.</p>
                     </div>
@@ -145,12 +209,6 @@
                             <button type="button" class="quick-action-pill active" id="quick-auto-btn" data-i18n="auto_strongest_btn">
                                 Tự động chọn sóng mạnh nhất
                             </button>
-                            <button type="button" class="quick-action-pill" id="quick-manual-toggle" data-i18n="manual_ip_btn">
-                                Nhập IP thủ công
-                            </button>
-                            <div class="manual-ip-input-wrap" id="manual-ip-wrap" hidden>
-                                <input type="text" id="prober-ip-custom" placeholder="Ví dụ: 192.168.10.238" spellcheck="false">
-                            </div>
                             <button type="button" class="scan-refresh-btn" id="prober-refresh-btn" title="Quét lại thiết bị Wi-Fi">
                                 <span class="refresh-icon">↻</span> <span data-i18n="refresh_btn">Quét lại</span>
                             </button>
@@ -171,6 +229,50 @@
                         </div>
                     </div>
                 </div>
+            </section>
+
+            <!-- Thống Kê Tín Hiệu CSI (Metric Grid đặt ngay trên đồ thị trực tiếp) -->
+            <section class="metric-grid" aria-label="CSI metrics">
+                <article class="metric-card">
+                    <div class="metric-heading"><span data-i18n="metric_sc">SUBCARRIERS</span><span class="metric-symbol cyan">⌁</span></div>
+                    <div class="metric-value" id="sc-count">—</div>
+                    <div class="metric-caption" id="sc-caption" data-i18n="caption_waiting_csi">Chờ dữ liệu CSI</div>
+                </article>
+                <article class="metric-card">
+                    <div class="metric-heading"><span data-i18n="metric_chains">ANTENNA CHAINS</span><span class="metric-symbol violet">≋</span></div>
+                    <div class="metric-value" id="chain-count">—</div>
+                    <div class="metric-caption" id="nss-caption">Spatial streams —</div>
+                </article>
+                <article class="metric-card metric-card-motion">
+                    <div class="metric-heading"><span data-i18n="metric_motion">MOTION SCORE</span><span class="metric-symbol orange">⌁</span></div>
+                    <div class="metric-value-row">
+                        <div class="metric-value" id="motion-value">—</div>
+                        <span class="motion-chip" id="motion-chip">—</span>
+                    </div>
+                    <div class="threshold-pill-container" id="threshold-pill-container">
+                        <div class="threshold-pill pill-high" title="Ngưỡng phát hiện chuyển động (High Threshold)">
+                            <span class="thres-indicator"></span>
+                            <small data-i18n="thres_high_short">Cao</small>
+                            <span id="thres-high-val">—</span>
+                        </div>
+                        <div class="threshold-pill pill-low" title="Ngưỡng duy trì trạng thái / trở về tĩnh (Low Threshold)">
+                            <span class="thres-indicator"></span>
+                            <small data-i18n="thres_low_short">Thấp</small>
+                            <span id="thres-low-val">—</span>
+                        </div>
+                    </div>
+                    <div class="metric-caption" id="motion-caption">Chờ đủ frame để tính tương quan</div>
+                </article>
+                <article class="metric-card">
+                    <div class="metric-heading"><span data-i18n="metric_presence">PRESENCE DETECTION</span><span class="metric-symbol orange">◉</span></div>
+                    <div class="metric-value presence-value" id="presence-value">CHỜ CSI</div>
+                    <div class="metric-caption" id="presence-caption">Chưa hiệu chuẩn nền</div>
+                </article>
+                <article class="metric-card">
+                    <div class="metric-heading"><span data-i18n="metric_framerate">FRAME RATE</span><span class="metric-symbol green">↗</span></div>
+                    <div class="metric-value"><span id="frame-rate">—</span><small>Hz</small></div>
+                    <div class="metric-caption" data-i18n="caption_framerate">Tốc độ nhận gần nhất</div>
+                </article>
             </section>
 
             <section class="panel chart-panel" id="chart-panel">
