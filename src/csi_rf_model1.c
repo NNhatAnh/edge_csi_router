@@ -3,6 +3,10 @@
 #include <math.h>
 #include <stdint.h>
 
+#ifndef CSI_RF1_DEFAULT_THRESHOLD
+#define CSI_RF1_DEFAULT_THRESHOLD 0.35f
+#endif
+
 typedef struct {
     int8_t feature;
     int16_t left;

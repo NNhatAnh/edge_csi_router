@@ -22,6 +22,11 @@ class MotionDetector {
     bool presence_detected_ = false;
     size_t calibration_disruption_streak_ = 0;
 
+    // Dynamic Leaky Baseline Tracking
+    float baseline_mean_ = 0.0f;
+    float baseline_deviation_ = 0.0f;
+    size_t quiet_frames_ = 0;
+
     void resetCalibration();
 };
 

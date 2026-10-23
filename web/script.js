@@ -82,7 +82,7 @@ const i18n = {
         col_mac: 'Địa chỉ MAC',
         col_signal: 'Tín hiệu / SNR',
         col_bitrate: 'Tốc độ TX',
-        col_activity: 'Hoạt động',
+        col_activity: 'Lần cuối thấy',
         no_card_stations: 'Không có thiết bị nào đang kết nối trên card này',
         no_ip_assigned: 'Chưa cấp IP',
         selecting_auto: 'Đang chọn: Tự động (Sóng mạnh nhất)',
@@ -1172,8 +1172,19 @@ async function fetchCfrStatus() {
 
         renderCfrUI();
 
-        if (prevRunning !== cfrState.running && currentProberConfig.cards) {
-            renderCardsTables(currentProberConfig.cards, currentProberConfig.clients, currentProberConfig.mode, currentProberConfig.target_ip);
+        if (prevRunning !== cfrState.running) {
+            if (!cfrState.running) {
+                latestFrame = null;
+                frameRate = 0;
+                receiveTimes = [];
+                motionHistory = [];
+                breathWaveHistory = [];
+                setStatus('waiting', cfrState.last_error || t('caption_waiting_csi'));
+                scheduleRender();
+            }
+            if (currentProberConfig.cards) {
+                renderCardsTables(currentProberConfig.cards, currentProberConfig.clients, currentProberConfig.mode, currentProberConfig.target_ip);
+            }
         }
     } catch (e) {
         console.warn('Failed to fetch CFR status:', e);
@@ -1709,9 +1720,14 @@ function renderCardsTables(cards, clients, mode, currentTargetIp) {
                 const rateText = (c.bitrate && c.bitrate !== '—') ? c.bitrate : '—';
                 tdRate.innerHTML = `<span>${rateText}</span>${bwBadge}`;
 
-                // 7. Activity cell
+                // 7. Activity / Last Seen cell
                 const tdActive = document.createElement('td');
-                tdActive.textContent = (c.inactive_ms && c.inactive_ms !== '—') ? c.inactive_ms : 'Active';
+                const rawAct = (c.inactive_ms && c.inactive_ms !== '—') ? c.inactive_ms : 'Active';
+                if (rawAct === '0 ms' || rawAct === '0ms' || rawAct === 'Active') {
+                    tdActive.innerHTML = `<span style="color:#4be2d0" title="Vừa truyền nhận dữ liệu (${rawAct})">${currentLang === 'vi' ? 'Vừa xong (0ms)' : 'Just now (0ms)'}</span>`;
+                } else {
+                    tdActive.textContent = rawAct;
+                }
 
                 // 8. Quick Action (CFR Capture) cell
                 const tdAction = document.createElement('td');
@@ -2024,7 +2040,7 @@ window.setInterval(() => {
     if (cfrState.running) {
         fetchCfrStatus();
     }
-}, 3000);
+}, 1500);
 
 window.setInterval(() => {
     if (lastFrameAt && performance.now() - lastFrameAt > 6000) {

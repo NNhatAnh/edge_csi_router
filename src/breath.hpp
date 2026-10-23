@@ -84,6 +84,10 @@ class BreathDetector {
     float presence_confidence_ = 0.0f;
     size_t sleep_qualify_counter_ = 0;
 
+    // Dynamic Floor Profiling & Fast Exit Recovery
+    float noise_floor_std_ = 0.015f;
+    size_t gross_motion_cooldown_ = 0;
+
     std::vector<float> getWrappedPhaseDiff(const CSIData &frame) const;
     void updateSensitiveTones(const CSIData &frame);
     float synthesizeCompositePhase(const std::vector<float> &unwrapped) const;

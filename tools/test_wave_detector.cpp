@@ -68,7 +68,7 @@ void testWaveDetectorPipelineSynthetic() {
 
         detector.update(frame);
 
-        if (f < 10) {
+        if (f < 9) {
             assert(frame.wave_status == "unavailable");
         } else {
             assert(frame.wave_status != "unavailable");

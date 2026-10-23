@@ -102,6 +102,8 @@ void BreathDetector::reset() {
     breath_wave_history_.clear();
     presence_confidence_ = 0.0f;
     sleep_qualify_counter_ = 0;
+    noise_floor_std_ = 0.015f;
+    gross_motion_cooldown_ = 0;
 }
 
 std::vector<float>
@@ -585,29 +587,52 @@ void BreathDetector::updateBreathingEstimate(CSIData &frame) {
     current_rrv_ = morph.rrv_cv;
     current_regularity_ = morph.regularity;
 
+    // Cập nhật Dynamic Noise Floor Profiler:
+    // Theo dõi độ phân tán pha nền khi không có nhịp thở đồng pha rõ rệt
+    if (current_coherence_ < 0.28f || current_prominence_ < 2.0f) {
+        noise_floor_std_ = 0.96f * noise_floor_std_ + 0.04f * std::max(current_phase_span_, 0.010f);
+    }
+
+    // Ngưỡng Phase Span thích ứng đa nền:
+    // - Phòng họp 2 (phòng rộng, tĩnh, noise_floor ~ 0.012 rad) -> adaptive_min_span ~ 0.030 rad (rất nhạy từ xa 4-5m)
+    // - Phòng họp 1 (vách kính, rò rỉ RF, noise_floor ~ 0.020 rad) -> adaptive_min_span ~ 0.045 rad (chặn nhiễu kính)
+    const float adaptive_min_span = std::clamp(2.2f * noise_floor_std_, 0.030f, 0.055f);
+
     // 4. Động cơ tính điểm bằng chứng sinh học đa chiều (Fuzzy Evidence Scoring Engine)
-    // - Coherence: có người thở làm di chuyển lồng ngực nên các subcarrier dao động đồng pha (> 0.50).
-    //   Phòng trống nhiễu độc lập thì Coherence rất thấp (< 0.20).
-    const float score_coherence = std::clamp((current_coherence_ - 0.22f) / 0.35f, 0.0f, 1.0f);
+    // - Coherence: có người thở làm di chuyển lồng ngực nên các subcarrier dao động đồng pha (> 0.45).
+    //   Phòng trống nhiễu độc lập thì Coherence rất thấp (< 0.20), ngoài kính tán xạ < 0.28.
+    const float score_coherence = std::clamp((current_coherence_ - 0.26f) / 0.35f, 0.0f, 1.0f);
     // - Prominence: đỉnh phổ nhọn tập trung tại 1 tần số nhịp thở (> 2.8).
-    const float score_prominence = std::clamp((current_prominence_ - 2.0f) / 2.5f, 0.0f, 1.0f);
+    const float score_prominence = std::clamp((current_prominence_ - 2.2f) / 2.5f, 0.0f, 1.0f);
     // - Regularity: độ tự tương quan chu kỳ (> 0.30).
     const float score_autocorr = std::clamp((current_regularity_ - 0.22f) / 0.30f, 0.0f, 1.0f);
-    // - Span: biên độ dao động pha đủ vượt qua sàn nhiễu nhiệt (> 0.02 rad).
-    const float score_span = std::clamp((current_phase_span_ - kMinHumanPhaseSpan) / 0.040f, 0.0f, 1.0f);
+    // - Span: biên độ dao động pha đủ vượt qua sàn nhiễu thích ứng của phòng.
+    const float score_span = std::clamp((current_phase_span_ - adaptive_min_span) / 0.040f, 0.0f, 1.0f);
 
     const float evidence_score = 0.35f * score_coherence +
                                  0.30f * score_prominence +
                                  0.20f * score_autocorr +
                                  0.15f * score_span;
 
+    // Fast Exit Transition Detection:
+    // Nhận diện sự kiện người vừa bước ra khỏi phòng:
+    // Sau khi có bước chân vĩ mô (gross_motion_cooldown_ > 0), nếu tín hiệu lập tức phẳng lặng
+    // (motion_score thấp, phase_span nhỏ, hoặc coherence rất thấp), đây là signature RỜI PHÒNG!
+    const bool is_exit_transition =
+        (gross_motion_cooldown_ > 0) &&
+        (frame.motion_ready && frame.motion_score < frame.motion_threshold_low) &&
+        (current_phase_span_ < adaptive_min_span || current_coherence_ < 0.28f);
+
     // 5. Cập nhật độ tin cậy bằng bộ tích lũy rò rỉ (Leaky Integrator):
-    // - Khi có bằng chứng mạnh (E >= 0.45): Tăng nhanh (Fast attack ~ 2 - 3s).
-    // - Khi bằng chứng yếu (E < 0.45): Giảm chậm (Slow decay ~ 6 - 8s grace period, chống chập chờn khi nuốt nước bọt/ngưng thở tạm thời).
-    if (evidence_score >= 0.45f && current_phase_span_ >= kMinHumanPhaseSpan) {
-        presence_confidence_ = std::min(1.0f, presence_confidence_ + 0.15f);
+    if (is_exit_transition) {
+        // Fast Exit Decay: Xả cực nhanh về phòng trống trong ~2 giây
+        presence_confidence_ = std::max(0.0f, presence_confidence_ - 0.20f);
+    } else if (evidence_score >= 0.48f && current_phase_span_ >= adaptive_min_span && current_coherence_ >= 0.28f) {
+        // Tăng độ tin cậy khi có bằng chứng chắc chắn (phải thỏa cả biên độ pha lẫn độ đồng pha sinh học)
+        presence_confidence_ = std::min(1.0f, presence_confidence_ + 0.12f);
     } else {
-        presence_confidence_ = std::max(0.0f, presence_confidence_ - 0.035f);
+        // Xả tự nhiên với tốc độ cân bằng (xả sạch sau ~3.5 giây)
+        presence_confidence_ = std::max(0.0f, presence_confidence_ - 0.065f);
     }
 
     // 6. Quyết định trạng thái hiện diện (Hysteresis chống giật nháy)
@@ -700,6 +725,7 @@ void BreathDetector::update(CSIData &frame) {
     // do đó giữ độ tin cậy hiện diện cao (0.75), hoãn tính nhịp thở vi sai.
     if (frame.motion_ready && frame.motion_score > kMaximumGrossMotionScore) {
         settling_frames_ = 20; // 20 frame đệm chuyển tiếp khi ngừng di chuyển
+        gross_motion_cooldown_ = 50; // Đánh dấu vừa có bước chân di chuyển (~1.6s)
         presence_confidence_ = std::max(presence_confidence_, 0.75f);
         current_quality_ = 0.0f;
         estimate_counter_ = 0;
@@ -716,6 +742,9 @@ void BreathDetector::update(CSIData &frame) {
 
     if (settling_frames_ > 0) {
         --settling_frames_;
+    }
+    if (gross_motion_cooldown_ > 0) {
+        --gross_motion_cooldown_;
     }
 
     // 1. Lọc Bandpass thời gian thực chạy trên TỪNG FRAME để sóng mượt mà 60Hz không giật bậc thang

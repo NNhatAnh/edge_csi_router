@@ -20,7 +20,7 @@ struct CFRCaptureStatus {
     uint64_t uptime_sec = 0;
     std::string last_error;
     int bandwidth = 0;
-    int period = 10;
+    int period = 50;
     std::string latest_file;
     size_t latest_file_size = 0;
     std::vector<int> available_bandwidths;
@@ -32,9 +32,11 @@ class CFRController {
     ~CFRController();
 
     bool startCapture(const std::string &mac, const std::string &iface,
-                      const std::string &ip = "", int period = 10,
+                      const std::string &ip = "", int period = 50,
                       int bandwidth = 0, int method = 0);
-    bool stopCapture();
+    bool stopCapture(const std::string &reason = "");
+    bool isRunning();
+    bool isTargetConnected();
     CFRCaptureStatus getStatus();
     std::string getLatestCaptureFilePath(size_t *file_size = nullptr);
     std::vector<int> getAvailableBandwidths(const std::string &iface,
@@ -59,11 +61,14 @@ class CFRController {
     std::chrono::steady_clock::time_point start_time_;
     std::string last_error_;
     int bandwidth_ = 0;
-    int period_ = 10;
+    int period_ = 50;
     std::string last_captured_file_;
     size_t last_captured_size_ = 0;
+    int target_disconnect_count_ = 0;
 
     void checkProcessAliveLocked();
+    void checkTargetConnectionLocked();
+    bool isTargetStationConnectedLocked() const;
     bool stopCaptureLocked();
     static bool writeSysfs(const std::string &path, const std::string &value);
     static void cleanupDumpFiles(size_t keep_latest = 1);

@@ -30,6 +30,9 @@ void MotionDetector::resetCalibration() {
     motion_calibrated_ = false;
     calibration_sample_stable_ = false;
     presence_detected_ = false;
+    baseline_mean_ = 0.0f;
+    baseline_deviation_ = 0.0f;
+    quiet_frames_ = 0;
 }
 
 void MotionDetector::update(CSIData &frame) {
@@ -141,29 +144,72 @@ void MotionDetector::update(CSIData &frame) {
 
                     if (standard_deviation <= kMaximumStableScoreDeviation) {
                         calibration_sample_stable_ = true;
-                        float baseline_deviation = std::max(
+                        baseline_deviation_ = std::max(
                             standard_deviation, kMinimumBaselineDeviation);
+                        baseline_mean_ = candidate_mean;
                         // Ngưỡng thích ứng: tối thiểu candidate_mean + 0.04f để chống báo động giả do trôi RF
                         motion_threshold_high_ = std::max(
-                            candidate_mean + 4.0f * baseline_deviation,
-                            candidate_mean + 0.04f);
+                            baseline_mean_ + 4.0f * baseline_deviation_,
+                            baseline_mean_ + 0.04f);
                         motion_threshold_low_ = std::max(
-                            candidate_mean + 2.0f * baseline_deviation,
-                            candidate_mean + 0.02f);
+                            baseline_mean_ + 2.0f * baseline_deviation_,
+                            baseline_mean_ + 0.02f);
                         motion_calibrated_ = true;
+                        quiet_frames_ = 0;
                     }
                 }
             }
-        } else if (frame.motion_score > motion_threshold_high_) {
-            presence_detected_ = true;
-            low_motion_frames_ = 0;
-        } else if (frame.motion_score < motion_threshold_low_) {
-            if (++low_motion_frames_ >= kLowMotionFramesToClear) {
-                presence_detected_ = false;
-                low_motion_frames_ = kLowMotionFramesToClear;
-            }
         } else {
-            low_motion_frames_ = 0;
+            // Đánh giá phương sai trên cửa sổ chuyển động để đo độ tĩnh lặng của môi trường
+            float window_mean = frame.motion_score;
+            float window_var = 0.0f;
+            for (float s : motion_window_) {
+                window_var += (s - window_mean) * (s - window_mean);
+            }
+            const float window_std =
+                std::sqrt(window_var / static_cast<float>(motion_window_.size()));
+
+            if (frame.motion_score > motion_threshold_high_) {
+                presence_detected_ = true;
+                low_motion_frames_ = 0;
+                quiet_frames_ = 0;
+            } else if (frame.motion_score < motion_threshold_low_) {
+                if (++low_motion_frames_ >= kLowMotionFramesToClear) {
+                    presence_detected_ = false;
+                    low_motion_frames_ = kLowMotionFramesToClear;
+                }
+                ++quiet_frames_;
+            } else {
+                // ĐANG TRONG KHOẢNG CHẾT (DEADBAND): motion_threshold_low_ <= score <= motion_threshold_high_
+                // Nếu cửa sổ rất phẳng (window_std < 0.012f), đây là nhiễu nền tĩnh (xuyên kính hoặc trôi nhiệt)
+                // chứ không phải người đang bước đi. Cho phép xả trạng thái có người sau 20 frame.
+                if (window_std < 0.012f) {
+                    if (++low_motion_frames_ >= (kLowMotionFramesToClear + 5)) {
+                        presence_detected_ = false;
+                        low_motion_frames_ = kLowMotionFramesToClear + 5;
+                    }
+                    ++quiet_frames_;
+                } else {
+                    low_motion_frames_ = 0;
+                    quiet_frames_ = 0;
+                }
+            }
+
+            // Dynamic Leaky Baseline: Khi phòng tĩnh lặng liên tục (> 45 frame ~1.5s),
+            // bộ bám EMA chậm (alpha = 0.008) tự thích ứng với sàn nhiễu và nhiệt độ chip của phòng hiện tại.
+            if (!presence_detected_ && quiet_frames_ >= 45 && window_std < 0.015f) {
+                const float alpha = 0.008f;
+                baseline_mean_ = (1.0f - alpha) * baseline_mean_ + alpha * frame.motion_score;
+                baseline_deviation_ = (1.0f - alpha) * baseline_deviation_ +
+                                      alpha * std::max(window_std, kMinimumBaselineDeviation);
+
+                motion_threshold_high_ = std::max(
+                    baseline_mean_ + 4.0f * baseline_deviation_,
+                    baseline_mean_ + 0.04f);
+                motion_threshold_low_ = std::max(
+                    baseline_mean_ + 2.0f * baseline_deviation_,
+                    baseline_mean_ + 0.02f);
+            }
         }
     }
 

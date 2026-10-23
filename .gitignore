@@ -108,3 +108,7 @@ graph_info.json
 Thumbs.db
 *.log
 *.tmp
+# Python
+__pycache__/
+*.pyc
+

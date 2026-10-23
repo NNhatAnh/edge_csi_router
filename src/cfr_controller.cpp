@@ -66,7 +66,31 @@ bool findNewestDumpInDir(const std::string &dir, std::string &out_path,
 }
 } // namespace
 
-CFRController::CFRController() { pci_path_ = findAth12kPciPath(); }
+CFRController::CFRController() {
+    pci_path_ = findAth12kPciPath();
+
+    // Dọn dẹp trạng thái mồ côi khi khởi động:
+    // 1. Tiêu diệt triệt để tiến trình cfr_test_app cũ nếu còn sót lại từ phiên trước
+    int kill_res = system("killall -9 cfr_test_app 2>/dev/null");
+    (void)kill_res;
+
+    // 2. Đưa toàn bộ thanh ghi enable_cfr của các mac device trên card ath12k về 0
+    namespace fs = std::filesystem;
+    std::error_code ec;
+    if (!pci_path_.empty() && fs::is_directory(pci_path_, ec)) {
+        for (const auto &entry : fs::directory_iterator(pci_path_, ec)) {
+            if (entry.is_directory(ec)) {
+                const std::string name = entry.path().filename().string();
+                if (name.find("mac") == 0) {
+                    std::string enable_path = entry.path().string() + "/enable_cfr";
+                    if (fs::exists(enable_path, ec)) {
+                        writeSysfs(enable_path, "0");
+                    }
+                }
+            }
+        }
+    }
+}
 
 CFRController::~CFRController() { stopCapture(); }
 
@@ -194,6 +218,89 @@ void CFRController::checkProcessAliveLocked() {
             last_error_ = "cfr_test_app exited unexpectedly";
             std::cerr << "[CFR] Process died unexpectedly\n";
         }
+    }
+}
+
+bool CFRController::isTargetStationConnectedLocked() const {
+    if (target_mac_.empty())
+        return true;
+
+    std::string mac_lower = toLower(target_mac_);
+    namespace fs = std::filesystem;
+    std::error_code ec;
+
+    // 1. Kiểm tra debugfs của driver vô tuyến Linux mac80211 / ath12k
+    const std::string base_debugfs = "/sys/kernel/debug/ieee80211";
+    if (fs::is_directory(base_debugfs, ec)) {
+        if (!phy_.empty() && !iface_.empty()) {
+            std::string sta_dir = base_debugfs + "/" + phy_ + "/netdev:" + iface_ + "/stations/" + mac_lower;
+            if (fs::exists(sta_dir, ec)) return true;
+
+            std::string sta_link0 = sta_dir + "/link-0";
+            if (fs::exists(sta_link0, ec)) return true;
+        }
+
+        // Quét tìm trên bất kỳ netdev nào của phy này (đề phòng client roam băng tần)
+        std::string phy_base = base_debugfs + "/" + (phy_.empty() ? "phy00" : phy_);
+        if (fs::is_directory(phy_base, ec)) {
+            for (const auto &entry : fs::directory_iterator(phy_base, ec)) {
+                const std::string name = entry.path().filename().string();
+                if (name.find("netdev:") == 0) {
+                    std::string test_dir = entry.path().string() + "/stations/" + mac_lower;
+                    if (fs::exists(test_dir, ec)) return true;
+                }
+            }
+        }
+
+        // Đã kiểm tra debugfs nhưng không thấy station ở interface nào -> Thiết bị đã ngắt kết nối!
+        return false;
+    }
+
+    // 2. Fallback nếu debugfs không mount: kiểm tra bằng iw dev hoặc iwinfo
+    if (!iface_.empty()) {
+        std::string cmd = "iw dev " + iface_ + " station get " + target_mac_ + " >/dev/null 2>&1";
+        if (system(cmd.c_str()) == 0) {
+            return true;
+        }
+        std::string cmd_iwinfo = "iwinfo " + iface_ + " assoclist 2>/dev/null | grep -iq \"" + target_mac_ + "\"";
+        if (system(cmd_iwinfo.c_str()) == 0) {
+            return true;
+        }
+        return false;
+    }
+
+    return true;
+}
+
+void CFRController::checkTargetConnectionLocked() {
+    if (!running_ || target_mac_.empty()) {
+        target_disconnect_count_ = 0;
+        return;
+    }
+
+    // Cho phép thời gian ân hạn 2 giây sau khi bắt đầu thu để driver & station ổn định
+    auto now = std::chrono::steady_clock::now();
+    if (std::chrono::duration_cast<std::chrono::seconds>(now - start_time_).count() < 2) {
+        return;
+    }
+
+    if (!isTargetStationConnectedLocked()) {
+        ++target_disconnect_count_;
+        std::cerr << "[CFR] Target station " << target_mac_
+                  << " connection check failed (" << target_disconnect_count_ << "/2)\n";
+        // Cần 2 lần kiểm tra liên tiếp không thấy thiết bị để tránh false-trigger
+        if (target_disconnect_count_ >= 2) {
+            std::string mac = target_mac_;
+            std::string ip = target_ip_;
+            stopCaptureLocked();
+            last_error_ = "Thiết bị (" + mac + (ip.empty() ? "" : (" / " + ip)) +
+                          ") đã mất kết nối Wi-Fi. Đã tự động ngừng thu CSI.";
+            std::cerr << "[CFR] Auto-stop triggered: Target station " << mac
+                      << " disconnected from Wi-Fi network.\n";
+            target_disconnect_count_ = 0;
+        }
+    } else {
+        target_disconnect_count_ = 0;
     }
 }
 
@@ -363,15 +470,32 @@ bool CFRController::startCapture(const std::string &mac,
     running_ = true;
     start_time_ = std::chrono::steady_clock::now();
     last_error_.clear();
+    target_disconnect_count_ = 0;
 
     std::cout << "[CFR] Capture daemon started successfully (PID: " << pid_
               << " for " << target_mac_ << " on " << iface_ << ")\n";
     return true;
 }
 
-bool CFRController::stopCapture() {
+bool CFRController::stopCapture(const std::string &reason) {
     std::lock_guard<std::mutex> lock(mutex_);
-    return stopCaptureLocked();
+    bool ret = stopCaptureLocked();
+    if (!reason.empty()) {
+        last_error_ = reason;
+    }
+    return ret;
+}
+
+bool CFRController::isRunning() {
+    std::lock_guard<std::mutex> lock(mutex_);
+    checkProcessAliveLocked();
+    checkTargetConnectionLocked();
+    return running_;
+}
+
+bool CFRController::isTargetConnected() {
+    std::lock_guard<std::mutex> lock(mutex_);
+    return isTargetStationConnectedLocked();
 }
 
 bool CFRController::stopCaptureLocked() {
@@ -434,6 +558,7 @@ bool CFRController::stopCaptureLocked() {
 CFRCaptureStatus CFRController::getStatus() {
     std::lock_guard<std::mutex> lock(mutex_);
     checkProcessAliveLocked();
+    checkTargetConnectionLocked();
 
     CFRCaptureStatus status;
     status.running = running_;

@@ -39,9 +39,12 @@ class WaveDetector {
     bool isWaving() const { return is_waving_; }
     float getConfidence() const { return wave_confidence_; }
     float getRawProb() const { return raw_prob_; }
+    float getSmoothProb() const { return smooth_prob_; }
     uint32_t getSamplesInWindow() const { return samples_in_window_; }
     const std::string &getStatus() const { return status_; }
     const std::string &getReason() const { return reason_; }
+    size_t getConsecutiveTriggers() const { return consecutive_triggers_; }
+    size_t getRequiredConsecutiveHits() const { return required_consecutive_hits_; }
 
     void setThreshold(float threshold) { trigger_threshold_ = threshold; }
     float getThreshold() const { return trigger_threshold_; }
@@ -52,10 +55,13 @@ class WaveDetector {
     static constexpr size_t kNonDcTones = 208;
     static constexpr uint64_t kWindowUs = 2000000ULL;       // 2.0s window
     static constexpr uint64_t kMaxPairGapUs = 100000ULL;    // 100ms max pair gap
-    static constexpr uint64_t kHoldDurationUs = 1500000ULL; // 1.5s active hold time
+    static constexpr uint64_t kHoldDurationUs = 800000ULL;  // 0.8s active hold time (thay vì 1.5s để nhả nhãn nhanh)
     static constexpr size_t kMinSamples = 10;               // Minimum samples in 2.0s
     static constexpr size_t kMinShortPairs = 5;             // Minimum consecutive pairs
-    static constexpr float kDefaultThreshold = 0.35f;       // Model threshold
+    static constexpr float kDefaultThreshold = 0.55f;       // Model threshold (0.55 khử sạch 100% nhiễu đi lại / cử động)
+    static constexpr uint64_t kTargetHitDurationUs = 350000ULL; // 350ms target continuous duration
+    static constexpr size_t kMinConsecutiveFrames = 6;      // Minimum 6 continuous frames
+    static constexpr float kProbEmaAlpha = 0.35f;           // EMA alpha for probability smoothing
 
     struct Sample {
         uint64_t timestamp_us = 0;
@@ -66,14 +72,17 @@ class WaveDetector {
     bool is_waving_ = false;
     float wave_confidence_ = 0.0f;
     float raw_prob_ = 0.0f;
+    float smooth_prob_ = 0.0f;
     uint32_t samples_in_window_ = 0;
     std::string status_ = "idle"; // "idle", "waving", "unavailable"
     std::string reason_ = "idle";
     uint64_t last_active_ts_us_ = 0;
     uint64_t last_infer_ts_us_ = 0;
     float trigger_threshold_ = kDefaultThreshold;
+    size_t consecutive_triggers_ = 0;
+    size_t required_consecutive_hits_ = kMinConsecutiveFrames;
 
-    void processWindow(uint64_t current_ts_us);
+    void processWindow(uint64_t current_ts_us, float motion_score = 0.0f);
     static float computeMedian(std::vector<float> &values);
 };
 

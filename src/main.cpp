@@ -238,7 +238,7 @@ bool replayFile(const std::string &path, WebServer &server) {
     return true;
 }
 
-void followRelayDirectory(const Options &options, WebServer &server) {
+void followRelayDirectory(const Options &options, WebServer &server, CFRController &cfr_controller) {
     namespace fs = std::filesystem;
     fs::path active_file;
     fs::path writer_fdinfo;
@@ -253,6 +253,18 @@ void followRelayDirectory(const Options &options, WebServer &server) {
               << '\n';
 
     while (!stop_requested) {
+        // Chỉ đọc và phát tán dữ liệu khi CFRController đang thu (hoặc đang replay file)
+        if (!cfr_controller.isRunning() && options.replay_file.empty()) {
+            if (!active_file.empty()) {
+                active_file.clear();
+                writer_fdinfo.clear();
+                offset = 0;
+                parser.reset();
+            }
+            std::this_thread::sleep_for(std::chrono::milliseconds(200));
+            continue;
+        }
+
         const auto now = std::chrono::steady_clock::now();
         if (active_file.empty() || (now - last_dir_scan > std::chrono::seconds(2))) {
             last_dir_scan = now;
@@ -378,14 +390,9 @@ void followRelayDirectory(const Options &options, WebServer &server) {
                 };
 
                 if (writer_fdinfo.empty()) {
-                    // Không có tiến trình cfr_test_app nào đang ghi dữ liệu (chưa bấm Thu hoặc đã bấm Dừng):
-                    // Đặt offset ở cuối file để chờ đợt ghi mới, TUYỆT ĐỐI KHÔNG đọc vét file cũ đẩy lên web!
                     offset = file_size;
                     parser.reset();
                 } else {
-                    // LIVE WRITER MODE (ath12k ring buffer)
-                    // Nếu tụt lại sau con trỏ ghi quá 64 KB (do traffic Wi-Fi quá mạnh hoặc CPU bận):
-                    // Bỏ qua nợ dữ liệu cũ dồn ứ, nhảy thẳng tới vị trí gần con trỏ ghi hiện tại để giữ độ trễ thời gian thực < 30ms!
                     constexpr uintmax_t kMaxBacklog = 65536;
                     uintmax_t backlog = 0;
                     if (available_size >= offset) {
@@ -461,11 +468,30 @@ int main(int argc, char **argv) {
     std::thread watcher;
     if (!options.watch_directory.empty()) {
         watcher = std::thread(followRelayDirectory, std::cref(options),
-                              std::ref(server));
+                              std::ref(server), std::ref(cfr_controller));
     }
 
-    while (!stop_requested)
+    auto last_target_check = std::chrono::steady_clock::now();
+    while (!stop_requested) {
         std::this_thread::sleep_for(std::chrono::milliseconds(200));
+
+        // Kiểm tra định kỳ kết nối thiết bị mục tiêu nếu đang thu CFR
+        const auto now = std::chrono::steady_clock::now();
+        if (now - last_target_check >= std::chrono::milliseconds(1000)) {
+            last_target_check = now;
+            if (cfr_controller.isRunning()) {
+                CFRCaptureStatus cstat = cfr_controller.getStatus();
+                if (!cstat.running) {
+                    server.resetMotionCalibration();
+                    if (options.probe_enabled) {
+                        prober.setConfig(false, "single", {}, options.probe_interval);
+                    }
+                    std::cerr << "[Main] Capture stopped automatically: "
+                              << cstat.last_error << '\n';
+                }
+            }
+        }
+    }
 
     cfr_controller.stopCapture();
     server.stop();

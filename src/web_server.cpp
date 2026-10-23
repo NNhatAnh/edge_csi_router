@@ -185,10 +185,9 @@ void WebServer::publish(const CSIData &frame) {
     wave_detector_.update(latest_frame_);
 
     // Quyết định hiện diện hợp nhất 3 trạng thái cốt lõi:
-    // 1. Chuyển động vĩ mô (người đi lại / cử động)
+    // 1. Chuyển động vĩ mô (người đi lại / cử động) - đồng bộ cờ presence_detected đã qua bộ lọc Hysteresis & Deadband từ motion_detector_
     const bool is_macro_moving =
-        latest_frame_.motion_calibrated &&
-        (latest_frame_.motion_score > latest_frame_.motion_threshold_high);
+        latest_frame_.motion_calibrated && latest_frame_.presence_detected;
     // 2. Vi chuyển động nhịp thở (người ngồi yên thức hoặc nằm ngủ)
     const bool is_micro_breathing = latest_frame_.is_human_presence;
 
@@ -694,7 +693,7 @@ void WebServer::handleCfrApi(int client_fd, const std::string &method,
         std::string mac;
         std::string iface;
         std::string ip;
-        int period = 10;
+        int period = 50;
         int bandwidth = 0;
         int method_id = 0;
         bool auto_probe = true;
@@ -840,6 +839,15 @@ void WebServer::handleCfrApi(int client_fd, const std::string &method,
 
     // GET: Trả về trạng thái hiện tại
     CFRCaptureStatus status = cfr_controller_->getStatus();
+    if (!status.running) {
+        std::lock_guard<std::mutex> lock(data_mutex_);
+        if (has_frame_) {
+            has_frame_ = false;
+            motion_detector_.reset();
+            breath_detector_.reset();
+            wave_detector_.reset();
+        }
+    }
     std::ostringstream ss;
     ss << "{\"running\":" << (status.running ? "true" : "false")
        << ",\"target_mac\":\"" << status.target_mac << "\""

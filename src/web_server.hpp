@@ -24,6 +24,7 @@ class WebServer {
     bool start();
     void stop();
     void publish(const CSIData &frame);
+    void resetMotionCalibration();
 
   private:
     int web_port_;
@@ -53,7 +54,6 @@ class WebServer {
 
     void runWebServer();
     void runIngestServer();
-    void resetMotionCalibration();
     void handleWebClient(int client_fd);
     void handleIngestClient(int client_fd);
     void handleEventStream(int client_fd);
