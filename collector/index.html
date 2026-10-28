@@ -62,6 +62,9 @@
     <label><input type="radio" name="label" value="no_wave"><span>no_wave — có người, không vẫy</span></label>
     <label><input type="radio" name="label" value="empty"><span>empty — phòng trống</span></label>
     <label><input type="radio" name="label" value="calib"><span>calib — phòng YÊN 30–60 s, đầu mỗi phiên (đo nền)</span></label>
+    <label><input type="radio" name="label" value="circle"><span>circle — cầm điện thoại vẽ tròn</span></label>
+    <label><input type="radio" name="label" value="triangle"><span>triangle — cầm điện thoại vẽ tam giác</span></label>
+    <label><input type="radio" name="label" value="none"><span>none — cầm điện thoại, không vẽ</span></label>
     <label><input type="radio" name="label" value="test"><span>test (tự loại)</span></label>
   </div>
   <button id="find" type="button">Tìm station</button>
@@ -81,7 +84,7 @@
 <script>
 const $ = id => document.getElementById(id);
 const FIELDS = ["board","sta","sta_ip","period_ms","bw","secs","person","position","distance","session","room","note"];
-const LABELS = ["wave","no_wave","empty","calib","test"];
+const LABELS = ["wave","no_wave","empty","calib","test","circle","triangle","none"];
 const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 
 try { const saved = JSON.parse(localStorage.getItem("form") || "{}");

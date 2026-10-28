@@ -60,7 +60,7 @@ def fuse(measurement, peer_mac, now=None, max_age_s=2.0, max_skew_s=0.5):
             reasons.append("Height difference exceeds measured range")
     if reasons:
         return result
-    horizontal = math.sqrt(max(0.0, distance * distance - height * height))
+    horizontal = distance * math.sqrt(max(0.0, 1.0 - (height / distance) ** 2))
     angle = math.radians(aoa["angle_deg"])
     result.update(valid=True, x_m=horizontal * math.cos(angle), y_m=horizontal * math.sin(angle),
                   horizontal_distance_m=horizontal, slant_distance_m=distance,

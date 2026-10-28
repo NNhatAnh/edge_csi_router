@@ -5,10 +5,8 @@ __pycache__/
 router/build/
 models/*/csi_rf_model.so
 
-# dữ liệu thu (lớn, có MAC thiết bị) — tạo lại bằng collector
-data/raw/
-data/trash/
-data/localization/
+# dữ liệu thu (lớn, có MAC thiết bị), nét vẽ, chứng chỉ HTTPS, tài liệu tải về — tạo lại bằng collector / viz / tools
+data/
 
 # phần mềm Qualcomm trong kit (firmware, module kernel, zip gốc) — không phát tán công khai
 *.zip
@@ -33,3 +31,10 @@ kit/*/measurements/
 *.pem
 *.p12
 id_rsa*
+*.crt
+*.srl
+
+# kết quả chạy tạm
+runs/
+*.log
+*.npz

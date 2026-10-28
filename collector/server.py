@@ -17,7 +17,7 @@ CAPTURE = Path(__file__).with_name("capture_pull.sh")  # kit pull + tham số BW
 KEEPAWAKE = ROOT / "tools" / "keepawake_udp.py"
 INDEX = Path(__file__).with_name("index.html")
 
-LABELS = {"wave", "no_wave", "empty", "calib", "test"}  # calib: phòng YÊN 30–60 s đầu mỗi phiên → nền cho inv_nb
+LABELS = {"wave", "no_wave", "empty", "calib", "test", "circle", "triangle", "none"}  # calib: phòng YÊN 30–60 s đầu mỗi phiên → nền cho inv_nb
 # interface AP 5 GHz và node CFR (debugfs ath12k_hwN) theo router; router khác dùng mặc định RDP499
 BOARDS = {"192.168.11.1": dict(ap_if="phy00.0-0", hw="ath12k_hw0"),   # RDP499, 3 chain, driver 0006
           "192.168.4.1": dict(ap_if="phy00.2-0", hw="ath12k_hw2")}    # RDP488, 5 chain, patch 0001-0005

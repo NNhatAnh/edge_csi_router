@@ -23,8 +23,16 @@
 </head>
 <body>
 <canvas id="c"></canvas>
+<div id="drawbox" style="display:none; position:fixed; right:12px; bottom:12px; width:min(380px, calc(100vw - 24px)); background:var(--panel); border-radius:10px; padding:10px; box-sizing:border-box;">
+  <div id="drawbig" style="font-size:28px; font-weight:600; text-align:center;">—</div>
+  <canvas id="drawcv" style="width:100%; aspect-ratio:1; display:block;"></canvas>
+  <div id="hlbl" style="font-size:12px; color:var(--muted); margin-top:6px;">Horizontal: gyro (grey) vs Wi-Fi CSI (cyan)</div>
+  <canvas id="hcv" style="width:100%; height:110px; display:block;"></canvas>
+</div>
 <div class="hud">
   <div class="state" id="state">—</div>
+  <div class="row" id="drawrow" style="display:none"><span>iPhone draw</span><span id="drawlbl">—</span></div>
+  <div class="row" id="shaperow" style="display:none"><span>Shape (11.1)</span><span id="shape">—</span></div>
   <div id="linkstats">
   <div class="row"><span>P(wave)</span><span id="p">—</span></div>
   <div class="bar"><i id="pbar"></i><b id="thr"></b></div>
@@ -32,6 +40,7 @@
   <div class="bar"><i id="mbar"></i></div>
   </div>
   <div class="msg" id="msg"></div>
+  <div class="row"><span>Chain level (dB)</span><span id="cdb">—</span></div>
   <div id="phones"></div>
   <div class="row" id="linkdistance"><label>Link distance (m) <input id="dist" type="number" min="1" max="15" step="0.5" value="4"></label></div>
 </div>
@@ -74,7 +83,7 @@ function router(name, color) {
   scene.add(g); return g;
 }
 const r41 = router("4.1 AP", 0x4cc9f0), r111 = router("11.1", 0xf72585);
-let singleAP = false;
+let singleAP = false, no41 = false;
 
 // link + vùng Fresnel thứ nhất: bán kính giữa link r = sqrt(λ·d/4), λ = c / 5.21 GHz
 const LAMBDA = 299792458 / 5.21e9;
@@ -85,7 +94,7 @@ const fresWire = new THREE.Mesh(fres.geometry, new THREE.MeshBasicMaterial({ col
 function layout() {
   const d = Math.max(1, Math.min(15, +$("dist").value || 4));
   r41.position.set(-d / 2, 1, 0); r111.position.set(d / 2, 1, 0);
-  if (singleAP) r111.position.set(0, 1, 0);
+  if (singleAP || no41) r111.position.set(0, 1, 0);
   link.geometry.setFromPoints([r41.position.clone(), r111.position.clone()]);
   const r = Math.sqrt(LAMBDA * d / 4);
   for (const m of [fres, fresWire]) { m.position.set(0, 1, 0); m.scale.set(d / 2, r, r); }
@@ -129,10 +138,21 @@ function setSingleAP(enabled) {
   singleAP = enabled;
   for (const o of [r41, link, fres, fresWire, ...waves]) o.visible = !singleAP;
   for (const s of surf) s.mesh.visible = !singleAP;
-  $("linkstats").hidden = $("linkdistance").hidden = singleAP;
+  $("linkstats").hidden = singleAP;
+  $("linkdistance").style.display = singleAP ? "none" : "";
   document.querySelector(".note").textContent = singleAP
     ? "Router at (0, 0). RSSI rings show distance only; XY needs measured AoA + FTM."
     : "Signal only — no position or pose.";
+  layout();
+}
+
+// chỉ dùng 11.1 (--no-csi / --csi-peer): ẩn router 4.1, link và vùng Fresnel; 11.1 ra giữa phòng
+function hide41(on) {
+  if (no41 === on) return;
+  no41 = on;
+  for (const o of [r41, link, fres, fresWire, ...waves]) o.visible = !on;
+  $("linkstats").hidden = on;
+  $("linkdistance").style.display = on ? "none" : "";
   layout();
 }
 
@@ -149,7 +169,7 @@ function createPhone(ph) {
   const info = document.createElement("div"), status = document.createElement("div"), xy = document.createElement("div");
   info.className = status.className = xy.className = "msg";
   const cal = document.createElement("button"); cal.textContent = "Calibrate RSSI at 1 m";
-  cal.setAttribute("aria-label", `Calibrate ${ph.name || ph.mac} at 1 m`);
+  cal.setAttribute("aria-label", `Calibrate RSSI for ${ph.name || ph.mac} at 1 m`);
   cal.onclick = async () => {
     cal.disabled = true;
     try {
@@ -182,7 +202,7 @@ function showPhones(phones) {
       g.clearRect(0, 0, 512, 64); g.fillText(v.name.textContent, 256, 42);
       v.lbl.material.map.needsUpdate = true; v.labelText = v.name.textContent;
     }
-    v.cal.setAttribute("aria-label", `Calibrate ${ph.name || ph.mac} at 1 m`);
+    v.cal.setAttribute("aria-label", `Calibrate RSSI for ${ph.name || ph.mac} at 1 m`);
     v.info.textContent = `${ph.ip || "No IP yet"} · ${ph.mac}`;
     v.cal.disabled = !ok;
     const point = ph.position;
@@ -203,7 +223,7 @@ function showPhones(phones) {
       v.status.textContent = ph.connected === false ? "Not connected to 11.1" : ph.connected == null ? "Waiting for router" : "Connected · asleep / no fresh ACK";
       continue;
     }
-    v.distance.textContent = `≈ ${ph.dist.toFixed(1)} m (RSSI)`;
+    v.distance.textContent = `≈ ${ph.dist.toFixed(1)} m · ${ph.zone ?? ""}` + (ph.trend && ph.trend !== "still" ? ` · ${ph.trend} ${Math.abs(ph.vel).toFixed(1)} m/s` : "");
     v.status.textContent = `RSSI ${ph.rssi} dBm · ${ph.lo.toFixed(1)}–${ph.hi.toFixed(1)} m · 1 m = ${ph.p1m.toFixed(0)} dBm`;
     const c = r111.position, d = Math.min(ph.dist, 12), lo = Math.min(ph.lo, 12), hi = Math.min(ph.hi, 12);
     v.band.geometry.dispose(); v.band.geometry = new THREE.RingGeometry(lo, hi, 96);
@@ -213,13 +233,82 @@ function showPhones(phones) {
   }
 }
 
+// hình vừa nhận diện (sensing/shape.py, chạy trong viz/server.py --shape-model): vẽ hình mẫu trước 11.1, KHÔNG phải đường tay thật
+const SHAPE_MIN_P = 0.6;
+const shapes = {};
+for (const [k, n] of [["circle", 64], ["triangle", 3]]) {
+  const pts = Array.from({ length: n }, (_, i) => { const a = Math.PI / 2 + i * 2 * Math.PI / n; return new THREE.Vector3(Math.cos(a) * 0.3, Math.sin(a) * 0.3, 0); });
+  shapes[k] = new THREE.LineLoop(new THREE.BufferGeometry().setFromPoints(pts), new THREE.LineBasicMaterial({ color: 0x06d6a0, transparent: true }));
+  shapes[k].visible = false; scene.add(shapes[k]);
+}
+let shapeShown = "", shapeT = 0;
+function showShape(sh) {
+  $("shaperow").style.display = "";
+  const p = sh.p || {}, top = sh.label, ok = top && top !== "none" && p[top] >= SHAPE_MIN_P;
+  $("shape").textContent = !top ? "skip: " + (sh.skip || "") : Object.entries(p).map(([k, v]) => `${k} ${v.toFixed(2)}`).join("  ");
+  if (ok) { shapeShown = top; shapeT = 1; }
+  $("shape").style.color = ok ? "var(--ok)" : "var(--muted)";
+}
+
+// nét vẽ từ gyro iPhone (viz/draw.py, --draw-port): 1° xoay = 2.5 cm, vẽ trước 11.1, cạnh hình mẫu
+const strokeGeo = new THREE.BufferGeometry(), strokeMat = new THREE.LineBasicMaterial({ color: 0xf72585 });
+const stroke = new THREE.Line(strokeGeo, strokeMat); scene.add(stroke);
+let lastStrokeN = -1;
+// khung 2D lớn: nét vẽ rõ hơn 3D
+function draw2d(pts, color) {
+  const cv = $("drawcv"), w = cv.width = cv.clientWidth * devicePixelRatio, h = cv.height = cv.clientHeight * devicePixelRatio, c = cv.getContext("2d");
+  if (pts.length < 2) return;
+  const xs = pts.map(p => p[0]), ys = pts.map(p => p[1]);
+  const span = Math.max(60, Math.max(...xs) - Math.min(...xs), Math.max(...ys) - Math.min(...ys));
+  const k = 0.85 * Math.min(w, h) / span, cx = (Math.max(...xs) + Math.min(...xs)) / 2, cy = (Math.max(...ys) + Math.min(...ys)) / 2;
+  c.lineWidth = 5 * devicePixelRatio; c.lineJoin = c.lineCap = "round"; c.strokeStyle = color; c.beginPath();
+  pts.forEach((p, i) => c[i ? "lineTo" : "moveTo"](w / 2 + (p[0] - cx) * k, h / 2 - (p[1] - cy) * k));
+  c.stroke();
+}
+// chiều ngang theo thời gian: gyro x (xám) và −pha CSI 0-1 (xanh), mỗi đường chuẩn hoá z — 11.1 chỉ thấy chiều ngang
+function drawHorizontal(h) {
+  const cv = $("hcv"), w = cv.width = cv.clientWidth * devicePixelRatio, ht = cv.height = cv.clientHeight * devicePixelRatio, c = cv.getContext("2d");
+  if (!h) { $("hlbl").textContent = "Horizontal: CSI off"; return; }
+  const all = [...h.gyro, ...h.csi];
+  $("hlbl").textContent = `Horizontal: gyro (grey) vs Wi-Fi CSI (cyan) · ${h.n_csi} CSI` + (h.r !== null && h.r !== undefined ? ` · r = ${h.r.toFixed(2)}` : "");
+  if (all.length < 2) return;
+  const tmax = Math.max(0.5, ...all.map(p => p[0])), vmax = Math.max(2.5, ...all.map(p => Math.abs(p[1])));
+  const X = t => t / tmax * (w - 8) + 4, Y = v => ht / 2 - v / vmax * (ht / 2 - 4);
+  for (const [pts, col] of [[h.gyro, "#9aa4b2"], [h.csi, "#4cc9f0"]]) {
+    c.lineWidth = 2.5 * devicePixelRatio; c.strokeStyle = col; c.beginPath();
+    pts.forEach((p, i) => c[i ? "lineTo" : "moveTo"](X(p[0]), Y(p[1]))); c.stroke();
+  }
+}
+function showDraw(d) {
+  drawHorizontal(d.horizontal);
+  $("drawrow").style.display = ""; $("drawbox").style.display = "";
+  const pts = d.pts || [];
+  if (pts.length) {
+    const cx = pts.reduce((a, p) => a + p[0], 0) / pts.length, cy = pts.reduce((a, p) => a + p[1], 0) / pts.length;
+    strokeGeo.setFromPoints(pts.map(p => new THREE.Vector3((p[0] - cx) * 0.025, (p[1] - cy) * 0.025, 0)));
+  }
+  strokeMat.color.set(d.active ? 0xf72585 : d.shape && d.shape !== "unknown" ? 0x80ed99 : 0x9aa4b2);
+  const col = d.active ? "#f72585" : d.shape && d.shape !== "unknown" ? "#80ed99" : "#9aa4b2";
+  draw2d(pts, col);
+  $("drawbig").textContent = d.active ? "drawing…" : d.shape ? d.shape.toUpperCase() : "hold the pad on the phone";
+  $("drawbig").style.color = col;
+  $("drawlbl").textContent = d.active ? "drawing…" : d.shape ? `${d.shape} ${d.score.toFixed(2)} (#${d.n})` : "hold the pad on the phone";
+  if (!d.active && d.n !== lastStrokeN && lastStrokeN >= 0 && d.shape && d.shape !== "unknown") { shapeShown = d.shape; shapeT = 1; }
+  lastStrokeN = d.n;
+}
+
 // HUD: chỉ trạng thái, P(wave) so với ngưỡng daemon, mức chuyển động, và lý do khi dữ liệu không dùng được
 let motion = 0, waving = false;
 const es = new EventSource("/events");
 es.onmessage = e => {
   const m = JSON.parse(e.data), md = m.model || {};
   setSingleAP(m.single_ap === true);
+  hide41(m.no_41 === true || m.single_ap === true);
+  if (!singleAP) for (const s of surf) s.mesh.visible = m.status !== "CSI off (--no-csi)";
   if (m.amp) pushAmp(m.amp);
+  if (m.shape) showShape(m.shape);
+  if (m.draw) showDraw(m.draw);
+  if (m.chain_db) $("cdb").textContent = m.chain_db.map((v, i) => `c${i} ${v.toFixed(1)}`).join("  ");
   showPhones(m.phones || (m.phone ? [m.phone] : []));
   if (m.motion !== undefined) { motion = m.motion; $("mv").textContent = Math.round(motion * 100) + "%"; $("mbar").style.width = motion * 100 + "%"; }
   const fresh = md.seen && md.age !== undefined && md.age < 6;
@@ -229,10 +318,10 @@ es.onmessage = e => {
   $("pbar").style.width = (fresh ? md.p_wave * 100 : 0) + "%"; $("pbar").style.background = waving ? "var(--warn)" : "var(--acc)";
   $("thr").style.left = thr * 100 + "%";
   const live = !m.stale && /đang thu/.test(m.status || "");
-  $("state").textContent = !live ? "NO DATA" : waving ? "WAVING" : motion > 0.3 ? "MOTION" : "IDLE";
+  $("state").textContent = !live ? (no41 ? "11.1" : "NO DATA") : waving ? "WAVING" : motion > 0.3 ? "MOTION" : "IDLE";
   $("state").style.color = !live ? "var(--muted)" : waving ? "var(--warn)" : motion > 0.3 ? "var(--acc)" : "var(--fg)";
-  $("msg").textContent = !live ? (/VIZERR/.test(m.status || "") ? "CSI busy on 11.1" : "No CSI from 11.1")
-    : !fresh ? "Model on 4.1 not reporting"
+  $("msg").textContent = m.status === "CSI off (--no-csi)" ? "CSI off (collector may capture)" : !live ? (/VIZERR/.test(m.status || "") ? "CSI busy on 11.1" : "No CSI from 11.1")
+    : !fresh && !no41 ? "Model on 4.1 not reporting"
     : m.skip ? "Window skipped: " + m.skip.reason.replace("chỉ", "only").replace("bản ghi", "records")
     : `${m.rate} CSI/s`;
   $("mbar").style.opacity = m.skip ? 0.35 : 1;
@@ -254,6 +343,13 @@ renderer.setAnimationLoop(() => {
   if (waving) { const pulse = 0.5 + 0.5 * Math.sin(clock.elapsedTime * 8); fres.material.color.setHSL(0.11, 1, 0.5 + 0.15 * pulse); fres.material.opacity = 0.35 + 0.3 * pulse; }
   else fres.material.color.setHSL(0.6 - motion * 0.6, 0.9, 0.55);
   waves.forEach(m => { m.userData.p = (m.userData.p + dt * 0.25) % 1; const s = 0.15 + m.userData.p * 1.2; m.scale.setScalar(s); m.position.copy(r41.position); m.material.opacity = 0.1 * (1 - m.userData.p); });
+  stroke.position.copy(r111.position).add(new THREE.Vector3(0, 1.3, 0.5)); stroke.lookAt(cam.position);
+  shapeT = Math.max(0, shapeT - dt * 0.5);  // mờ dần ~2 s sau lần nhận diện cuối
+  for (const [k, o] of Object.entries(shapes)) {
+    o.visible = k === shapeShown && shapeT > 0;
+    o.position.copy(r111.position).add(new THREE.Vector3(0, 1.0, 0.8)); o.lookAt(cam.position); o.material.opacity = shapeT;
+  }
+  if (shapeShown && shapeT > 0) { $("state").textContent = shapeShown.toUpperCase(); $("state").style.color = "var(--ok)"; }
   ctl.update(); renderer.render(scene, cam);
 });
 </script>

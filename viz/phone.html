@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+<title>Air Draw</title>
+<style>
+  :root { --bg:#0e1116; --fg:#e6e9ef; --muted:#9aa4b2; --acc:#4cc9f0; --ok:#80ed99; --hot:#f72585; }
+  html, body { margin:0; height:100%; background:var(--bg); color:var(--fg); font:16px system-ui, sans-serif;
+               -webkit-user-select:none; user-select:none; overscroll-behavior:none; }
+  main { display:flex; flex-direction:column; height:100%; padding:16px; box-sizing:border-box; gap:12px; }
+  button { font:inherit; padding:14px; border-radius:12px; border:0; background:var(--acc); color:#000; }
+  #pad { flex:1; position:relative; border-radius:20px; border:2px dashed var(--muted); display:flex; align-items:center;
+         justify-content:center; font-size:24px; text-align:center; touch-action:none; overflow:hidden; }
+  #cv { position:absolute; inset:0; width:100%; height:100%; pointer-events:none; }
+  #pad.on { background:rgba(247,37,133,.25); border-color:var(--hot); }
+  #out { font-size:28px; text-align:center; min-height:1.4em; }
+  .muted { color:var(--muted); font-size:14px; }
+</style>
+</head>
+<body>
+<main>
+  <button id="perm">Bật cảm biến chuyển động</button>
+  <select id="intent" style="font:inherit; padding:10px; border-radius:10px;">
+    <option value="circle">Định vẽ: hình tròn</option><option value="triangle">Định vẽ: tam giác</option>
+    <option value="none">Không vẽ (cầm yên)</option></select>
+  <div id="pad"><canvas id="cv"></canvas>Giữ để vẽ<br><span class="muted">xoay cổ tay như bút laser, thả tay khi xong</span></div>
+  <div id="out"></div>
+  <div class="muted" id="csi"></div>
+  <div class="muted" id="info">—</div>
+</main>
+<script>
+const $ = id => document.getElementById(id);
+let buf = [], drawing = false, rate = 0, enabled = false, queue = Promise.resolve();
+// gửi tuần tự (giữ thứ tự start → mẫu → end)
+function send(body) {
+  queue = queue.then(() => fetch("/imu", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) })
+    .then(r => r.json()).catch(() => ({ ok: false })));
+  return queue;
+}
+// hướng máy do iOS hợp nhất từ gyro + gia tốc kế (viz/draw.py tính con trỏ từ đây)
+function onOrient(e) {
+  if (e.alpha === null) return;
+  rate++;
+  if (drawing) buf.push({ t: e.timeStamp, o: [e.alpha, e.beta, e.gamma] });
+}
+function drawPts(pts, color) {
+  const cv = $("cv"), w = cv.width = cv.clientWidth * devicePixelRatio, h = cv.height = cv.clientHeight * devicePixelRatio, c = cv.getContext("2d");
+  if (!pts || pts.length < 2) return;
+  const xs = pts.map(p => p[0]), ys = pts.map(p => p[1]);
+  const span = Math.max(60, Math.max(...xs) - Math.min(...xs), Math.max(...ys) - Math.min(...ys));  // ≥ 30°: nét nhỏ trông nhỏ
+  const k = 0.8 * Math.min(w, h) / span, cx = (Math.max(...xs) + Math.min(...xs)) / 2, cy = (Math.max(...ys) + Math.min(...ys)) / 2;
+  c.lineWidth = 6 * devicePixelRatio; c.lineJoin = c.lineCap = "round"; c.strokeStyle = color; c.beginPath();
+  pts.forEach((p, i) => c[i ? "lineTo" : "moveTo"](w / 2 + (p[0] - cx) * k, h / 2 - (p[1] - cy) * k));
+  c.stroke();
+}
+// iOS: phải xin quyền trong cử chỉ người dùng mỗi lần tải trang → nút, hoặc lần chạm đầu vào ô vẽ
+async function enable() {
+  if (enabled) return true;
+  try {
+    if (typeof DeviceOrientationEvent?.requestPermission === "function" && await DeviceOrientationEvent.requestPermission() !== "granted")
+      throw new Error("bị từ chối");
+    addEventListener("deviceorientation", onOrient);
+    enabled = true; $("perm").style.display = "none";
+    return true;
+  } catch (err) { $("info").textContent = "Không bật được cảm biến: " + err.message + (isSecureContext ? "" : " (cần HTTPS)"); return false; }
+}
+$("perm").onclick = enable;
+try { $("intent").value = localStorage.getItem("intent") || "circle"; } catch (e) {}
+$("intent").onchange = () => { try { localStorage.setItem("intent", $("intent").value); } catch (e) {} };
+setInterval(() => { if (!drawing) fetch("/ping").catch(() => {}); }, 100);  // giữ Wi-Fi thức → 11.1 thu CSI liên tục
+setInterval(() => { $("info").textContent = `${rate} mẫu/s` + (isSecureContext ? "" : " · không phải HTTPS"); rate = 0; }, 1000);
+setInterval(() => { if (drawing && buf.length) send({ samples: buf.splice(0) }).then(r => drawing && drawPts(r.pts, "#f72585")); }, 50);
+const pad = $("pad");
+pad.addEventListener("pointerdown", async e => {
+  e.preventDefault();
+  if (!enabled && !await enable()) return;
+  buf = []; drawing = true; pad.classList.add("on"); $("out").textContent = "…"; send({ start: true, intent: $("intent").value });
+});
+function stop() {
+  if (!drawing) return;
+  drawing = false; pad.classList.remove("on");
+  send({ end: true, samples: buf.splice(0) }).then(r => {
+    $("out").textContent = !r.ok ? "lỗi gửi" : !r.pts?.length ? "không có mẫu cảm biến" : `${r.shape} (${(r.score ?? 0).toFixed(2)})`;
+    $("csi").textContent = r.ok ? `CSI đã lưu: ${r.n_csi} bản ghi (${r.csi_rate}/s)` : "";
+    const ok = r.shape && r.shape !== "unknown";
+    $("out").style.color = ok ? "var(--ok)" : "var(--muted)";
+    drawPts(r.pts, ok ? "#80ed99" : "#9aa4b2");
+  });
+}
+for (const ev of ["pointerup", "pointercancel", "pointerleave"]) pad.addEventListener(ev, stop);
+</script>
+</body>
+</html>

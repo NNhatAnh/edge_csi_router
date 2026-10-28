@@ -224,19 +224,24 @@ def load_recording(folder, iq=False):
     meta = meta.reindex(columns=META_COLUMNS)  # cột thiếu → NaN
     records = pd.concat([csi[["record", "chip_tsf_us", "kernel_ts_s", "phy_ppdu_id", "packet_bw"]].reset_index(drop=True),
                          meta.reset_index(drop=True)], axis=1)
-    ok = np.ones(len(csi), bool)
     iq = pd.read_csv(folder / "export_csi/csi_iq.csv", usecols=["record", "chain", "tone_index", "i", "q", "present"])
-    per = len(iq) // max(len(ok), 1)
-    assert per % 212 == 0 and len(iq) == len(ok) * per, f"Layout không phải chain x 212: {folder}"
+    # vài record (firmware "event matched" thiếu) có số I/Q lệch (354/738 thay 636) → bỏ, giữ số I/Q phổ biến nhất
+    n = iq.groupby("record").size()
+    good = n.index[n == n.mode()[0]]
+    ok = csi.record.isin(good).to_numpy()
+    iq = iq[iq.record.isin(good)]
+    per = len(iq) // max(int(ok.sum()), 1)
+    assert per % 212 == 0 and len(iq) == ok.sum() * per, f"Layout không phải chain x 212: {folder}"
     slots = np.arange(len(iq)) % per
     assert (iq.chain.to_numpy() == slots // 212).all() and (iq.tone_index.to_numpy() == slots % 212).all()
     assert is_true(iq.present).all(), f"Có I/Q missing: {folder}"
     if want_iq:
-        a = (iq.i.to_numpy(np.float64) + 1j * iq.q.to_numpy(np.float64)).reshape(-1, per // 212, 212)[ok][:, :, NON_DC_MASK]
+        a = (iq.i.to_numpy(np.float64) + 1j * iq.q.to_numpy(np.float64)).reshape(-1, per // 212, 212)[:, :, NON_DC_MASK]
     else:
-        a = np.hypot(iq.i.to_numpy(np.float32), iq.q.to_numpy(np.float32)).reshape(-1, per // 212, 212)[ok][:, :, NON_DC_MASK]
+        a = np.hypot(iq.i.to_numpy(np.float32), iq.q.to_numpy(np.float32)).reshape(-1, per // 212, 212)[:, :, NON_DC_MASK]
     # relay.bin không luôn theo thứ tự thời gian (4.1: vài trăm record cuối ghi trước) và có record hỏng với
     # kernel_ts vô lý → sắp theo TSF, bỏ record lệch > 1 giờ so với trung vị
+    records = records[ok].reset_index(drop=True)
     k = records.kernel_ts_s.to_numpy()
     order = np.argsort(records.chip_tsf_us.to_numpy(), kind="stable")
     order = order[np.abs(k[order] - np.median(k)) < 3600]
