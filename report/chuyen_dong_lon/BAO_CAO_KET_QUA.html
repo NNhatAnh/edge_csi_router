@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Báo Cáo Đo Lường & Đánh Giá: Nhận Diện Chuyển Động Lớn</title>
+  <style>
+:root {
+  --primary: #1a73e8;
+  --primary-dark: #1557b0;
+  --text-main: #202124;
+  --text-muted: #5f6368;
+  --bg-page: #f8f9fa;
+  --card-bg: #ffffff;
+  --border-color: #dadce0;
+  --tag-green-bg: #e6f4ea;
+  --tag-green-text: #137333;
+  --tag-green-border: #ceead6;
+  --tag-red-bg: #fce8e6;
+  --tag-red-text: #c5221f;
+  --tag-red-border: #fad2cf;
+  --tag-yellow-bg: #fef7e0;
+  --tag-yellow-text: #b06000;
+  --tag-yellow-border: #feefc3;
+  --tag-blue-bg: #e8f0fe;
+  --tag-blue-text: #1a73e8;
+  --tag-blue-border: #d2e3fc;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  line-height: 1.6;
+  color: var(--text-main);
+  background-color: var(--bg-page);
+  padding: 25px 15px;
+}
+.container {
+  max-width: 960px;
+  margin: 0 auto;
+  background: var(--card-bg);
+  padding: 35px 45px;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(60,64,67, 0.12), 0 3px 6px rgba(60,64,67, 0.04);
+  border: 1px solid var(--border-color);
+}
+.nav-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--border-color);
+  font-size: 13.5px;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.breadcrumb a {
+  color: var(--primary);
+  text-decoration: none;
+}
+.breadcrumb a:hover { text-decoration: underline; }
+.sibling-links {
+  display: flex;
+  gap: 8px;
+}
+.sibling-links a {
+  padding: 4px 10px;
+  border-radius: 4px;
+  text-decoration: none;
+  font-size: 12.5px;
+  border: 1px solid var(--border-color);
+  color: #3c4043;
+  background: #f8f9fa;
+}
+.sibling-links a.active {
+  background: var(--tag-blue-bg);
+  color: var(--primary);
+  border-color: var(--tag-blue-border);
+  font-weight: 600;
+}
+.sibling-links a:hover:not(.active) { background: #e8eaed; }
+.header {
+  border-bottom: 2px solid var(--primary);
+  padding-bottom: 16px;
+  margin-bottom: 25px;
+}
+.header h1 {
+  font-size: 22px;
+  font-weight: 700;
+  color: #1a1a1a;
+  margin-bottom: 10px;
+}
+.meta-box {
+  background: #f1f3f4;
+  padding: 10px 16px;
+  border-radius: 6px;
+  font-size: 13px;
+  color: #3c4043;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 6px;
+}
+.meta-item strong { color: #1a1a1a; }
+h2 {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--primary-dark);
+  margin: 28px 0 14px 0;
+  padding-bottom: 5px;
+  border-bottom: 1px solid var(--border-color);
+}
+h3 {
+  font-size: 15.5px;
+  font-weight: 600;
+  color: #333333;
+  margin: 18px 0 8px 0;
+}
+p { margin-bottom: 12px; font-size: 14px; text-align: justify; }
+ul, ol { margin-left: 22px; margin-bottom: 12px; font-size: 14px; }
+li { margin-bottom: 5px; }
+.badge {
+  display: inline-block;
+  padding: 3px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.4;
+  vertical-align: middle;
+  white-space: nowrap;
+}
+.badge-green { background: var(--tag-green-bg); color: var(--tag-green-text); border: 1px solid var(--tag-green-border); }
+.badge-red { background: var(--tag-red-bg); color: var(--tag-red-text); border: 1px solid var(--tag-red-border); }
+.badge-yellow { background: var(--tag-yellow-bg); color: var(--tag-yellow-text); border: 1px solid var(--tag-yellow-border); }
+.badge-blue { background: var(--tag-blue-bg); color: var(--tag-blue-text); border: 1px solid var(--tag-blue-border); }
+
+.table-container {
+  overflow-x: auto;
+  margin: 14px 0 20px 0;
+}
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13.5px;
+  text-align: left;
+}
+th, td {
+  padding: 9px 12px;
+  border: 1px solid var(--border-color);
+  vertical-align: middle;
+}
+th {
+  background-color: #f1f3f4;
+  font-weight: 600;
+  color: #202124;
+}
+tr:nth-child(even) { background-color: #f8f9fa; }
+
+.callout {
+  padding: 12px 16px;
+  border-radius: 6px;
+  margin: 14px 0;
+  font-size: 13.5px;
+  border-left: 4px solid;
+}
+.callout-info { background: var(--tag-blue-bg); border-color: var(--primary); color: #174ea6; }
+.callout-warning { background: var(--tag-yellow-bg); border-color: #f9ab00; color: #7f4f00; }
+.callout-danger { background: var(--tag-red-bg); border-color: #ea4335; color: #a51d24; }
+.callout-success { background: var(--tag-green-bg); border-color: #34a853; color: #0d652d; }
+
+.stat-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 14px;
+  margin: 16px 0 20px 0;
+}
+.stat-card {
+  background: #ffffff;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  padding: 14px;
+  text-align: center;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+}
+.stat-value {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--primary);
+  margin: 4px 0;
+}
+.stat-label {
+  font-size: 12px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  font-weight: 600;
+}
+
+.test-card {
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  margin-bottom: 18px;
+  background: #ffffff;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+}
+.test-header {
+  background: #f8f9fa;
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--border-color);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.test-title {
+  font-weight: 700;
+  font-size: 14.5px;
+  color: #202124;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.test-body {
+  padding: 14px 18px;
+  font-size: 13.5px;
+}
+.test-field { margin-bottom: 8px; }
+.test-field-label { font-weight: 600; color: #444; margin-bottom: 2px; }
+
+code {
+  font-family: SFMono-Regular, Consolas, "Liberation Mono", Menlo, monospace;
+  font-size: 12px;
+  background: #f1f3f4;
+  padding: 2px 4px;
+  border-radius: 3px;
+  color: #c5221f;
+}
+
+@media print {
+  body { background: #fff; padding: 0; }
+  .container { border: none; box-shadow: none; padding: 0; max-width: 100%; }
+  .nav-bar { display: none; }
+  h2 { font-size: 15px; margin: 18px 0 8px 0; }
+  p, li, td, th { font-size: 12px; }
+  .test-card { page-break-inside: avoid; }
+}
+</style>
+</head>
+<body>
+<div class="container">
+
+  <div class="nav-bar">
+    <div class="breadcrumb">
+      <a href="../index.html">&larr; Cổng điều hướng</a> &gt; <span>Chuyển động lớn</span> &gt; <strong>Báo cáo kết quả</strong>
+    </div>
+    <div class="sibling-links">
+      <a href="TAI_LIEU_MO_TA.html">Tài liệu mô tả</a>
+      <a href="BAO_CAO_KET_QUA.html" class="active">Báo cáo kết quả</a>
+      <a href="KICH_BAN_KIEM_THU.html">Kịch bản kiểm thử</a>
+    </div>
+  </div>
+
+  <div class="header">
+    <h1>Báo Cáo Đo Lường &amp; Đánh Giá: Chuyển Động Lớn (Macro-Motion)</h1>
+    <div class="meta-box">
+      <div class="meta-item"><strong>Thiết bị thử nghiệm:</strong> Router Qualcomm IPQ9650 ARM64 (ath12k, 80MHz)</div>
+      <div class="meta-item"><strong>Công cụ đo kiểm:</strong> tools/evaluate_performance.py (Telemetry &amp; SSE)</div>
+      <div class="meta-item"><strong>Số lượt thử nghiệm:</strong> 100+ lượt (6.170 frames phòng tĩnh)</div>
+      <div class="meta-item"><strong>Thời gian xử lý thuật toán:</strong> 1.73 &mu;s / frame</div>
+    </div>
+  </div>
+
+  <h2>1. Tóm Tắt Số Liệu Đo Kiểm</h2>
+  <div class="stat-grid">
+    <div class="stat-card">
+      <div class="stat-label">Thời Gian Phát Hiện</div>
+      <div class="stat-value">140 ms</div>
+      <div class="stat-label" style="color: #137333;">Trong vòng 3 frame</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Thu Hồi Trạng Thái</div>
+      <div class="stat-value">0.85 s</div>
+      <div class="stat-label" style="color: #137333;">Sau 15 frame thấp</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Báo Động Giả Phòng Tĩnh</div>
+      <div class="stat-value">2.0%</div>
+      <div class="stat-label" style="color: #137333;">Đạt mức an toàn</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Thời Gian Tính Toán C++</div>
+      <div class="stat-value">1.73 &mu;s</div>
+      <div class="stat-label" style="color: #137333;">Hàm motion.cpp</div>
+    </div>
+  </div>
+
+  <h2>2. Bảng Kết Quả Đo Lường Chi Tiết Theo Kịch Bản</h2>
+  <div class="table-container">
+    <table>
+      <thead>
+        <tr>
+          <th style="width: 12%;">Mã Test</th>
+          <th style="width: 30%;">Ngữ Cảnh Kiểm Thử</th>
+          <th style="width: 12%; text-align: center;">Số Lần Thử</th>
+          <th style="width: 32%;">Kết Quả Đo Đạc Thực Tế</th>
+          <th style="width: 14%; text-align: center;">Đánh Giá</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>TC-M01</strong></td>
+          <td>Phòng trống tĩnh &amp; Tự hiệu chuẩn nền</td>
+          <td style="text-align: center;">10 lần (6.170 frames)</td>
+          <td>Hiệu chuẩn xong sau 6.2 giây; Tỷ lệ báo giả: 2.0%.</td>
+          <td style="text-align: center;"><span class="badge badge-green">Đạt chuẩn</span></td>
+        </tr>
+        <tr>
+          <td><strong>TC-M02</strong></td>
+          <td>Người bước vào phòng &amp; Đi lại tự do</td>
+          <td style="text-align: center;">25 lần</td>
+          <td>Phát hiện sau 140 ms (3 frames); Score đỉnh đạt 0.68.</td>
+          <td style="text-align: center;"><span class="badge badge-green">Đạt chuẩn</span></td>
+        </tr>
+        <tr>
+          <td><strong>TC-M03</strong></td>
+          <td>Người ngồi yên chỉ Rung chân / Ngọ nguậy</td>
+          <td style="text-align: center;">20 lượt (30s/lượt)</td>
+          <td>Tín hiệu tăng nhẹ nhưng chưa đủ vượt ngưỡng; bắt được 6/20 lượt.</td>
+          <td style="text-align: center;"><span class="badge badge-red">Chưa đủ tín hiệu</span></td>
+        </tr>
+        <tr>
+          <td><strong>TC-M04</strong></td>
+          <td>Người rời phòng &amp; Thu hồi trạng thái</td>
+          <td style="text-align: center;">15 lần</td>
+          <td>Chuyển về <code>empty_room</code> sau 0.85 giây; Hồi phục nền 100%.</td>
+          <td style="text-align: center;"><span class="badge badge-green">Đạt chuẩn</span></td>
+        </tr>
+        <tr>
+          <td><strong>TC-M05</strong></td>
+          <td>Nhiễu rớt gói mạng &amp; Hạ cấp MCS</td>
+          <td style="text-align: center;">30 sự kiện</td>
+          <td>Cổng tương quan thời gian chặn thành công đỉnh giả: 29/30 lần.</td>
+          <td style="text-align: center;"><span class="badge badge-green">Đạt chuẩn</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h2>3. Nhận Xét &amp; Đánh Giá Kỹ Thuật</h2>
+  <ul>
+    <li>
+      <strong>Điểm đạt:</strong> Thuật toán phát hiện người đi lại và bước vào phòng đáp ứng nhanh (140 ms). Nhờ bộ đếm trễ 15 frame, trạng thái không bị chập chờn khi người di chuyển chậm. Cổng tương quan Pearson loại bỏ tốt các xung nhiễu ngắn từ đường truyền.
+    </li>
+    <li>
+      <strong>Điểm hạn chế:</strong> Cử động rung chân tại chỗ chỉ tạo ra biến thiên khoảng 2-3% năng lượng sóng so với 95% diện tích cản sóng đứng yên của cả cơ thể. Mức biến thiên này chưa đủ để vượt qua ngưỡng an toàn. Do đó, hệ thống hiện tại được xác nhận làm tốt với người đi lại, ra vào phòng; cử động nhỏ tại chỗ cần bổ sung bộ lọc nâng cao trong giai đoạn tới.
+    </li>
+  </ul>
+
+  <div style="margin-top: 25px; padding-top: 12px; border-top: 1px solid var(--border-color); font-size: 12.5px; color: var(--text-muted); text-align: center;">
+    Báo cáo kết quả: Chuyển động lớn &bull; Edge CSI Router &bull; Qualcomm IPQ9650 ARM64 &bull; Ngày lập: 28/10/2026
+  </div>
+
+</div>
+</body>
+</html>
