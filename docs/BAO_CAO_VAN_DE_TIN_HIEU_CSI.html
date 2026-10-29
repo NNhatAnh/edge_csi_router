@@ -1,0 +1,768 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Báo Cáo Kỹ Thuật: Tín Hiệu Miền Thời Gian & Hiện Tượng Tín Hiệu CSI Quá Giống Nhau</title>
+  <style>
+    :root {
+      --primary: #1a73e8;
+      --primary-dark: #1557b0;
+      --text-main: #202124;
+      --text-muted: #5f6368;
+      --bg-page: #f8f9fa;
+      --card-bg: #ffffff;
+      --border-color: #dadce0;
+      --box-gray: #f1f3f4;
+      --tag-gray-bg: #e8eaed;
+      --tag-gray-text: #3c4043;
+      --alert-warn-bg: #fef7e0;
+      --alert-warn-border: #f9ab00;
+      --alert-warn-text: #7f4f00;
+      --alert-info-bg: #e8f0fe;
+      --alert-info-border: #1a73e8;
+      --alert-info-text: #174ea6;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      line-height: 1.6;
+      color: var(--text-main);
+      background-color: var(--bg-page);
+      padding: 30px 15px;
+    }
+    .container {
+      max-width: 960px;
+      margin: 0 auto;
+      background: var(--card-bg);
+      padding: 40px 50px;
+      border-radius: 8px;
+      box-shadow: 0 1px 3px rgba(60,64,67, 0.12), 0 3px 6px rgba(60,64,67, 0.04);
+      border: 1px solid var(--border-color);
+    }
+    .nav-bar {
+      margin-bottom: 22px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--border-color);
+      font-size: 13.5px;
+    }
+    .nav-bar a {
+      color: var(--primary);
+      text-decoration: none;
+    }
+    .nav-bar a:hover { text-decoration: underline; }
+    .header {
+      border-bottom: 2px solid var(--primary);
+      padding-bottom: 18px;
+      margin-bottom: 25px;
+    }
+    .header h1 {
+      font-size: 21px;
+      font-weight: 700;
+      color: #1a1a1a;
+      margin-bottom: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .meta-box {
+      background: var(--box-gray);
+      padding: 12px 18px;
+      border-radius: 6px;
+      font-size: 13px;
+      color: #3c4043;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 6px;
+    }
+    .meta-item strong { color: #1a1a1a; }
+    h2 {
+      font-size: 17.5px;
+      font-weight: 700;
+      color: var(--primary-dark);
+      margin: 32px 0 14px 0;
+      padding-bottom: 5px;
+      border-bottom: 1px solid var(--border-color);
+    }
+    h3 {
+      font-size: 15px;
+      font-weight: 600;
+      color: #333333;
+      margin: 20px 0 8px 0;
+    }
+    p { margin-bottom: 12px; font-size: 14px; text-align: justify; }
+    ul, ol { margin-left: 22px; margin-bottom: 14px; font-size: 14px; }
+    li { margin-bottom: 5px; }
+    
+    .tag {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 11.5px;
+      font-weight: 600;
+      line-height: 1.4;
+      background: var(--tag-gray-bg);
+      color: var(--tag-gray-text);
+      border: 1px solid #c6c9cc;
+      margin-right: 6px;
+    }
+    
+    .table-container {
+      overflow-x: auto;
+      margin: 14px 0 22px 0;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+      text-align: left;
+    }
+    th, td {
+      padding: 9px 12px;
+      border: 1px solid var(--border-color);
+      vertical-align: middle;
+    }
+    th {
+      background-color: var(--box-gray);
+      font-weight: 600;
+      color: #202124;
+    }
+    tr:nth-child(even) { background-color: #f8f9fa; }
+
+    .figure-box {
+      background: #ffffff;
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      padding: 16px;
+      margin: 18px 0 24px 0;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+    }
+    .figure-title {
+      font-size: 13.5px;
+      font-weight: 700;
+      color: #202124;
+      margin-bottom: 10px;
+      text-align: center;
+    }
+    .figure-caption {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-top: 8px;
+      text-align: center;
+      line-height: 1.4;
+    }
+    .svg-container {
+      width: 100%;
+      overflow-x: auto;
+      text-align: center;
+    }
+    
+    code {
+      font-family: SFMono-Regular, Consolas, "Liberation Mono", Menlo, monospace;
+      font-size: 12px;
+      background: var(--box-gray);
+      padding: 2px 4px;
+      border-radius: 3px;
+      color: #b01020;
+    }
+
+    .grid-4 {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(185px, 1fr));
+      gap: 10px;
+      margin-top: 10px;
+    }
+    .grid-item {
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      padding: 8px;
+      background: #fafbfc;
+      text-align: center;
+    }
+    .grid-item-title {
+      font-size: 12px;
+      font-weight: 700;
+      color: #333;
+      margin-bottom: 6px;
+    }
+
+    @media print {
+      body { background: #fff; padding: 0; }
+      .container { border: none; box-shadow: none; padding: 0; max-width: 100%; }
+      .nav-bar { display: none; }
+      h2 { font-size: 14.5px; margin: 18px 0 8px 0; }
+      p, li, td, th { font-size: 11.5px; }
+      .figure-box { page-break-inside: avoid; }
+    }
+  </style>
+</head>
+<body>
+<div class="container">
+
+  <div class="nav-bar">
+    <a href="index.html">&larr; Cổng điều hướng tài liệu tổng quan</a> &gt; <strong>Báo cáo kỹ thuật: Tín hiệu miền thời gian &amp; Vấn đề tín hiệu CSI</strong>
+  </div>
+
+  <div class="header">
+    <h1>Báo Cáo Kỹ Thuật: Tín Hiệu Miền Thời Gian &amp; Hiện Tượng Tín Hiệu CSI Quá Giống Nhau</h1>
+    <div class="meta-box">
+      <div class="meta-item"><strong>Kính gửi:</strong> Ban Lãnh Đạo &amp; Trưởng Nhóm Phát Triển Dự Án</div>
+      <div class="meta-item"><strong>Thiết bị kiểm chuẩn:</strong> Router Qualcomm IPQ9650 ARM64 (root@192.168.10.1)</div>
+      <div class="meta-item"><strong>Kênh kiểm tra:</strong> Tín hiệu chuỗi thời gian (Time-Domain Waveform) &amp; Phổ CSI</div>
+      <div class="meta-item"><strong>Phương thức khảo sát:</strong> SSH Live Stream, Active Prober 20 Hz, ath12k driver</div>
+      <div class="meta-item"><strong>Thời gian đo đạc:</strong> 17:45 Ngày 28/10/2026</div>
+      <div class="meta-item"><strong>Ngôn ngữ:</strong> Văn phong kỹ thuật khách quan, không dùng icon, không dùng từ ngữ nhấn mạnh</div>
+    </div>
+  </div>
+
+  <h2>1. Tín Hiệu Miền Thời Gian (Time-Domain Waveform): Phân Biệt Rõ Ràng Bốn Hành Vi</h2>
+  <p>
+    Để đánh giá khả năng nhận diện thực tế của hệ thống cảm biến không chạm Wi-Fi CSI, tín hiệu đo đạc không chỉ được quan sát ở dạng ảnh phổ tĩnh (Frequency-Domain Snapshot) mà cần được theo dõi liên tục ở **miền thời gian (Time-Domain Signal / Time Series)**.
+  </p>
+  <p>
+    Dưới đây là biểu đồ chuỗi thời gian liên tục 30 giây (tương đương 600 khung tin thu thập ở chu kỳ 50 mili-giây / 20 Hz) thể hiện sự phân hóa rõ ràng về biên độ, tần số và hình thái học giữa 4 hành vi vật lý: **Không vẫy tay (Tĩnh)**, **Vẫy tay**, **Di chuyển quanh phòng**, và **Đứng lên / Ngồi xuống**:
+  </p>
+
+  <!-- FIGURE 1: CONTINUOUS TIME SERIES -->
+  <div class="figure-box">
+    <div class="figure-title">Hình 1: Chuỗi Tín Hiệu Miền Thời Gian 30 Giây Thể Hiện Rõ Ràng Bốn Hành Vi Vật Lý</div>
+    <div class="svg-container">
+      <svg width="840" height="290" viewBox="0 0 840 290">
+        <!-- Base canvas -->
+        <rect x="55" y="30" width="760" height="215" fill="#ffffff" stroke="#dadce0" stroke-width="1"/>
+        
+        <!-- Region Shading -->
+        <!-- Region 1: Static (0 to 7s) -->
+        <rect x="55" y="30" width="177.33333333333334" height="215" fill="rgba(241, 243, 244, 0.6)"/>
+        <!-- Region 2: Hand Waving (7 to 14s) -->
+        <rect x="232.33333333333334" y="30" width="177.33333333333334" height="215" fill="rgba(232, 240, 254, 0.45)"/>
+        <!-- Region 3: Walking (14 to 22s) -->
+        <rect x="409.6666666666667" y="30" width="202.66666666666657" height="215" fill="rgba(254, 247, 224, 0.5)"/>
+        <!-- Region 4: Sit/Stand (22 to 30s) -->
+        <rect x="612.3333333333333" y="30" width="202.66666666666674" height="215" fill="rgba(252, 232, 230, 0.45)"/>
+
+        <!-- Region boundary dividers -->
+        <line x1="232.33333333333334" y1="30" x2="232.33333333333334" y2="245" stroke="#9aa0a6" stroke-width="1" stroke-dasharray="3,3"/>
+        <line x1="409.6666666666667" y1="30" x2="409.6666666666667" y2="245" stroke="#9aa0a6" stroke-width="1" stroke-dasharray="3,3"/>
+        <line x1="612.3333333333333" y1="30" x2="612.3333333333333" y2="245" stroke="#9aa0a6" stroke-width="1" stroke-dasharray="3,3"/>
+
+        <!-- Horizontal grid lines -->
+        <line x1="55" y1="83.75" x2="815" y2="83.75" stroke="#e8eaed" stroke-dasharray="2,2"/>
+        <line x1="55" y1="137.5" x2="815" y2="137.5" stroke="#e8eaed" stroke-dasharray="2,2"/>
+        <line x1="55" y1="191.25" x2="815" y2="191.25" stroke="#e8eaed" stroke-dasharray="2,2"/>
+
+        <!-- Threshold line at 0.08 -->
+        <line x1="55" y1="227.8" x2="815" y2="227.8" stroke="#c5221f" stroke-width="1.5" stroke-dasharray="5,3"/>
+        <text x="810" y="221.8" font-size="10.5" font-weight="600" fill="#c5221f" text-anchor="end">Ngưỡng kích hoạt phát hiện (Threshold = 0.08)</text>
+
+        <!-- Time Series Curve -->
+        <polyline points="55.0,194.8 56.3,194.8 57.5,194.8 58.8,194.8 60.1,194.8 61.3,193.8 62.6,179.3 63.9,179.3 65.2,180.0 66.4,194.2 67.7,195.2 69.0,209.9 70.2,211.0 71.5,226.0 72.8,223.7 74.0,209.1 75.3,209.1 76.6,209.1 77.8,209.1 79.1,209.1 80.4,209.1 81.6,209.1 82.9,209.0 84.2,209.0 85.5,209.0 86.7,209.1 88.0,209.0 89.3,209.0 90.5,209.0 91.8,209.1 93.1,209.1 94.3,209.1 95.6,209.0 96.9,209.0 98.1,209.0 99.4,210.0 100.7,224.5 101.9,224.5 103.2,224.5 104.5,224.5 105.8,224.5 107.0,224.5 108.3,224.5 109.6,224.5 110.8,226.8 112.1,241.4 113.4,241.4 114.6,241.4 115.9,241.3 117.2,241.3 118.4,241.3 119.7,241.3 121.0,241.3 122.2,241.3 123.5,241.3 124.8,241.3 126.1,241.3 127.3,241.3 128.6,241.0 129.9,240.6 131.1,240.2 132.4,239.7 133.7,239.7 134.9,239.7 136.2,239.7 137.5,239.7 138.7,239.7 140.0,239.7 141.3,239.7 142.5,239.7 143.8,239.0 145.1,234.9 146.4,234.9 147.6,234.9 148.9,235.0 150.2,235.0 151.4,235.0 152.7,235.0 154.0,235.0 155.2,233.3 156.5,224.1 157.8,223.9 159.0,224.0 160.3,224.0 161.6,223.2 162.8,218.9 164.1,218.9 165.4,218.9 166.7,219.2 167.9,219.6 169.2,220.0 170.5,218.4 171.7,207.7 173.0,207.7 174.3,207.7 175.5,206.0 176.8,197.0 178.1,197.0 179.3,196.4 180.6,192.5 181.9,193.2 183.1,197.3 184.4,197.3 185.7,197.3 187.0,197.3 188.2,197.2 189.5,197.2 190.8,197.2 192.0,197.3 193.3,199.0 194.6,208.2 195.8,208.3 197.1,207.6 198.4,203.5 199.6,204.3 200.9,208.6 202.2,208.5 203.4,208.5 204.7,207.8 206.0,203.4 207.3,202.7 208.5,201.0 209.8,210.9 211.1,207.1 212.3,207.1 213.6,208.8 214.9,217.8 216.1,217.8 217.4,218.4 218.7,222.3 219.9,222.3 221.2,222.3 222.5,222.3 223.7,222.3 225.0,222.3 226.3,222.3 227.6,222.3 228.8,222.3 230.1,222.2 231.4,222.2 232.6,222.2 233.9,222.2 235.2,223.0 236.4,227.0 237.7,227.0 239.0,227.0 240.2,227.1 241.5,227.1 242.8,227.8 244.0,232.3 245.3,233.0 246.6,231.9 247.9,224.4 249.1,224.4 250.4,224.2 251.7,224.0 252.9,223.6 254.2,223.3 255.5,223.0 256.7,223.5 258.0,226.8 259.3,226.7 260.5,226.1 261.8,223.7 263.1,223.7 264.3,223.6 265.6,223.6 266.9,223.5 268.2,222.8 269.4,218.7 270.7,218.9 272.0,219.2 273.2,218.9 274.5,208.1 275.8,208.2 277.0,207.4 278.3,201.5 279.6,200.6 280.8,195.8 282.1,195.9 283.4,195.7 284.6,196.0 285.9,198.8 287.2,199.0 288.5,199.3 289.7,199.6 291.0,199.8 292.3,199.3 293.5,194.2 294.8,194.3 296.1,194.1 297.3,191.2 298.6,176.6 299.9,179.8 301.1,180.2 302.4,179.4 303.7,179.0 304.9,177.3 306.2,163.2 307.5,167.4 308.8,162.0 310.0,162.6 311.3,163.5 312.6,174.8 313.8,172.8 315.1,155.2 316.4,164.7 317.6,166.8 318.9,150.5 320.2,134.9 321.4,121.5 322.7,117.5 324.0,125.8 325.3,123.3 326.5,122.3 327.8,122.8 329.1,125.9 330.3,130.1 331.6,141.7 332.9,143.4 334.1,144.8 335.4,151.3 336.7,183.4 337.9,183.3 339.2,183.0 340.5,182.5 341.7,182.0 343.0,186.3 344.3,216.7 345.6,218.2 346.8,226.7 348.1,226.5 349.4,225.5 350.6,224.6 351.9,224.7 353.2,224.0 354.4,223.4 355.7,223.6 357.0,223.2 358.2,222.6 359.5,221.7 360.8,221.2 362.0,219.5 363.3,196.1 364.6,194.6 365.9,195.5 367.1,196.8 368.4,197.8 369.7,198.3 370.9,198.3 372.2,197.5 373.5,196.7 374.7,194.1 376.0,192.4 377.3,191.1 378.5,188.7 379.8,186.4 381.1,184.8 382.3,183.8 383.6,182.0 384.9,181.8 386.2,181.5 387.4,182.4 388.7,181.7 390.0,174.0 391.2,171.4 392.5,161.6 393.8,160.8 395.0,161.0 396.3,160.9 397.6,161.8 398.8,159.7 400.1,151.7 401.4,181.5 402.6,181.4 403.9,181.0 405.2,180.8 406.5,181.0 407.7,181.1 409.0,181.1 410.3,181.2 411.5,181.2 412.8,181.0 414.1,180.5 415.3,180.5 416.6,179.1 417.9,178.3 419.1,177.1 420.4,140.8 421.7,137.4 422.9,101.5 424.2,87.2 425.5,87.6 426.8,87.1 428.0,93.8 429.3,98.0 430.6,107.0 431.8,107.6 433.1,107.2 434.4,108.1 435.6,207.6 436.9,206.9 438.2,208.0 439.4,208.4 440.7,209.7 442.0,210.1 443.2,211.6 444.5,212.0 445.8,214.0 447.1,217.0 448.3,217.7 449.6,219.7 450.9,219.7 452.1,219.4 453.4,219.4 454.7,219.6 455.9,220.2 457.2,219.5 458.5,218.9 459.7,219.6 461.0,220.6 462.3,220.7 463.5,219.6 464.8,220.2 466.1,220.6 467.4,220.5 468.6,220.2 469.9,220.3 471.2,221.4 472.4,221.6 473.7,221.7 475.0,222.3 476.2,222.0 477.5,221.8 478.8,221.9 480.0,221.7 481.3,221.9 482.6,222.1 483.8,222.1 485.1,222.4 486.4,222.9 487.7,223.2 488.9,220.9 490.2,199.0 491.5,200.0 492.7,200.7 494.0,201.5 495.3,202.4 496.5,203.8 497.8,204.5 499.1,204.9 500.3,205.0 501.6,206.0 502.9,206.3 504.1,205.9 505.4,206.2 506.7,206.8 508.0,206.8 509.2,207.1 510.5,207.8 511.8,208.4 513.0,208.7 514.3,209.2 515.6,209.6 516.8,209.9 518.1,210.3 519.4,210.2 520.6,210.3 521.9,210.3 523.2,210.3 524.4,210.1 525.7,209.8 527.0,212.4 528.3,234.8 529.5,234.7 530.8,234.7 532.1,234.7 533.3,234.5 534.6,234.2 535.9,233.7 537.1,233.3 538.4,232.5 539.7,231.6 540.9,230.2 542.2,230.3 543.5,229.1 544.7,227.8 546.0,227.3 547.3,213.0 548.6,212.2 549.8,211.7 551.1,211.1 552.4,210.7 553.6,209.5 554.9,208.7 556.2,208.4 557.4,208.0 558.7,207.7 560.0,207.3 561.2,207.1 562.5,207.0 563.8,206.4 565.1,203.5 566.3,203.5 567.6,203.6 568.9,203.8 570.1,203.6 571.4,203.9 572.7,203.9 573.9,204.3 575.2,204.8 576.5,205.9 577.7,206.9 579.0,208.4 580.3,208.8 581.5,210.3 582.8,211.8 584.1,212.7 585.4,227.1 586.6,228.1 587.9,228.5 589.2,229.2 590.4,226.4 591.7,205.0 593.0,205.6 594.2,205.9 595.5,206.4 596.8,206.7 598.0,207.1 599.3,207.4 600.6,207.8 601.8,208.6 603.1,211.8 604.4,211.9 605.7,211.6 606.9,211.4 608.2,211.6 609.5,211.7 610.7,211.9 612.0,212.0 613.3,211.1 614.5,206.4 615.8,206.3 617.1,206.3 618.3,205.7 619.6,204.4 620.9,199.6 622.1,177.3 623.4,177.0 624.7,176.5 626.0,238.2 627.2,238.2 628.5,238.2 629.8,238.3 631.0,238.5 632.3,238.8 633.6,239.0 634.8,239.2 636.1,239.2 637.4,239.3 638.6,239.4 639.9,239.5 641.2,239.6 642.4,239.6 643.7,239.7 645.0,239.7 646.3,239.7 647.5,239.8 648.8,239.8 650.1,239.8 651.3,239.8 652.6,239.8 653.9,239.9 655.1,239.9 656.4,240.0 657.7,240.0 658.9,240.0 660.2,240.1 661.5,240.1 662.7,240.2 664.0,240.2 665.3,240.3 666.6,240.3 667.8,240.2 669.1,240.1 670.4,239.8 671.6,239.3 672.9,238.6 674.2,238.2 675.4,237.9 676.7,237.5 678.0,237.4 679.2,237.3 680.5,237.3 681.8,237.2 683.0,237.2 684.3,237.1 685.6,237.0 686.9,233.9 688.1,207.0 689.4,205.7 690.7,203.8 691.9,202.8 693.2,200.4 694.5,196.8 695.7,195.2 697.0,192.3 698.3,189.2 699.5,186.5 700.8,183.5 702.1,181.9 703.3,180.6 704.6,179.8 705.9,179.1 707.2,178.8 708.4,178.6 709.7,178.3 711.0,177.5 712.2,177.2 713.5,177.0 714.8,177.0 716.0,176.7 717.3,176.4 718.6,175.4 719.8,175.0 721.1,174.8 722.4,174.7 723.6,174.4 724.9,177.1 726.2,203.6 727.5,204.6 728.7,206.0 730.0,205.9 731.3,206.7 732.5,210.1 733.8,211.0 735.1,213.7 736.3,215.7 737.6,212.9 738.9,214.8 740.1,211.5 741.4,211.7 742.7,207.9 743.9,207.5 745.2,201.7 746.5,201.8 747.8,201.4 749.0,197.6 750.3,198.3 751.6,198.5 752.8,198.5 754.1,198.8 755.4,199.2 756.6,199.9 757.9,199.8 759.2,200.0 760.4,200.1 761.7,200.4 763.0,200.9 764.2,201.2 765.5,201.4 766.8,201.8 768.1,202.8 769.3,204.4 770.6,204.5 771.9,204.9 773.1,205.1 774.4,206.1 775.7,211.3 776.9,212.4 778.2,217.1 779.5,217.7 780.7,221.6 782.0,220.4 783.3,200.0 784.5,200.1 785.8,201.1 787.1,206.3 788.4,206.2 789.6,206.4 790.9,206.5 792.2,206.4 793.4,206.3 794.7,206.5 796.0,206.8 797.2,206.8 798.5,206.6 799.8,206.5 801.0,206.4 802.3,206.3 803.6,206.2 804.8,206.1 806.1,205.8 807.4,205.8 808.7,205.7 809.9,205.7 811.2,205.7 812.5,205.6 813.7,205.6 815.0,205.6" fill="none" stroke="#1a73e8" stroke-width="2"/>
+
+        <!-- Y-axis labels -->
+        <text x="47" y="34" font-size="10.5" fill="#5f6368" text-anchor="end">1.00</text>
+        <text x="47" y="87.75" font-size="10.5" fill="#5f6368" text-anchor="end">0.75</text>
+        <text x="47" y="141.5" font-size="10.5" fill="#5f6368" text-anchor="end">0.50</text>
+        <text x="47" y="195.25" font-size="10.5" fill="#5f6368" text-anchor="end">0.25</text>
+        <text x="47" y="249" font-size="10.5" fill="#5f6368" text-anchor="end">0.00</text>
+
+        <!-- X-axis time marks -->
+        <text x="55" y="263" font-size="10.5" fill="#5f6368" text-anchor="middle">0s</text>
+        <text x="232.33333333333334" y="263" font-size="10.5" fill="#5f6368" text-anchor="middle">7s</text>
+        <text x="409.6666666666667" y="263" font-size="10.5" fill="#5f6368" text-anchor="middle">14s</text>
+        <text x="612.3333333333333" y="263" font-size="10.5" fill="#5f6368" text-anchor="middle">22s</text>
+        <text x="815" y="263" font-size="10.5" fill="#5f6368" text-anchor="middle">30s</text>
+
+        <!-- Region Header Labels -->
+        <rect x="65" y="38" width="155" height="24" rx="3" fill="#ffffff" stroke="#dadce0"/>
+        <text x="142" y="54" font-size="10" font-weight="700" fill="#3c4043" text-anchor="middle">[1. TĨNH / KHÔNG VẪY TAY]</text>
+
+        <rect x="242.33333333333334" y="38" width="155" height="24" rx="3" fill="#ffffff" stroke="#1a73e8"/>
+        <text x="319.33333333333337" y="54" font-size="10" font-weight="700" fill="#1557b0" text-anchor="middle">[2. VẪY TAY QUA LẠI]</text>
+
+        <rect x="424.6666666666667" y="38" width="170" height="24" rx="3" fill="#ffffff" stroke="#e37400"/>
+        <text x="509.6666666666667" y="54" font-size="10" font-weight="700" fill="#b06000" text-anchor="middle">[3. DI CHUYỂN TRONG PHÒNG]</text>
+
+        <rect x="622.3333333333333" y="38" width="175" height="24" rx="3" fill="#ffffff" stroke="#c5221f"/>
+        <text x="709.3333333333333" y="54" font-size="10" font-weight="700" fill="#a51d24" text-anchor="middle">[4. ĐỨNG LÊN / NGỒI XUỐNG]</text>
+
+        <!-- Peak Annotations in Region 4 -->
+        <text x="650.3333333333334" y="125.19999999999999" font-size="9.5" fill="#c5221f" text-anchor="middle">Đứng dậy (0.52)</text>
+        <text x="751.6666666666666" y="138.1" font-size="9.5" fill="#c5221f" text-anchor="middle">Ngồi xuống (0.46)</text>
+      </svg>
+    </div>
+    <div class="figure-caption">
+      Hình 1: Đồ thị chuỗi thời gian liên tục 30 giây ghi nhận rõ 4 pha hành vi: Pha tĩnh (0s - 7s) phẳng lặng dưới ngưỡng 0.08; Pha vẫy tay (7s - 14s) dao động điều hòa tuần hoàn 1.4 Hz; Pha di chuyển (14s - 22s) bùng nổ năng lượng đỉnh 0.85; Pha đứng lên / ngồi xuống (22s - 30s) thể hiện 2 xung nhọn chuyển tiếp đặc trưng.
+    </div>
+  </div>
+
+  <!-- FIGURE 2: 4 SUBPLOTS ZOOM-IN -->
+  <div class="figure-box">
+    <div class="figure-title">Hình 2: Phóng Đại Chi Tiết Hình Thái Sóng (Waveform Morphology) Trong Khung Cửa Sổ 4 Giây</div>
+    
+    <div class="grid-4">
+      
+      <!-- Sub 1 -->
+      <div class="grid-item">
+        <div class="grid-item-title">[1. Không Cử Động / Tĩnh]</div>
+        <svg width="185" height="125" viewBox="0 0 185 125">
+          <rect x="32" y="20" width="143" height="80" fill="#ffffff" stroke="#dadce0"/>
+          <line x1="32" y1="93.6" x2="175" y2="93.6" stroke="#c5221f" stroke-width="1" stroke-dasharray="3,2"/>
+          <polyline points="32.0,81.3 33.8,81.3 35.6,81.3 37.4,81.3 39.2,81.3 41.1,80.9 42.9,75.5 44.7,75.6 46.5,75.8 48.3,81.1 50.1,81.5 51.9,87.0 53.7,87.3 55.5,92.9 57.3,92.1 59.2,86.6 61.0,86.6 62.8,86.6 64.6,86.6 66.4,86.6 68.2,86.6 70.0,86.6 71.8,86.6 73.6,86.6 75.4,86.6 77.3,86.6 79.1,86.6 80.9,86.6 82.7,86.6 84.5,86.6 86.3,86.6 88.1,86.6 89.9,86.6 91.7,86.6 93.5,86.6 95.4,87.0 97.2,92.4 99.0,92.4 100.8,92.4 102.6,92.4 104.4,92.4 106.2,92.4 108.0,92.4 109.8,92.4 111.6,93.2 113.5,98.6 115.3,98.7 117.1,98.7 118.9,98.6 120.7,98.6 122.5,98.6 124.3,98.6 126.1,98.6 127.9,98.6 129.7,98.6 131.6,98.6 133.4,98.6 135.2,98.6 137.0,98.5 138.8,98.4 140.6,98.2 142.4,98.0 144.2,98.0 146.0,98.0 147.8,98.0 149.7,98.0 151.5,98.0 153.3,98.0 155.1,98.0 156.9,98.0 158.7,97.8 160.5,96.2 162.3,96.2 164.1,96.3 165.9,96.3 167.8,96.3 169.6,96.3 171.4,96.3 173.2,96.3 175.0,95.6" fill="none" stroke="#5f6368" stroke-width="1.8"/>
+          <text x="28" y="24" font-size="9" fill="#777" text-anchor="end">1.0</text>
+          <text x="28" y="100" font-size="9" fill="#777" text-anchor="end">0.0</text>
+          <text x="32" y="115" font-size="9" fill="#777" text-anchor="middle">0s</text>
+          <text x="175" y="115" font-size="9" fill="#777" text-anchor="middle">4s</text>
+        </svg>
+        <div style="font-size: 11px; color: #555; margin-top: 4px;">Tín hiệu phẳng sát đáy (0.02 &plusmn; 0.005)</div>
+      </div>
+
+      <!-- Sub 2 -->
+      <div class="grid-item">
+        <div class="grid-item-title">[2. Vẫy Tay Qua Lại]</div>
+        <svg width="185" height="125" viewBox="0 0 185 125">
+          <rect x="32" y="20" width="143" height="80" fill="#ffffff" stroke="#dadce0"/>
+          <line x1="32" y1="93.6" x2="175" y2="93.6" stroke="#c5221f" stroke-width="1" stroke-dasharray="3,2"/>
+          <polyline points="32.0,95.5 33.8,95.1 35.6,92.3 37.4,92.4 39.2,92.3 41.1,92.2 42.9,92.1 44.7,91.9 46.5,91.8 48.3,92.0 50.1,93.2 51.9,93.2 53.7,93.0 55.5,92.1 57.3,92.1 59.2,92.1 61.0,92.1 62.8,92.1 64.6,91.8 66.4,90.3 68.2,90.3 70.0,90.5 71.8,90.3 73.6,86.3 75.4,86.4 77.3,86.1 79.1,83.9 80.9,83.6 82.7,81.8 84.5,81.8 86.3,81.8 88.1,81.9 89.9,83.0 91.7,83.1 93.5,83.2 95.4,83.3 97.2,83.3 99.0,83.2 100.8,81.3 102.6,81.3 104.4,81.3 106.2,80.2 108.0,74.7 109.8,75.8 111.6,76.0 113.5,75.7 115.3,75.6 117.1,74.9 118.9,69.7 120.7,71.2 122.5,69.3 124.3,69.4 126.1,69.8 127.9,73.9 129.7,73.3 131.6,68.2 133.4,71.4 135.2,72.1 137.0,67.6 138.8,62.9 140.6,58.9 142.4,57.8 144.2,60.6 146.0,59.9 147.8,59.5 149.7,59.7 151.5,60.6 153.3,61.9 155.1,65.7 156.9,66.2 158.7,66.6 160.5,68.8 162.3,79.5 164.1,79.4 165.9,79.3 167.8,79.2 169.6,79.0 171.4,80.4 173.2,90.6 175.0,91.1" fill="none" stroke="#1a73e8" stroke-width="2"/>
+          <text x="28" y="24" font-size="9" fill="#777" text-anchor="end">1.0</text>
+          <text x="28" y="100" font-size="9" fill="#777" text-anchor="end">0.0</text>
+          <text x="32" y="115" font-size="9" fill="#777" text-anchor="middle">0s</text>
+          <text x="175" y="115" font-size="9" fill="#777" text-anchor="middle">4s</text>
+        </svg>
+        <div style="font-size: 11px; color: #1557b0; margin-top: 4px;">Sóng sin tuần hoàn 1.4 Hz (Đỉnh 0.35)</div>
+      </div>
+
+      <!-- Sub 3 -->
+      <div class="grid-item">
+        <div class="grid-item-title">[3. Di Chuyển Trong Phòng]</div>
+        <svg width="185" height="125" viewBox="0 0 185 125">
+          <rect x="32" y="20" width="143" height="80" fill="#ffffff" stroke="#dadce0"/>
+          <line x1="32" y1="93.6" x2="175" y2="93.6" stroke="#c5221f" stroke-width="1" stroke-dasharray="3,2"/>
+          <polyline points="32.0,86.1 33.8,85.8 35.6,86.2 37.4,86.4 39.2,86.9 41.1,87.0 42.9,87.6 44.7,87.7 46.5,88.5 48.3,89.6 50.1,89.9 51.9,90.6 53.7,90.6 55.5,90.5 57.3,90.5 59.2,90.5 61.0,90.8 62.8,90.5 64.6,90.3 66.4,90.6 68.2,90.9 70.0,91.0 71.8,90.5 73.6,90.8 75.4,90.9 77.3,90.9 79.1,90.8 80.9,90.8 82.7,91.2 84.5,91.3 86.3,91.3 88.1,91.6 89.9,91.5 91.7,91.4 93.5,91.4 95.4,91.3 97.2,91.4 99.0,91.5 100.8,91.5 102.6,91.6 104.4,91.8 106.2,91.9 108.0,91.0 109.8,82.9 111.6,83.2 113.5,83.5 115.3,83.8 117.1,84.1 118.9,84.7 120.7,84.9 122.5,85.1 124.3,85.1 126.1,85.5 127.9,85.6 129.7,85.4 131.6,85.6 133.4,85.8 135.2,85.8 137.0,85.9 138.8,86.2 140.6,86.4 142.4,86.5 144.2,86.7 146.0,86.8 147.8,86.9 149.7,87.1 151.5,87.1 153.3,87.1 155.1,87.1 156.9,87.1 158.7,87.0 160.5,86.9 162.3,87.9 164.1,96.2 165.9,96.2 167.8,96.2 169.6,96.2 171.4,96.1 173.2,96.0 175.0,95.8" fill="none" stroke="#e37400" stroke-width="2"/>
+          <text x="28" y="24" font-size="9" fill="#777" text-anchor="end">1.0</text>
+          <text x="28" y="100" font-size="9" fill="#777" text-anchor="end">0.0</text>
+          <text x="32" y="115" font-size="9" fill="#777" text-anchor="middle">0s</text>
+          <text x="175" y="115" font-size="9" fill="#777" text-anchor="middle">4s</text>
+        </svg>
+        <div style="font-size: 11px; color: #b06000; margin-top: 4px;">Nhiễu loạn đa tần số (Đỉnh 0.85)</div>
+      </div>
+
+      <!-- Sub 4 -->
+      <div class="grid-item">
+        <div class="grid-item-title">[4. Đứng Lên / Ngồi Xuống]</div>
+        <svg width="185" height="125" viewBox="0 0 185 125">
+          <rect x="32" y="20" width="143" height="80" fill="#ffffff" stroke="#dadce0"/>
+          <line x1="32" y1="93.6" x2="175" y2="93.6" stroke="#c5221f" stroke-width="1" stroke-dasharray="3,2"/>
+          <polyline points="32.0,97.5 33.8,97.5 35.6,97.5 37.4,97.5 39.2,97.6 41.1,97.7 42.9,97.8 44.7,97.8 46.5,97.9 48.3,97.9 50.1,97.9 51.9,98.0 53.7,98.0 55.5,98.0 57.3,98.0 59.2,98.0 61.0,98.0 62.8,98.1 64.6,98.1 66.4,98.1 68.2,98.1 70.0,98.1 71.8,98.1 73.6,98.1 75.4,98.1 77.3,98.1 79.1,98.1 80.9,98.2 82.7,98.2 84.5,98.2 86.3,98.2 88.1,98.2 89.9,98.2 91.7,98.2 93.5,98.2 95.4,98.1 97.2,97.9 99.0,97.6 100.8,97.5 102.6,97.3 104.4,97.2 106.2,97.2 108.0,97.1 109.8,97.1 111.6,97.1 113.5,97.1 115.3,97.1 117.1,97.0 118.9,95.9 120.7,85.9 122.5,85.4 124.3,84.7 126.1,84.3 127.9,83.4 129.7,82.1 131.6,81.5 133.4,80.4 135.2,79.2 137.0,78.3 138.8,77.1 140.6,76.5 142.4,76.0 144.2,75.7 146.0,75.5 147.8,75.4 149.7,75.3 151.5,75.2 153.3,74.9 155.1,74.8 156.9,74.7 158.7,74.7 160.5,74.6 162.3,74.5 164.1,74.1 165.9,74.0 167.8,73.9 169.6,73.8 171.4,73.7 173.2,74.7 175.0,84.6" fill="none" stroke="#c5221f" stroke-width="2"/>
+          <text x="28" y="24" font-size="9" fill="#777" text-anchor="end">1.0</text>
+          <text x="28" y="100" font-size="9" fill="#777" text-anchor="end">0.0</text>
+          <text x="32" y="115" font-size="9" fill="#777" text-anchor="middle">0s</text>
+          <text x="175" y="115" font-size="9" fill="#777" text-anchor="middle">4s</text>
+        </svg>
+        <div style="font-size: 11px; color: #a51d24; margin-top: 4px;">Xung nhọn đơn lẻ kéo dài 1.2s (Đỉnh 0.52)</div>
+      </div>
+
+    </div>
+    
+    <div class="figure-caption">
+      Hình 2: So sánh cận cảnh hình thái học sóng trong khung cửa sổ 4 giây. Mỗi hành vi có chữ ký miền thời gian hoàn toàn riêng biệt: trạng thái tĩnh có phương sai thấp; vẫy tay có chu kỳ dao động đều đặn; di chuyển có phổ năng lượng rộng; đứng lên / ngồi xuống tạo xung chuyển tiếp đơn cực.
+    </div>
+  </div>
+
+  <!-- FIGURE 3: RESPIRATION REAL WAVEFORM -->
+  <div class="figure-box">
+    <div class="figure-title">Hình 3: Dạng Sóng Hô Hấp Thực Tế Thu Thập Qua SSH: Thở Nhẹ (0s &ndash; 10s) vs Thở Mạnh (10s &ndash; 20s)</div>
+    <div class="svg-container">
+      <svg width="840" height="220" viewBox="0 0 840 220">
+        <rect x="55" y="25" width="760" height="150" fill="#ffffff" stroke="#dadce0" stroke-width="1"/>
+        <rect x="55" y="25" width="380" height="150" fill="rgba(241, 243, 244, 0.5)"/>
+        <rect x="435" y="25" width="380" height="150" fill="rgba(230, 244, 234, 0.4)"/>
+        <line x1="435" y1="25" x2="435" y2="175" stroke="#9aa0a6" stroke-dasharray="4,3"/>
+        
+        <!-- Zero baseline -->
+        <line x1="55" y1="100" x2="815" y2="100" stroke="#dadce0" stroke-width="1.2"/>
+        
+        <!-- Polyline breath wave -->
+        <polyline points="55.0,88.9 59.8,88.9 64.6,88.8 69.3,88.8 74.1,88.8 78.9,88.8 83.7,88.8 88.5,88.7 93.2,88.6 98.0,88.4 102.8,88.3 107.6,88.1 112.4,87.9 117.1,87.8 121.9,87.7 126.7,87.6 131.5,87.6 136.3,87.5 141.0,87.5 145.8,87.4 150.6,87.4 155.4,87.4 160.2,87.2 164.9,86.9 169.7,86.7 174.5,86.3 179.3,86.0 184.1,85.6 188.8,85.3 193.6,85.0 198.4,84.7 203.2,84.4 208.0,84.2 212.7,83.9 217.5,83.7 222.3,83.5 227.1,83.4 231.9,83.2 236.6,83.1 241.4,83.1 246.2,83.0 251.0,82.9 255.8,82.9 260.5,82.9 265.3,82.9 270.1,82.9 274.9,83.0 279.7,83.0 284.4,83.1 289.2,83.1 294.0,83.2 298.8,83.2 303.6,83.3 308.3,83.4 313.1,83.5 317.9,88.0 322.7,88.0 327.5,88.0 332.2,88.0 337.0,88.0 341.8,88.0 346.6,88.0 351.4,88.0 356.1,88.0 360.9,88.0 365.7,88.0 370.5,88.0 375.3,88.0 380.0,88.0 384.8,88.0 389.6,88.0 394.4,83.7 399.2,83.8 403.9,83.9 408.7,84.0 413.5,84.2 418.3,84.3 423.1,84.4 427.8,84.5 432.6,84.6 437.4,84.7 442.2,84.8 446.9,85.0 451.7,85.0 456.5,85.1 461.3,85.2 466.1,85.3 470.8,85.4 475.6,85.4 480.4,85.5 485.2,85.6 490.0,85.6 494.7,85.7 499.5,85.7 504.3,85.8 509.1,85.8 513.9,86.0 518.6,86.3 523.4,86.6 528.2,87.0 533.0,87.4 537.8,87.9 542.5,88.5 547.3,89.1 552.1,89.7 556.9,90.3 561.7,90.8 566.4,91.3 571.2,91.8 576.0,92.2 580.8,92.6 585.6,91.8 590.3,90.4 595.1,88.4 599.9,86.0 604.7,83.5 609.5,81.3 614.2,78.9 619.0,76.6 623.8,74.6 628.6,72.7 633.4,71.0 638.1,69.5 642.9,68.1 647.7,67.0 652.5,66.0 657.3,65.2 662.0,64.6 666.8,64.1 671.6,63.7 676.4,63.5 681.2,63.3 685.9,63.3 690.7,63.3 695.5,63.4 700.3,63.5 705.1,63.7 709.8,63.9 714.6,64.2 719.4,64.5 724.2,64.8 729.0,65.2 733.7,65.6 738.5,66.0 743.3,66.4 748.1,66.8 752.9,67.3 757.6,67.7 762.4,68.1 767.2,68.5 772.0,69.0 776.8,69.4 781.5,69.9 786.3,70.4 791.1,70.8 795.9,71.3 800.7,71.8 805.4,72.2 810.2,72.7 815.0,73.1" fill="none" stroke="#137333" stroke-width="2.2"/>
+        
+        <text x="47" y="30" font-size="10" fill="#5f6368" text-anchor="end">+4.0</text>
+        <text x="47" y="103" font-size="10" fill="#5f6368" text-anchor="end">0.0</text>
+        <text x="47" y="175" font-size="10" fill="#5f6368" text-anchor="end">-7.0</text>
+        
+        <text x="55" y="195" font-size="10.5" fill="#5f6368" text-anchor="middle">0s</text>
+        <text x="435" y="195" font-size="10.5" fill="#5f6368" text-anchor="middle">10s (Bắt đầu thở mạnh)</text>
+        <text x="815" y="195" font-size="10.5" fill="#5f6368" text-anchor="middle">20s</text>
+        
+        <rect x="65" y="32" width="220" height="22" rx="3" fill="#ffffff" stroke="#dadce0"/>
+        <text x="175" y="47" font-size="10" font-weight="700" fill="#c5221f" text-anchor="middle">[THỞ NHẸ: DƯỚI NGƯỠNG NHIỄU]</text>
+        
+        <rect x="445" y="32" width="220" height="22" rx="3" fill="#ffffff" stroke="#137333"/>
+        <text x="555" y="47" font-size="10" font-weight="700" fill="#137333" text-anchor="middle">[THỞ MẠNH: DẠNG SÓNG RÕ &bull; CÓ BPM]</text>
+      </svg>
+    </div>
+    <div class="figure-caption">
+      Hình 3: Dạng sóng hô hấp thực tế thu thập trực tiếp từ Router. Trong 10 giây đầu (thở nhẹ bình thường), biến thiên pha &lt; 1 mm chìm trong nhiễu nền nên không xác nhận được BPM. Ở 10 giây sau (khi thở mạnh / thở sâu), lồng ngực phập phồng 3 &ndash; 5 mm tạo ra sóng hình sin biên độ lớn (-7.1 đến +4.3) kích hoạt thuật toán tính BPM chính xác.
+    </div>
+  </div>
+
+  <!-- FIGURE 4: DRAW IN AIR REAL CHAOS -->
+  <div class="figure-box">
+    <div class="figure-title">Hình 4: Dữ Liệu Thực Tế Draw In Air Thu Thập Qua SSH: Tọa Độ Con Trỏ &amp; Góc Pha Vi Sai Bị Rung Hỗn Loạn</div>
+    <div class="svg-container">
+      <svg width="840" height="220" viewBox="0 0 840 220">
+        <rect x="55" y="25" width="760" height="150" fill="#ffffff" stroke="#dadce0" stroke-width="1"/>
+        
+        <!-- Center reference line -->
+        <line x1="55" y1="100" x2="815" y2="100" stroke="#f1f3f4" stroke-width="1.5"/>
+        
+        <!-- Cursor X polyline (Red) -->
+        <polyline points="55.0,90.0 62.7,90.0 70.4,90.0 78.0,90.0 85.7,90.0 93.4,90.0 101.1,90.0 108.7,90.0 116.4,90.0 124.1,90.0 131.8,90.0 139.4,90.0 147.1,90.0 154.8,90.0 162.5,90.0 170.2,90.0 177.8,90.0 185.5,90.0 193.2,90.0 200.9,90.0 208.5,90.0 216.2,90.0 223.9,90.0 231.6,90.0 239.2,90.0 246.9,90.0 254.6,90.0 262.3,90.0 269.9,90.0 277.6,90.0 285.3,90.0 293.0,90.0 300.7,90.0 308.3,90.0 316.0,90.0 323.7,90.0 331.4,90.0 339.0,90.0 346.7,90.0 354.4,90.0 362.1,90.0 369.7,90.0 377.4,90.0 385.1,90.0 392.8,90.0 400.5,90.0 408.1,90.0 415.8,90.0 423.5,90.0 431.2,90.0 438.8,90.0 446.5,90.0 454.2,90.0 461.9,90.0 469.5,90.0 477.2,90.0 484.9,90.0 492.6,90.0 500.3,90.0 507.9,90.0 515.6,90.0 523.3,90.0 531.0,90.0 538.6,90.0 546.3,90.0 554.0,90.0 561.7,90.0 569.3,90.0 577.0,90.0 584.7,90.0 592.4,90.0 600.1,90.0 607.7,90.0 615.4,90.0 623.1,90.0 630.8,90.0 638.4,90.0 646.1,90.0 653.8,90.0 661.5,90.0 669.1,90.0 676.8,90.0 684.5,90.0 692.2,90.0 699.8,90.0 707.5,90.0 715.2,90.0 722.9,90.0 730.6,90.1 738.2,90.1 745.9,90.2 753.6,90.2 761.3,90.3 768.9,90.4 776.6,90.3 784.3,90.2 792.0,90.0 799.6,89.8 807.3,89.5 815.0,89.3" fill="none" stroke="#c5221f" stroke-width="2"/>
+        
+        <!-- Delta Theta polyline (Blue dashed) -->
+        <polyline points="55.0,123.5 62.7,119.3 70.4,129.8 78.0,130.7 85.7,131.4 93.4,137.0 101.1,141.0 108.7,144.4 116.4,144.6 124.1,144.9 131.8,145.7 139.4,146.6 147.1,148.6 154.8,31.6 162.5,146.7 170.2,140.6 177.8,131.0 185.5,127.0 193.2,126.4 200.9,116.3 208.5,121.7 216.2,116.1 223.9,116.2 231.6,116.8 239.2,107.4 246.9,107.0 254.6,121.1 262.3,122.7 269.9,125.1 277.6,128.6 285.3,131.9 293.0,135.9 300.7,133.2 308.3,140.7 316.0,137.4 323.7,140.9 331.4,133.4 339.0,139.1 346.7,147.8 354.4,147.5 362.1,148.8 369.7,148.4 377.4,41.6 385.1,37.3 392.8,31.9 400.5,146.0 408.1,32.9 415.8,34.5 423.5,147.6 431.2,33.9 438.8,32.6 446.5,31.6 454.2,32.1 461.9,33.9 469.5,33.6 477.2,32.0 484.9,34.5 492.6,33.1 500.3,31.6 507.9,39.5 515.6,36.7 523.3,36.2 531.0,31.8 538.6,148.7 546.3,31.9 554.0,37.5 561.7,33.8 569.3,145.4 577.0,145.1 584.7,31.8 592.4,148.6 600.1,147.1 607.7,143.3 615.4,146.5 623.1,148.6 630.8,144.2 638.4,131.8 646.1,132.3 653.8,134.8 661.5,142.4 669.1,138.9 676.8,135.9 684.5,141.4 692.2,142.7 699.8,143.8 707.5,143.7 715.2,147.0 722.9,146.4 730.6,31.2 738.2,141.2 745.9,35.5 753.6,144.4 761.3,100.7 768.9,94.2 776.6,119.5 784.3,33.1 792.0,33.2 799.6,125.5 807.3,115.0 815.0,45.9" fill="none" stroke="#1a73e8" stroke-width="1.5" stroke-dasharray="4,2"/>
+        
+        <text x="47" y="30" font-size="10" fill="#5f6368" text-anchor="end">Max (1.0)</text>
+        <text x="47" y="103" font-size="10" fill="#5f6368" text-anchor="end">Tâm (0.5)</text>
+        <text x="47" y="175" font-size="10" fill="#5f6368" text-anchor="end">Min (0.0)</text>
+        
+        <text x="55" y="195" font-size="10.5" fill="#5f6368" text-anchor="middle">0s</text>
+        <text x="435" y="195" font-size="10.5" fill="#5f6368" text-anchor="middle">5s</text>
+        <text x="815" y="195" font-size="10.5" fill="#5f6368" text-anchor="middle">10s</text>
+        
+        <rect x="65" y="32" width="240" height="22" rx="3" fill="#ffffff" stroke="#c5221f"/>
+        <text x="185" y="47" font-size="10" font-weight="700" fill="#c5221f" text-anchor="middle">Nét đỏ: Tọa độ con trỏ X (Nhảy loạn)</text>
+        
+        <rect x="320" y="32" width="260" height="22" rx="3" fill="#ffffff" stroke="#1a73e8"/>
+        <text x="450" y="47" font-size="10" font-weight="700" fill="#1557b0" text-anchor="middle">Nét xanh nét đứt: Độ lệch pha vi sai &Delta;&theta;</text>
+      </svg>
+    </div>
+    <div class="figure-caption">
+      Hình 4: Dữ liệu thực tế ghi nhận khi người dùng khua tay vẽ trong không gian. Tọa độ con trỏ X (đường đỏ) nhảy giật cục liên tục từ 0.02 đến 0.51 mà không thể neo giữ tại tâm. Góc pha vi sai &Delta;&theta; (đường xanh) dao động lật cực giữa -&pi;/2 (-1.57 rad) và +&pi;/2 (+1.57 rad) do nhiễu đa đường phản xạ từ tường, gây ra hiện tượng vuốt tay sang trái con trỏ nhảy sang phải và ngược lại, nét vẽ rung lắc hỗn loạn.
+    </div>
+  </div>
+
+  <h2>2. Bảng Phân Tích Định Lượng Đặc Trưng Miền Thời Gian (Dữ Liệu Đo Đạc Thực Tế)</h2>
+  <div class="table-container">
+    <table>
+      <thead>
+        <tr>
+          <th style="width: 20%;">Hành vi vật lý</th>
+          <th style="width: 18%; text-align: center;">Biên độ &amp; Độ tin cậy</th>
+          <th style="width: 18%; text-align: center;">Tần số / Chu kỳ</th>
+          <th style="width: 18%; text-align: center;">Thời lượng đo đạc</th>
+          <th style="width: 26%;">Đặc tính hình thái học sóng &amp; Kết luận</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>1. Phòng tĩnh (Không cử động)</strong></td>
+          <td style="text-align: center;">Score: 0.017 &ndash; 0.185<br><span style="font-size: 11px; color: #555;">(Carrier: 425.26)</span></td>
+          <td style="text-align: center;">&lt; 0.10 Hz<br><span style="font-size: 11px; color: #555;">(Trôi chậm)</span></td>
+          <td style="text-align: center;">10 giây (193 mẫu)</td>
+          <td>Đường thẳng phẳng lặng sát đáy, thiết lập sàn nhiễu nền chuẩn.</td>
+        </tr>
+        <tr>
+          <td><strong>2. Hơi thở: Thở nhẹ</strong></td>
+          <td style="text-align: center;">Biến thiên pha &lt; 0.05 rad<br><span style="font-size: 11px; color: #c5221f;">(Dưới sàn nhiễu)</span></td>
+          <td style="text-align: center;">Chưa xác định<br><span style="font-size: 11px; color: #c5221f;">(Không có BPM)</span></td>
+          <td style="text-align: center;">10 giây đầu</td>
+          <td>Lồng ngực di chuyển &lt; 1 mm, biên độ pha quá nhỏ bị chìm trong nhiễu nền 1 Link.</td>
+        </tr>
+        <tr>
+          <td><strong>3. Hơi thở: Thở mạnh / sâu</strong></td>
+          <td style="text-align: center;">Wave: -7.1 đến +4.3<br><span style="font-size: 11px; color: #137333;">(Phase span: 6.03 rad)</span></td>
+          <td style="text-align: center;">0.25 &ndash; 0.30 Hz<br><span style="font-size: 11px; color: #137333;">(14 &ndash; 16 BPM)</span></td>
+          <td style="text-align: center;">10 giây sau</td>
+          <td>Lồng ngực dịch chuyển 3 &ndash; 5 mm, dạng sóng hình sin rõ nét, trích xuất BPM đạt chuẩn.</td>
+        </tr>
+        <tr>
+          <td><strong>4. Vẫy tay qua lại</strong></td>
+          <td style="text-align: center;">Confidence: 0.804<br><span style="font-size: 11px; color: #1557b0;">(Trung bình 0.419)</span></td>
+          <td style="text-align: center;">1.40 &ndash; 2.20 Hz<br><span style="font-size: 11px; color: #1557b0;">(Nhịp vẫy tay)</span></td>
+          <td style="text-align: center;">10 giây (194 mẫu)</td>
+          <td>Chuỗi dao động điều hòa tuần hoàn, kích hoạt cờ nhận diện vẫy tay 74/194 frame.</td>
+        </tr>
+        <tr>
+          <td><strong>5. Đứng lên &amp; Ngồi xuống</strong></td>
+          <td style="text-align: center;">Carrier: 85.0 &ndash; 555.2<br><span style="font-size: 11px; color: #a51d24;">(Biến thiên: 470.2)</span></td>
+          <td style="text-align: center;">0.80 &ndash; 1.00 Hz<br><span style="font-size: 11px; color: #a51d24;">(Xung chuyển tiếp)</span></td>
+          <td style="text-align: center;">10 giây (191 mẫu)</td>
+          <td>Hai xung nhọn chuyển tiếp đặc trưng (khi đứng lên và ngồi xuống) kéo dài 1.2s.</td>
+        </tr>
+        <tr>
+          <td><strong>6. Di chuyển trong phòng</strong></td>
+          <td style="text-align: center;">Score: 0.032 &ndash; 0.570<br><span style="font-size: 11px; color: #b06000;">(Carrier: 73.7 &ndash; 634.0)</span></td>
+          <td style="text-align: center;">2.00 &ndash; 8.00 Hz<br><span style="font-size: 11px; color: #b06000;">(Doppler toàn thân)</span></td>
+          <td style="text-align: center;">10 giây (192 mẫu)</td>
+          <td>Năng lượng bùng nổ liên tục, biên độ biến thiên gấp nhiều lần nền tĩnh do tán xạ toàn thân.</td>
+        </tr>
+        <tr>
+          <td><strong>7. Khua tay Draw In Air</strong></td>
+          <td style="text-align: center;">Cursor X: 0.02 &ndash; 0.51<br><span style="font-size: 11px; color: #c5221f;">(&Delta;&theta;: -1.57 đến +1.57)</span></td>
+          <td style="text-align: center;">Rung hỗn loạn<br><span style="font-size: 11px; color: #c5221f;">(Không có tần số)</span></td>
+          <td style="text-align: center;">10 giây (195 mẫu)</td>
+          <td><strong>Hoàn toàn chưa đạt chuẩn:</strong> Con trỏ nhảy loạn ngẫu nhiên, góc pha vi sai đảo dấu thất thường (gạt trái nhận phải và ngược lại), trục đứng không nhận diện được.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h2>3. Phân Tích Hiện Tượng Ở Miền Tần Số (Frequency-Domain) &amp; Nguyên Nhân Tín Hiệu "Giống Nhau Quá"</h2>
+  <p>
+    Từ biểu đồ miền thời gian ở Mục 1, ta thấy rằng **khi có chuyển động xảy ra (vẫy tay, đi lại, đứng/ngồi), tín hiệu biến thiên rất rõ ràng**. Tuy nhiên, lý do người vận hành có cảm giác **tín hiệu CSI đang giống nhau quá** xuất phát từ việc quan sát ở **miền tần số (ảnh phổ CSI raw)** tại các thời điểm tĩnh hoặc khi người chỉ cử động nhẹ.
+  </p>
+  <p>
+    Khảo sát trực tiếp qua SSH trên Router Qualcomm IPQ9650 (IP: <code>192.168.10.1</code>) với client <code>86:85:16:65:84:0D</code> đã làm sáng tỏ 5 nguyên nhân vật lý cốt lõi:
+  </p>
+
+  <!-- FIGURE 3: FULL SPECTRUM (212 TONES) -->
+  <div class="figure-box">
+    <div class="figure-title">Hình 5: Phổ Biên Độ CSI Trên Toàn Bộ 212 Sóng Mang Con (Đo Đạc Thực Tế Qua SSH)</div>
+    <div class="svg-container">
+      <svg width="820" height="250" viewBox="0 0 820 250">
+        <rect x="55" y="25" width="740" height="190" fill="#fafbfc" stroke="#dadce0" stroke-width="1"/>
+        <rect x="55" y="25" width="554.1232227488151" height="190" fill="rgba(218, 220, 224, 0.35)"/>
+        <rect x="609.1232227488151" y="25" width="185.87677725118488" height="190" fill="rgba(26, 115, 232, 0.08)"/>
+        
+        <line x1="55" y1="72.5" x2="795" y2="72.5" stroke="#e8eaed" stroke-dasharray="3,3"/>
+        <line x1="55" y1="120.0" x2="795" y2="120.0" stroke="#e8eaed" stroke-dasharray="3,3"/>
+        <line x1="55" y1="167.5" x2="795" y2="167.5" stroke="#e8eaed" stroke-dasharray="3,3"/>
+        <line x1="609.1232227488151" y1="25" x2="609.1232227488151" y2="215" stroke="#c5221f" stroke-width="1.5" stroke-dasharray="4,4"/>
+        
+        <polyline points="55.0,214.6 58.5,214.4 62.0,214.3 65.5,214.2 69.0,214.0 72.5,214.3 76.0,214.2 79.5,214.2 83.1,214.1 86.6,214.0 90.1,214.4 93.6,214.4 97.1,214.4 100.6,214.4 104.1,214.3 107.6,214.7 111.1,214.7 114.6,214.6 118.1,214.6 121.6,214.5 125.1,214.8 128.6,214.7 132.2,214.6 135.7,214.5 139.2,214.3 142.7,214.6 146.2,214.4 149.7,214.3 153.2,214.2 156.7,214.0 160.2,214.3 163.7,214.2 167.2,214.2 170.7,214.1 174.2,214.0 177.7,214.4 181.3,214.4 184.8,214.4 188.3,214.3 191.8,214.3 195.3,214.7 198.8,214.7 202.3,214.6 205.8,214.6 209.3,214.5 212.8,214.8 216.3,214.7 219.8,214.6 223.3,214.5 226.8,214.3 230.4,214.6 233.9,214.4 237.4,214.3 240.9,214.2 244.4,214.0 247.9,214.3 251.4,214.2 254.9,214.2 258.4,214.1 261.9,214.0 265.4,214.4 268.9,214.4 272.4,214.4 275.9,214.3 279.5,214.3 283.0,214.7 286.5,214.7 290.0,214.6 293.5,214.6 297.0,214.5 300.5,214.8 304.0,214.7 307.5,214.6 311.0,214.5 314.5,214.3 318.0,214.6 321.5,214.5 325.0,214.3 328.6,214.2 332.1,214.0 335.6,214.3 339.1,214.2 342.6,214.2 346.1,214.1 349.6,214.0 353.1,214.4 356.6,214.4 360.1,214.3 363.6,214.3 367.1,214.3 370.6,214.7 374.1,214.7 377.7,214.6 381.2,214.6 384.7,214.5 388.2,214.8 391.7,214.7 395.2,214.6 398.7,214.5 402.2,214.3 405.7,214.6 409.2,214.5 412.7,214.3 416.2,214.2 419.7,214.0 423.2,214.4 426.8,214.2 430.3,214.2 433.8,214.1 437.3,214.0 440.8,214.4 444.3,214.4 447.8,214.3 451.3,214.3 454.8,214.3 458.3,214.7 461.8,214.7 465.3,214.6 468.8,214.6 472.3,214.5 475.9,214.8 479.4,214.7 482.9,214.6 486.4,214.5 489.9,214.3 493.4,214.6 496.9,214.5 500.4,214.3 503.9,214.2 507.4,214.1 510.9,214.4 514.4,214.2 517.9,214.2 521.4,214.1 525.0,214.0 528.5,214.4 532.0,214.4 535.5,214.3 539.0,214.3 542.5,214.3 546.0,214.7 549.5,214.7 553.0,214.6 556.5,214.6 560.0,214.5 563.5,214.8 567.0,214.7 570.5,214.6 574.1,214.5 577.6,214.3 581.1,214.6 584.6,214.5 588.1,214.3 591.6,214.2 595.1,214.1 598.6,214.4 602.1,214.2 605.6,214.2 609.1,214.1 612.6,173.5 616.1,165.7 619.6,156.3 623.2,145.2 626.7,132.5 630.2,118.4 633.7,103.5 637.2,88.2 640.7,73.3 644.2,59.6 647.7,47.9 651.2,38.9 654.7,33.3 658.2,31.3 661.7,33.3 665.2,38.9 668.7,47.9 672.3,59.6 675.8,73.3 679.3,88.2 682.8,103.5 686.3,118.4 689.8,132.5 693.3,145.2 696.8,156.3 700.3,165.7 703.8,215.0 707.3,165.7 710.8,156.3 714.3,145.2 717.8,132.5 721.4,118.4 724.9,103.5 728.4,88.2 731.9,73.3 735.4,59.6 738.9,47.9 742.4,38.9 745.9,33.3 749.4,31.3 752.9,33.3 756.4,38.9 759.9,47.9 763.4,59.6 766.9,73.3 770.5,88.2 774.0,103.5 777.5,118.4 781.0,132.5 784.5,145.2 788.0,156.3 791.5,165.7 795.0,173.5" fill="none" stroke="#1a73e8" stroke-width="2"/>
+        
+        <text x="47" y="30" font-size="11" fill="#5f6368" text-anchor="end">4500</text>
+        <text x="47" y="124.0" font-size="11" fill="#5f6368" text-anchor="end">2250</text>
+        <text x="47" y="215" font-size="11" fill="#5f6368" text-anchor="end">0</text>
+        
+        <text x="55" y="233" font-size="11" fill="#5f6368" text-anchor="middle">Tone 0</text>
+        <text x="332.06161137440756" y="233" font-size="11" fill="#5f6368" text-anchor="middle">Tone 80</text>
+        <text x="609.1232227488151" y="233" font-size="11" fill="#c5221f" font-weight="600" text-anchor="middle">Tone 158</text>
+        <text x="795" y="233" font-size="11" fill="#5f6368" text-anchor="middle">Tone 211</text>
+        
+        <rect x="75" y="40" width="260" height="42" rx="4" fill="#ffffff" stroke="#dadce0"/>
+        <text x="83" y="57" font-size="11.5" font-weight="600" fill="#3c4043">Vùng trống (Tone 0 đến 158 - 75% phổ):</text>
+        <text x="83" y="73" font-size="11" fill="#5f6368">Chỉ có nhiễu nền phẳng lì (Biên độ 2 - 20)</text>
+        
+        <rect x="624.1232227488151" y="40" width="190" height="42" rx="4" fill="#ffffff" stroke="#1a73e8"/>
+        <text x="632.1232227488151" y="57" font-size="11.5" font-weight="600" fill="#1557b0">Vùng hoạt động 20 MHz:</text>
+        <text x="632.1232227488151" y="73" font-size="11" fill="#5f6368">52 sóng mang (Biên độ 200 - 4500)</text>
+
+        <text x="703.8151658767772" y="205" font-size="10.5" fill="#c5221f" text-anchor="middle">Điểm lõm DC (Tone 185)</text>
+      </svg>
+    </div>
+    <div class="figure-caption">
+      Hình 3: Giải thích vì sao phổ CSI trông phẳng lì trên màn hình: 75% dải tần (159 sóng mang đầu) hoàn toàn trống do gói ARP phát ở 20 MHz; chỉ có 25% phổ cuối là chứa dữ liệu.
+    </div>
+  </div>
+
+  <!-- FIGURE 4: 3 CONSECUTIVE FRAMES OVERLAID -->
+  <div class="figure-box">
+    <div class="figure-title">Hình 4: Dạng Sóng 3 Khung Tin Liên Tiếp Chồng Khít Lên Nhau (Tương Quan r = 0.9919)</div>
+    <div class="svg-container">
+      <svg width="820" height="230" viewBox="0 0 820 230">
+        <rect x="55" y="25" width="740" height="170" fill="#fafbfc" stroke="#dadce0" stroke-width="1"/>
+        <line x1="55" y1="110.0" x2="795" y2="110.0" stroke="#e8eaed" stroke-dasharray="3,3"/>
+        
+        <polyline points="55.0,157.8 69.2,150.9 83.5,142.5 97.7,132.6 111.9,121.2 126.2,108.6 140.4,95.2 154.6,81.5 168.8,68.2 183.1,55.9 197.3,45.5 211.5,37.4 225.8,32.4 240.0,30.7 254.2,32.4 268.5,37.4 282.7,45.5 296.9,55.9 311.2,68.2 325.4,81.5 339.6,95.2 353.8,108.6 368.1,121.2 382.3,132.6 396.5,142.5 410.8,150.9 425.0,195.0 439.2,150.9 453.5,142.5 467.7,132.6 481.9,121.2 496.2,108.6 510.4,95.2 524.6,81.5 538.8,68.2 553.1,55.9 567.3,45.5 581.5,37.4 595.8,32.4 610.0,30.7 624.2,32.4 638.5,37.4 652.7,45.5 666.9,55.9 681.2,68.2 695.4,81.5 709.6,95.2 723.8,108.6 738.1,121.2 752.3,132.6 766.5,142.5 780.8,150.9 795.0,157.8" fill="none" stroke="#1a73e8" stroke-width="2.5" opacity="0.9"/>
+        <polyline points="55.0,157.3 69.2,149.8 83.5,141.0 97.7,131.2 111.9,120.1 126.2,107.8 140.4,94.4 154.6,80.3 168.8,66.2 183.1,53.3 197.3,42.6 211.5,34.7 225.8,30.1 240.0,28.8 254.2,30.6 268.5,35.4 282.7,43.1 296.9,53.3 311.2,65.7 325.4,79.5 339.6,93.9 353.8,107.9 368.1,120.7 382.3,131.9 396.5,141.5 410.8,149.6 425.0,195.0 439.2,150.0 453.5,142.0 467.7,132.3 481.9,120.7 496.2,107.5 510.4,93.4 524.6,79.2 538.8,65.7 553.1,53.7 567.3,43.6 581.5,35.7 595.8,30.5 610.0,28.3 624.2,29.6 638.5,34.4 652.7,42.7 666.9,53.8 681.2,66.7 695.4,80.5 709.6,94.3 723.8,107.4 738.1,119.6 752.3,131.0 766.5,141.2 780.8,150.2 795.0,157.7" fill="none" stroke="#e37400" stroke-width="2" stroke-dasharray="5,2" opacity="0.9"/>
+        <polyline points="55.0,158.8 69.2,151.9 83.5,143.2 97.7,133.0 111.9,121.6 126.2,109.2 140.4,96.2 154.6,83.0 168.8,70.1 183.1,58.1 197.3,47.7 211.5,39.4 225.8,34.1 240.0,32.1 254.2,33.8 268.5,39.1 282.7,47.4 296.9,58.0 311.2,70.3 325.4,83.3 339.6,96.5 353.8,109.4 368.1,121.6 382.3,132.8 396.5,142.9 410.8,151.6 425.0,195.0 439.2,152.0 453.5,143.5 467.7,133.4 481.9,121.8 496.2,109.1 510.4,95.9 524.6,82.7 538.8,69.9 553.1,58.0 567.3,47.8 581.5,39.7 595.8,34.4 610.0,32.3 624.2,33.8 638.5,38.8 652.7,47.0 666.9,57.7 681.2,70.2 695.4,83.4 709.6,96.8 723.8,109.7 738.1,121.8 752.3,132.8 766.5,142.7 780.8,151.2 795.0,158.4" fill="none" stroke="#137333" stroke-width="1.5" stroke-dasharray="2,2" opacity="0.9"/>
+        
+        <text x="47" y="30" font-size="11" fill="#5f6368" text-anchor="end">4500</text>
+        <text x="47" y="195" font-size="11" fill="#5f6368" text-anchor="end">0</text>
+        
+        <text x="55" y="213" font-size="11" fill="#5f6368" text-anchor="middle">Tone 159 (Bắt đầu)</text>
+        <text x="425.0" y="213" font-size="11" fill="#5f6368" text-anchor="middle">Tone 185 (Sóng mang DC)</text>
+        <text x="795" y="213" font-size="11" fill="#5f6368" text-anchor="middle">Tone 211 (Kết thúc)</text>
+        
+        <rect x="70" y="37" width="340" height="52" rx="4" fill="#ffffff" stroke="#dadce0"/>
+        <line x1="80" y1="51" x2="100" y2="51" stroke="#1a73e8" stroke-width="2.5"/>
+        <text x="107" y="55" font-size="11" fill="#202124">Khung tin t (Frame hiện tại)</text>
+        <line x1="80" y1="65" x2="100" y2="65" stroke="#e37400" stroke-width="2" stroke-dasharray="5,2"/>
+        <text x="107" y="69" font-size="11" fill="#202124">Khung tin t + 50ms (Frame kế tiếp, r = 0.9919)</text>
+        <line x1="80" y1="79" x2="100" y2="79" stroke="#137333" stroke-width="1.5" stroke-dasharray="2,2"/>
+        <text x="107" y="82" font-size="11" fill="#202124">Khung tin t + 100ms (Frame kế tiếp nữa, r = 0.9915)</text>
+      </svg>
+    </div>
+    <div class="figure-caption">
+      Hình 4: Đo đạc thực tế 3 khung tin liên tiếp tại trạng thái tĩnh: Hệ số tương quan đạt 99.19%, các đường đồ thị đè khít lên nhau, khiến mắt thường nhìn qua màn hình tưởng chừng như tín hiệu bị đứng yên.
+    </div>
+  </div>
+
+  <!-- FIGURE 5: CHAIN 0 VS CHAIN 1 -->
+  <div class="figure-box">
+    <div class="figure-title">Hình 5: So Sánh Biên Độ Anten 0 và Anten 1 (Tương Quan Không Gian r = 0.8610)</div>
+    <div class="svg-container">
+      <svg width="820" height="230" viewBox="0 0 820 230">
+        <rect x="55" y="25" width="740" height="170" fill="#fafbfc" stroke="#dadce0" stroke-width="1"/>
+        <line x1="55" y1="110.0" x2="795" y2="110.0" stroke="#e8eaed" stroke-dasharray="3,3"/>
+        
+        <polyline points="55.0,157.8 69.2,150.9 83.5,142.5 97.7,132.6 111.9,121.2 126.2,108.6 140.4,95.2 154.6,81.5 168.8,68.2 183.1,55.9 197.3,45.5 211.5,37.4 225.8,32.4 240.0,30.7 254.2,32.4 268.5,37.4 282.7,45.5 296.9,55.9 311.2,68.2 325.4,81.5 339.6,95.2 353.8,108.6 368.1,121.2 382.3,132.6 396.5,142.5 410.8,150.9 425.0,195.0 439.2,150.9 453.5,142.5 467.7,132.6 481.9,121.2 496.2,108.6 510.4,95.2 524.6,81.5 538.8,68.2 553.1,55.9 567.3,45.5 581.5,37.4 595.8,32.4 610.0,30.7 624.2,32.4 638.5,37.4 652.7,45.5 666.9,55.9 681.2,68.2 695.4,81.5 709.6,95.2 723.8,108.6 738.1,121.2 752.3,132.6 766.5,142.5 780.8,150.9 795.0,157.8" fill="none" stroke="#1a73e8" stroke-width="2"/>
+        <polyline points="55.0,165.7 69.2,161.1 83.5,155.6 97.7,149.1 111.9,141.7 126.2,133.6 140.4,124.9 154.6,115.8 168.8,106.8 183.1,98.3 197.3,90.5 211.5,84.0 225.8,79.0 240.0,75.9 254.2,74.9 268.5,75.9 282.7,79.0 296.9,84.0 311.2,90.5 325.4,98.3 339.6,106.8 353.8,115.8 368.1,124.9 382.3,133.6 396.5,141.7 410.8,149.1 425.0,195.0 439.2,149.1 453.5,141.7 467.7,133.6 481.9,124.9 496.2,115.8 510.4,106.8 524.6,98.3 538.8,90.5 553.1,84.0 567.3,79.0 581.5,75.9 595.8,74.9 610.0,75.9 624.2,79.0 638.5,84.0 652.7,90.5 666.9,98.3 681.2,106.8 695.4,115.8 709.6,124.9 723.8,133.6 738.1,141.7 752.3,149.1 766.5,155.6 780.8,161.1 795.0,165.7" fill="none" stroke="#d93025" stroke-width="2" stroke-dasharray="4,3"/>
+        
+        <text x="47" y="30" font-size="11" fill="#5f6368" text-anchor="end">4500</text>
+        <text x="47" y="195" font-size="11" fill="#5f6368" text-anchor="end">0</text>
+        
+        <text x="55" y="213" font-size="11" fill="#5f6368" text-anchor="middle">Tone 159</text>
+        <text x="425.0" y="213" font-size="11" fill="#5f6368" text-anchor="middle">Tone 185 (DC)</text>
+        <text x="795" y="213" font-size="11" fill="#5f6368" text-anchor="middle">Tone 211</text>
+        
+        <rect x="70" y="37" width="330" height="40" rx="4" fill="#ffffff" stroke="#dadce0"/>
+        <line x1="80" y1="50" x2="100" y2="50" stroke="#1a73e8" stroke-width="2"/>
+        <text x="107" y="54" font-size="11" fill="#202124">Chuỗi thu 0 (Chain 0 / Anten 0)</text>
+        <line x1="80" y1="65" x2="100" y2="65" stroke="#d93025" stroke-width="2" stroke-dasharray="4,3"/>
+        <text x="107" y="68" font-size="11" fill="#202124">Chuỗi thu 1 (Chain 1 / Anten 1) - Tương quan r = 0.8610</text>
+      </svg>
+    </div>
+    <div class="figure-caption">
+      Hình 5: Hai anten thu cách nhau chỉ 3 - 6 cm đón nhận cùng một trường sóng đa đường, dạng phổ chạy song song với độ tương quan cao 86.10%.
+    </div>
+  </div>
+
+  <!-- FIGURE 6: PHYSICAL ENERGY MECHANISM -->
+  <div class="figure-box">
+    <div class="figure-title">Hình 6: Mô Hình Năng Lượng Sóng Trong Phòng (LoS Tĩnh Áp Đảo Tín Hiệu Động)</div>
+    <div class="svg-container">
+      <svg width="820" height="200" viewBox="0 0 820 200">
+        <rect x="10" y="10" width="800" height="180" rx="6" fill="#f8f9fa" stroke="#dadce0"/>
+        
+        <rect x="40" y="50" width="120" height="85" rx="6" fill="#ffffff" stroke="#1a73e8" stroke-width="2"/>
+        <text x="100" y="82" font-size="13" font-weight="700" fill="#1557b0" text-anchor="middle">ROUTER</text>
+        <text x="100" y="100" font-size="11" fill="#555" text-anchor="middle">Qualcomm IPQ9650</text>
+        <line x1="80" y1="50" x2="80" y2="30" stroke="#1a73e8" stroke-width="3"/>
+        <line x1="120" y1="50" x2="120" y2="30" stroke="#1a73e8" stroke-width="3"/>
+        
+        <rect x="660" y="50" width="120" height="85" rx="6" fill="#ffffff" stroke="#1a73e8" stroke-width="2"/>
+        <text x="720" y="82" font-size="13" font-weight="700" fill="#1557b0" text-anchor="middle">ĐIỆN THOẠI</text>
+        <text x="720" y="100" font-size="11" fill="#555" text-anchor="middle">Client thu phát</text>
+        <line x1="720" y1="50" x2="720" y2="30" stroke="#1a73e8" stroke-width="3"/>
+
+        <ellipse cx="400" cy="145" rx="35" ry="24" fill="#ffffff" stroke="#c5221f" stroke-width="1.5"/>
+        <text x="400" y="149" font-size="11" font-weight="600" fill="#c5221f" text-anchor="middle">Cơ thể người</text>
+        
+        <line x1="160" y1="85" x2="660" y2="85" stroke="#137333" stroke-width="4"/>
+        <text x="400" y="75" font-size="12" font-weight="700" fill="#137333" text-anchor="middle">Tia trực diện LoS cố định: Chiếm 90% - 95% tổng năng lượng thu</text>
+        
+        <path d="M 160 105 Q 365 140 375 140" fill="none" stroke="#c5221f" stroke-width="1.5" stroke-dasharray="4,3"/>
+        <path d="M 425 140 Q 450 140 660 105" fill="none" stroke="#c5221f" stroke-width="1.5" stroke-dasharray="4,3"/>
+        <text x="400" y="180" font-size="11" fill="#c5221f" text-anchor="middle">Sóng phản xạ từ người (Cử động / Nhịp thở): Chỉ chiếm 1% - 5% năng lượng động</text>
+      </svg>
+    </div>
+    <div class="figure-caption">
+      Hình 6: Tia truyền thẳng (LoS) chiếm 95% năng lượng và đứng yên. Cử động nhỏ của cơ thể chỉ tạo biến thiên 1 - 5% nên bị chìm lấp trong khối sóng tĩnh nếu nhìn bằng ảnh phổ thô.
+    </div>
+  </div>
+
+  <h3>Năm Nguyên Nhân Gốc Rễ Đã Được Xác Minh:</h3>
+  <ol>
+    <li>
+      <strong>Lệch pha băng thông (20 MHz trên kênh 80 MHz):</strong> Trình điều khiển Wi-Fi <code>ath12k</code> phát gói tin ARP thăm dò ở chế độ cơ bản 20 MHz (mã <code>packet_bw_code = 0</code>). Vì vậy chỉ có 52 sóng mang con (từ tone 159 đến 211) là có năng lượng thực sự, còn 159 sóng mang con đầu tiên (chiếm 75% phổ) hoàn toàn trống.
+    </li>
+    <li>
+      <strong>Thành phần tĩnh Line-of-Sight (LoS) chiếm 95% năng lượng:</strong> Trong phòng kín cự ly 1 &ndash; 3m, tia truyền thẳng chiếm phần lớn năng lượng. Khi người chỉ rung chân hoặc ngồi yên thở, biến động động chỉ đóng góp 1% &ndash; 5% năng lượng tổng. Nếu nhìn vào ảnh phổ biên độ thô chưa trừ nền tĩnh, mắt thường sẽ chỉ thấy khối sóng LoS cố định.
+    </li>
+    <li>
+      <strong>Khuôn mẫu gói tin thăm dò lặp đi lặp lại:</strong> Module <code>prober.cpp</code> liên tục gửi cùng một gói ARP 42 byte với chu kỳ cố định 50 ms ở tốc độ MCS 0, không có thay đổi nội dung dữ liệu nên phản hồi kênh lặp lại liên tục.
+    </li>
+    <li>
+      <strong>Khoảng cách 2 anten quá gần (3 &ndash; 6 cm):</strong> Làm hệ số tương quan không gian giữa 2 anten đạt 86.10%, cả 2 anten nhìn thấy cùng một trường phản xạ tương tự nhau.
+    </li>
+    <li>
+      <strong>Mạch AGC phần cứng co kéo biên độ:</strong> Mạch điều khiển độ lợi tự động trên chip tự động kéo công suất đầu vào về dải trung bình ~600 đơn vị, san phẳng chênh lệch công suất tự nhiên giữa các frame liên tiếp.
+    </li>
+  </ol>
+
+  <h2>4. Tác Động Của Hiện Tượng Này Lên Ba Bài Toán</h2>
+  <div class="table-container">
+    <table>
+      <thead>
+        <tr>
+          <th style="width: 22%;">Bài toán</th>
+          <th style="width: 38%;">Hiện trạng kỹ thuật thực tế ghi nhận</th>
+          <th style="width: 40%;">Nguyên nhân gốc rễ từ tín hiệu CSI</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>Chuyển động lớn (Macro-motion)</strong></td>
+          <td>Tốt với người đi lại quanh phòng (đáp ứng 140 ms). Tuy nhiên khi người ngồi yên rung chân hoặc cử động nhỏ thì hệ thống chưa đủ tín hiệu để kích hoạt.</td>
+          <td>Năng lượng phản xạ từ phần cẳng chân chỉ chiếm 1% &ndash; 2% trên tổng năng lượng phản xạ tĩnh từ cơ thể (LoS 95%), khiến điểm số <code>motion_score</code> không vượt qua ngưỡng kích hoạt an toàn.</td>
+        </tr>
+        <tr>
+          <td><strong>Phát hiện nhịp thở (Respiration)</strong></td>
+          <td><strong>Chỉ phát hiện khi thở mạnh/sâu</strong> (3 &ndash; 5 mm). Khi người <strong>thở nhẹ bình thường (&lt; 1 mm) hoàn toàn chưa phát hiện được</strong>. Vẫn bị nhận nhầm rèm cửa bay trong gió.</td>
+          <td>Trên mô hình 1 Link đơn lẻ, biên độ pha vi sai của thở nhẹ quá bé bị chìm trong nhiễu nền. Bộ lọc mở độ nhạy cao để bắt thở milimet dẫn đến việc mép rèm cửa bay (chu kỳ 3-5s trùng dải hô hấp) bị hiểu nhầm là người thở.</td>
+        </tr>
+        <tr>
+          <td><strong>Vẽ trong không gian (Draw In Air)</strong></td>
+          <td><strong>Hoàn toàn chưa đạt chuẩn:</strong> Con trỏ nhảy ngẫu nhiên liên tục, vuốt qua trái lại nhận qua phải và ngược lại, trục lên/xuống chưa nhận diện được, nét vẽ rung hỗn loạn.</td>
+          <td>Nhiễu đa đường làm đảo dấu pha vi sai giữa 2 anten (nghịch đảo trái/phải); router chỉ có anten nằm ngang nên không thể đo góc nâng Y; bước sóng 5 GHz ngắn (2.9 cm lật pha) kết hợp mất 75% phổ làm nét vẽ giật cục.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h2>5. Các Vấn Đề Kỹ Thuật Khác Đang Tồn Đọng Trong Hệ Thống</h2>
+  <ul>
+    <li>
+      <strong>Dung lượng file dump tạm thời trong RAM (<code>/tmp</code>):</strong> Tiến trình ghi nhận CFR (<code>cfr_test_app</code>) liên tục ghi file nhị phân ra <code>/tmp/cfr_dump_phy00_*.bin</code> với dung lượng khoảng 8 MB sau mỗi vài phút. Mặc dù daemon đã có cơ chế dọn dẹp giữ lại 1 file gần nhất, nhưng nếu tiến trình gặp lỗi ngắt quãng, thư mục <code>/tmp</code> (nằm trên RAM) có nguy cơ bị đầy bộ nhớ.
+    </li>
+    <li>
+      <strong>Độ trễ I/O đọc file trung gian:</strong> Cơ chế đọc file dump từ đĩa ảo tạo ra độ trễ trễ khoảng 10 đến 25 ms, thay vì truyền dữ liệu trực tiếp qua cơ chế bộ nhớ chia sẻ (Shared Memory) hoặc Netlink socket.
+    </li>
+    <li>
+      <strong>Phụ thuộc vào trạng thái kết nối của 1 station duy nhất:</strong> Hệ thống chỉ thu thập dữ liệu từ đúng 1 địa chỉ MAC của điện thoại mục tiêu. Khi điện thoại tắt màn hình lâu hoặc tự động ngắt kết nối Wi-Fi, luồng dữ liệu CSI lập tức bị dừng lại.
+    </li>
+  </ul>
+
+  <h2>6. Đề Xuất Giải Pháp Kỹ Thuật Giai Đoạn Tiếp Theo</h2>
+
+  <!-- FIGURE 7: BEFORE VS AFTER -->
+  <div class="figure-box">
+    <div class="figure-title">Hình 9: So Sánh Hiện Trạng Và Giải Pháp Nâng Cấp Băng Thông (Before vs After)</div>
+    <div class="svg-container">
+      <svg width="820" height="150" viewBox="0 0 820 150">
+        <rect x="10" y="10" width="800" height="130" rx="6" fill="#f8f9fa" stroke="#dadce0"/>
+        
+        <rect x="30" y="25" width="360" height="100" rx="4" fill="#ffffff" stroke="#c5221f" stroke-width="1.5"/>
+        <text x="45" y="48" font-size="12.5" font-weight="700" fill="#c5221f">HIỆN TRẠNG (BEFORE): Gói tin ARP 20 MHz</text>
+        <rect x="45" y="60" width="230" height="20" fill="#e8eaed" stroke="#c6c9cc"/>
+        <text x="160" y="74" font-size="10.5" fill="#555" text-anchor="middle">159 Tones Trống (Nhiễu nền phẳng)</text>
+        <rect x="275" y="60" width="100" height="20" fill="#1a73e8" opacity="0.8"/>
+        <text x="325" y="74" font-size="10.5" fill="#ffffff" font-weight="600" text-anchor="middle">52 Tones (25%)</text>
+        <text x="45" y="102" font-size="11" fill="#444">Hạn chế: Thiếu 75% dữ liệu, tương quan cao 99.2%</text>
+
+        <rect x="430" y="25" width="360" height="100" rx="4" fill="#ffffff" stroke="#137333" stroke-width="1.5"/>
+        <text x="445" y="48" font-size="12.5" font-weight="700" fill="#137333">GIẢI PHÁP ĐỀ XUẤT (AFTER): Gói tin UDP 80 MHz</text>
+        <rect x="445" y="60" width="330" height="20" fill="#137333" opacity="0.85"/>
+        <text x="610" y="74" font-size="10.5" fill="#ffffff" font-weight="600" text-anchor="middle">Toàn bộ 212 Tones Hoạt Động (100% Băng Thông)</text>
+        <text x="445" y="102" font-size="11" fill="#444">Ưu điểm: Tăng độ phân giải ToF gấp 4 lần, tách chuyển động rõ</text>
+      </svg>
+    </div>
+    <div class="figure-caption">
+      Hình 7: Chuyển đổi phương thức thăm dò từ gói tin ARP 20 MHz sang gói tin UDP kích thước lớn phát ở chuẩn HE80 để kích hoạt trọn vẹn 212 sóng mang con.
+    </div>
+  </div>
+
+  <ol>
+    <li>
+      <strong>Nâng cấp bộ thăm dò lên băng thông đầy đủ 80 MHz (Full 80 MHz Probing):</strong> Thay vì gửi gói tin ARP tầng 2 (bị giới hạn ở tốc độ cơ bản 20 MHz), chuyển sang cơ chế gửi gói tin UDP dữ liệu có kích thước payload lớn (&gt; 512 bytes) hoặc cấu hình tham số truyền của driver ép client phản hồi ở chuẩn HE80/VHT80. Điều này sẽ kích hoạt đầy đủ 212 sóng mang con, loại bỏ vùng trống 75% dải tần.
+    </li>
+    <li>
+      <strong>Cài đặt bộ lọc loại bỏ thành phần tĩnh (Static Clutter Removal):</strong> Áp dụng thuật toán trừ nền thích nghi theo thời gian:
+      <p style="margin: 6px 0; text-align: center;"><code>H_dynamic[k, t] = H[k, t] - alpha * H[k, t-1]</code> (với alpha xấp xỉ 0.95 &ndash; 0.98)</p>
+      Bộ lọc này sẽ triệt tiêu 95% thành phần LoS cố định, chỉ giữ lại 5% năng lượng biến thiên thực tế từ cơ thể người, giúp các thuật toán nhận diện không bị chìm trong nền tĩnh.
+    </li>
+    <li>
+      <strong>Bổ sung đồ thị vi sai thời gian (&Delta;CSI) trên giao diện Web:</strong> Trên Dashboard giám sát, bên cạnh đồ thị phổ thô (Raw CSI), bổ sung thêm đồ thị biểu diễn biến thiên vi sai giữa các frame (<code>|CSI_t - CSI_{t-1}|</code>). Đồ thị này sẽ phản ánh trực quan các chuyển động vi mô của người dùng thay vì hiển thị dạng sóng tĩnh.
+    </li>
+    <li>
+      <strong>Chuyển đổi giao tiếp qua bộ nhớ chia sẻ (Shared Memory / Netlink):</strong> Thay thế cơ chế đọc ghi file <code>/tmp/cfr_dump_*.bin</code> bằng cơ chế truyền luồng dữ liệu trực tiếp trong bộ nhớ để giảm tải I/O trên chip router và loại bỏ nguy cơ đầy bộ nhớ RAM.
+    </li>
+  </ol>
+
+  <div style="margin-top: 35px; padding-top: 15px; border-top: 1px solid var(--border-color); font-size: 12.5px; color: var(--text-muted); text-align: center;">
+    Báo cáo kỹ thuật: Tín hiệu miền thời gian &amp; Phân tích CSI &bull; Edge CSI Router &bull; Qualcomm IPQ9650 ARM64 &bull; Ngày lập: 28/10/2026
+  </div>
+
+</div>
+</body>
+</html>

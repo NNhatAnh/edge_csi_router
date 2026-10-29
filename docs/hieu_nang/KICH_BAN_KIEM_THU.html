@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bộ Kịch Bản Kiểm Thử Phần Mềm: Đánh Giá Hiệu Năng Hệ Thống</title>
+  <style>
+:root {
+  --primary: #1a73e8;
+  --primary-dark: #1557b0;
+  --text-main: #202124;
+  --text-muted: #5f6368;
+  --bg-page: #f8f9fa;
+  --card-bg: #ffffff;
+  --border-color: #dadce0;
+  --tag-green-bg: #e6f4ea;
+  --tag-green-text: #137333;
+  --tag-green-border: #ceead6;
+  --tag-red-bg: #fce8e6;
+  --tag-red-text: #c5221f;
+  --tag-red-border: #fad2cf;
+  --tag-yellow-bg: #fef7e0;
+  --tag-yellow-text: #b06000;
+  --tag-yellow-border: #feefc3;
+  --tag-blue-bg: #e8f0fe;
+  --tag-blue-text: #1a73e8;
+  --tag-blue-border: #d2e3fc;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  line-height: 1.6;
+  color: var(--text-main);
+  background-color: var(--bg-page);
+  padding: 25px 15px;
+}
+.container {
+  max-width: 960px;
+  margin: 0 auto;
+  background: var(--card-bg);
+  padding: 35px 45px;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(60,64,67, 0.12), 0 3px 6px rgba(60,64,67, 0.04);
+  border: 1px solid var(--border-color);
+}
+.nav-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--border-color);
+  font-size: 13.5px;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.breadcrumb a {
+  color: var(--primary);
+  text-decoration: none;
+}
+.breadcrumb a:hover { text-decoration: underline; }
+.sibling-links {
+  display: flex;
+  gap: 8px;
+}
+.sibling-links a {
+  padding: 4px 10px;
+  border-radius: 4px;
+  text-decoration: none;
+  font-size: 12.5px;
+  border: 1px solid var(--border-color);
+  color: #3c4043;
+  background: #f8f9fa;
+}
+.sibling-links a.active {
+  background: var(--tag-blue-bg);
+  color: var(--primary);
+  border-color: var(--tag-blue-border);
+  font-weight: 600;
+}
+.sibling-links a:hover:not(.active) { background: #e8eaed; }
+.header {
+  border-bottom: 2px solid var(--primary);
+  padding-bottom: 16px;
+  margin-bottom: 25px;
+}
+.header h1 {
+  font-size: 22px;
+  font-weight: 700;
+  color: #1a1a1a;
+  margin-bottom: 10px;
+}
+.meta-box {
+  background: #f1f3f4;
+  padding: 10px 16px;
+  border-radius: 6px;
+  font-size: 13px;
+  color: #3c4043;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 6px;
+}
+.meta-item strong { color: #1a1a1a; }
+h2 {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--primary-dark);
+  margin: 28px 0 14px 0;
+  padding-bottom: 5px;
+  border-bottom: 1px solid var(--border-color);
+}
+h3 {
+  font-size: 15.5px;
+  font-weight: 600;
+  color: #333333;
+  margin: 18px 0 8px 0;
+}
+p { margin-bottom: 12px; font-size: 14px; text-align: justify; }
+ul, ol { margin-left: 22px; margin-bottom: 12px; font-size: 14px; }
+li { margin-bottom: 5px; }
+.badge {
+  display: inline-block;
+  padding: 3px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.4;
+  vertical-align: middle;
+  white-space: nowrap;
+}
+.badge-green { background: var(--tag-green-bg); color: var(--tag-green-text); border: 1px solid var(--tag-green-border); }
+.badge-red { background: var(--tag-red-bg); color: var(--tag-red-text); border: 1px solid var(--tag-red-border); }
+.badge-yellow { background: var(--tag-yellow-bg); color: var(--tag-yellow-text); border: 1px solid var(--tag-yellow-border); }
+.badge-blue { background: var(--tag-blue-bg); color: var(--tag-blue-text); border: 1px solid var(--tag-blue-border); }
+
+.table-container {
+  overflow-x: auto;
+  margin: 14px 0 20px 0;
+}
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13.5px;
+  text-align: left;
+}
+th, td {
+  padding: 9px 12px;
+  border: 1px solid var(--border-color);
+  vertical-align: middle;
+}
+th {
+  background-color: #f1f3f4;
+  font-weight: 600;
+  color: #202124;
+}
+tr:nth-child(even) { background-color: #f8f9fa; }
+
+.test-card {
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  margin-bottom: 18px;
+  background: #ffffff;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+}
+.test-header {
+  background: #f8f9fa;
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--border-color);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.test-title {
+  font-weight: 700;
+  font-size: 14.5px;
+  color: #202124;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.test-body {
+  padding: 14px 18px;
+  font-size: 13.5px;
+}
+.test-field { margin-bottom: 8px; }
+.test-field-label { font-weight: 600; color: #444; margin-bottom: 2px; }
+
+code {
+  font-family: SFMono-Regular, Consolas, "Liberation Mono", Menlo, monospace;
+  font-size: 12px;
+  background: #f1f3f4;
+  padding: 2px 4px;
+  border-radius: 3px;
+  color: #c5221f;
+}
+
+@media print {
+  body { background: #fff; padding: 0; }
+  .container { border: none; box-shadow: none; padding: 0; max-width: 100%; }
+  .nav-bar { display: none; }
+  h2 { font-size: 15px; margin: 18px 0 8px 0; }
+  p, li, td, th { font-size: 12px; }
+  .test-card { page-break-inside: avoid; }
+}
+  </style>
+</head>
+<body>
+<div class="container">
+
+  <div class="nav-bar">
+    <div class="breadcrumb">
+      <a href="../index.html">&larr; Cổng điều hướng</a> &gt; <span>Hiệu năng</span> &gt; <strong>Kịch bản kiểm thử</strong>
+    </div>
+    <div class="sibling-links">
+      <a href="TAI_LIEU_MO_TA.html">Tài liệu mô tả</a>
+      <a href="BAO_CAO_KET_QUA.html">Báo cáo kết quả</a>
+      <a href="KICH_BAN_KIEM_THU.html" class="active">Kịch bản kiểm thử</a>
+    </div>
+  </div>
+
+  <div class="header">
+    <h1>Bộ Kịch Bản Kiểm Thử Phần Mềm: Đánh Giá Hiệu Năng Hệ Thống</h1>
+    <div class="meta-box">
+      <div class="meta-item"><strong>Bộ kịch bản:</strong> TC-P01 đến TC-P06 (6 Kịch bản)</div>
+      <div class="meta-item"><strong>Mục tiêu:</strong> Kiểm tra tài nguyên phần cứng, thông lượng mạng và độ trễ</div>
+      <div class="meta-item"><strong>Công cụ thực thi:</strong> tools/evaluate_performance.py (Đo tự động 100%)</div>
+      <div class="meta-item"><strong>Trạng thái:</strong> 6 Đạt chuẩn (100% chỉ số nằm trong ngưỡng an toàn)</div>
+    </div>
+  </div>
+
+  <h2>Danh Sách 6 Kịch Bản Kiểm Thử Hiệu Năng Chi Tiết</h2>
+
+  <!-- TC-P01 -->
+  <div class="test-card">
+    <div class="test-header">
+      <div class="test-title">
+        <span class="badge badge-blue">TC-P01</span>
+        <span>Kiểm Tra Tần Số Lấy Mẫu Khung Hình CSI (Frame Rate / FPS)</span>
+      </div>
+      <span class="badge badge-green">Đạt chuẩn</span>
+    </div>
+    <div class="test-body">
+      <div class="test-field">
+        <div class="test-field-label">Mục tiêu &amp; Tiêu chuẩn nghiệm thu:</div>
+        <div>Đo lường tần số lấy mẫu thực tế của luồng dữ liệu CSI qua cổng SSE. Tiêu chuẩn đạt: Tần số trung bình &ge; 14.0 Hz (chu kỳ phát mục tiêu 20 Hz).</div>
+      </div>
+      <div class="test-field">
+        <div class="test-field-label">Phương pháp đo đạc:</div>
+        <div>Lắng nghe luồng dữ liệu qua kết nối HTTP SSE trong 15 đến 30 giây, đếm tổng số gói tin nhận được chia cho tổng thời gian đo.</div>
+      </div>
+      <div class="test-field">
+        <div class="test-field-label">Kết quả thực tế:</div>
+        <div>Tần số đo được dao động từ 19.5 &ndash; 20.8 Hz, đáp ứng đầy đủ yêu cầu lấy mẫu liên tục của các thuật toán xử lý tín hiệu.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TC-P02 -->
+  <div class="test-card">
+    <div class="test-header">
+      <div class="test-title">
+        <span class="badge badge-blue">TC-P02</span>
+        <span>Kiểm Tra Độ Ổn Định Khoảng Cách Khung Hình Và Độ Giật (Jitter)</span>
+      </div>
+      <span class="badge badge-green">Đạt chuẩn</span>
+    </div>
+    <div class="test-body">
+      <div class="test-field">
+        <div class="test-field-label">Mục tiêu &amp; Tiêu chuẩn nghiệm thu:</div>
+        <div>Đánh giá tính đồng đều của khoảng thời gian giữa hai gói tin liên tiếp (&Delta;t). Tiêu chuẩn đạt: Khoảng cách trung vị 50 &ndash; 66 ms, độ lệch chuẩn (Jitter &sigma;) &le; 15.0 ms, khoảng cách tối đa &le; 200 ms.</div>
+      </div>
+      <div class="test-field">
+        <div class="test-field-label">Phương pháp đo đạc:</div>
+        <div>Ghi nhận mốc thời gian nano-giây bằng <code>time.perf_counter()</code> cho từng gói tin, tính toán các chỉ số thống kê (Mean, Median, Standard Deviation, P95, Max).</div>
+      </div>
+      <div class="test-field">
+        <div class="test-field-label">Kết quả thực tế:</div>
+        <div>Khoảng cách trung vị đạt 49.5 &ndash; 51.0 ms, độ lệch chuẩn duy trì ở mức 4.5 &ndash; 8.5 ms, không xảy ra hiện tượng mất gói hay gián đoạn luồng dữ liệu.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TC-P03 -->
+  <div class="test-card">
+    <div class="test-header">
+      <div class="test-title">
+        <span class="badge badge-blue">TC-P03</span>
+        <span>Kiểm Tra Mức Chiếm Dụng CPU Daemon &amp; Tỷ Lệ CPU Router Rảnh</span>
+      </div>
+      <span class="badge badge-green">Đạt chuẩn</span>
+    </div>
+    <div class="test-body">
+      <div class="test-field">
+        <div class="test-field-label">Mục tiêu &amp; Tiêu chuẩn nghiệm thu:</div>
+        <div>Đảm bảo tiến trình <code>edge_csi_daemon</code> không gây nghẽn CPU trên Router. Tiêu chuẩn đạt: Tải CPU daemon trung bình &le; 5.0% (đỉnh &le; 10.0%), tỷ lệ CPU router rảnh (System Idle) &ge; 80.0%.</div>
+      </div>
+      <div class="test-field">
+        <div class="test-field-label">Phương pháp đo đạc:</div>
+        <div>Đọc định kỳ mỗi giây thông tin từ tệp <code>/proc/[pid]/stat</code> và <code>/proc/stat</code> trên router qua kết nối SSH chỉ đọc.</div>
+      </div>
+      <div class="test-field">
+        <div class="test-field-label">Kết quả thực tế:</div>
+        <div>Tải CPU của daemon chỉ dao động từ 0.0% đến 2.1% (trung bình dưới 1.0%), toàn bộ router duy trì tỷ lệ rảnh từ 91% &ndash; 94%, không gây ảnh hưởng đến năng lực định tuyến mạng.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TC-P04 -->
+  <div class="test-card">
+    <div class="test-header">
+      <div class="test-title">
+        <span class="badge badge-blue">TC-P04</span>
+        <span>Kiểm Tra Mức Chiếm Dụng RAM Và Nguy Cơ Rò Rỉ Bộ Nhớ (&Delta;RSS)</span>
+      </div>
+      <span class="badge badge-green">Đạt chuẩn</span>
+    </div>
+    <div class="test-body">
+      <div class="test-field">
+        <div class="test-field-label">Mục tiêu &amp; Tiêu chuẩn nghiệm thu:</div>
+        <div>Kiểm soát lượng RAM thực tế (RSS) mà tiến trình sử dụng và xác nhận không có hiện tượng rò rỉ bộ nhớ. Tiêu chuẩn đạt: RAM sử dụng &le; 10.0 MB, độ biến thiên &Delta;RSS &lt; 1.0 MB trong suốt phiên chạy.</div>
+      </div>
+      <div class="test-field">
+        <div class="test-field-label">Phương pháp đo đạc:</div>
+        <div>Lấy mẫu giá trị VmRSS trong <code>/proc/[pid]/status</code> tại thời điểm bắt đầu và kết thúc chu kỳ đo.</div>
+      </div>
+      <div class="test-field">
+        <div class="test-field-label">Kết quả thực tế:</div>
+        <div>Dung lượng RAM thực tế duy trì ổn định ở mức 3.5 &ndash; 3.8 MB (trên tổng số 1 GB RAM của router), &Delta;RSS xấp xỉ 0.00 MB, xác nhận không rò rỉ bộ nhớ.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TC-P05 -->
+  <div class="test-card">
+    <div class="test-header">
+      <div class="test-title">
+        <span class="badge badge-blue">TC-P05</span>
+        <span>Kiểm Tra Băng Thông Mạng Luồng Web SSE &amp; Kích Thước Gói Tin</span>
+      </div>
+      <span class="badge badge-green">Đạt chuẩn</span>
+    </div>
+    <div class="test-body">
+      <div class="test-field">
+        <div class="test-field-label">Mục tiêu &amp; Tiêu chuẩn nghiệm thu:</div>
+        <div>Kiểm soát lưu lượng dữ liệu truyền qua mạng khi đẩy dữ liệu lên Web UI. Tiêu chuẩn đạt: Băng thông &le; 2.0 Mbps, kích thước gói tin JSON từ 8 &ndash; 12 KB (chứa toàn bộ biên độ và pha 2 anten).</div>
+      </div>
+      <div class="test-field">
+        <div class="test-field-label">Phương pháp đo đạc:</div>
+        <div>Đo kích thước từng dòng dữ liệu SSE nhận được, tính tổng lưu lượng chia cho thời gian đo lường.</div>
+      </div>
+      <div class="test-field">
+        <div class="test-field-label">Kết quả thực tế:</div>
+        <div>Băng thông truyền trung bình đạt khoảng 0.18 &ndash; 0.22 Mbps, kích thước gói JSON khoảng 9.5 KB, tiết kiệm đường truyền mạng nội bộ.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TC-P06 -->
+  <div class="test-card">
+    <div class="test-header">
+      <div class="test-title">
+        <span class="badge badge-blue">TC-P06</span>
+        <span>Kiểm Tra Vi Độ Trễ Xử Lý Từng Thuật Toán C++ (Pipeline Latency)</span>
+      </div>
+      <span class="badge badge-green">Đạt chuẩn</span>
+    </div>
+    <div class="test-body">
+      <div class="test-field">
+        <div class="test-field-label">Mục tiêu &amp; Tiêu chuẩn nghiệm thu:</div>
+        <div>Đo lường thời gian thực thi của chuỗi thuật toán xử lý dữ liệu CSI. Tiêu chuẩn đạt: Tổng thời gian tính toán của cả pipeline &lt; 1000 &mu;s (1.0 ms / frame).</div>
+      </div>
+      <div class="test-field">
+        <div class="test-field-label">Phương pháp đo đạc:</div>
+        <div>Thực thi công cụ micro-benchmark C++ (<code>tools/bench_algorithms.cpp</code>) với 2,000 vòng lặp cho các hàm: Lọc chuyển động, Bộ lọc IIR nhịp thở, và Đóng gói JSON.</div>
+      </div>
+      <div class="test-field">
+        <div class="test-field-label">Kết quả thực tế:</div>
+        <div>Tổng vi độ trễ chỉ mất khoảng 240 &ndash; 280 &mu;s (0.25 ms), chiếm 0.5% trong chu kỳ 50 ms cho phép, tốc độ xử lý trần lý thuyết đạt trên 3,500 khung hình/giây.</div>
+      </div>
+    </div>
+  </div>
+
+  <h2>Ma Trận Nghiệm Thu 6 Kịch Bản Hiệu Năng Hệ Thống</h2>
+  <div class="table-container">
+    <table>
+      <thead>
+        <tr>
+          <th style="width: 14%;">Mã Kịch Bản</th>
+          <th style="width: 40%;">Tên Kịch Bản Kiểm Thử</th>
+          <th style="width: 24%; text-align: center;">Tiêu Chuẩn Đạt</th>
+          <th style="width: 22%; text-align: center;">Đánh Giá Nghiệm Thu</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code>TC-P01</code></td>
+          <td>Tần số lấy mẫu khung hình (Frame Rate)</td>
+          <td style="text-align: center;">&ge; 14.0 Hz</td>
+          <td style="text-align: center;"><span class="badge badge-green">Đạt chuẩn (19.8 Hz)</span></td>
+        </tr>
+        <tr>
+          <td><code>TC-P02</code></td>
+          <td>Độ ổn định thời gian và độ giật (Jitter)</td>
+          <td style="text-align: center;">&le; 15.0 ms</td>
+          <td style="text-align: center;"><span class="badge badge-green">Đạt chuẩn (6.2 ms)</span></td>
+        </tr>
+        <tr>
+          <td><code>TC-P03</code></td>
+          <td>Tải CPU daemon trên Router Qualcomm</td>
+          <td style="text-align: center;">&le; 5.0% (Rảnh &ge; 80%)</td>
+          <td style="text-align: center;"><span class="badge badge-green">Đạt chuẩn (0.8%)</span></td>
+        </tr>
+        <tr>
+          <td><code>TC-P04</code></td>
+          <td>Dung lượng RAM chiếm dụng &amp; Kiểm tra rò rỉ</td>
+          <td style="text-align: center;">&le; 10.0 MB (&Delta;RSS &lt; 1.0 MB)</td>
+          <td style="text-align: center;"><span class="badge badge-green">Đạt chuẩn (3.5 MB)</span></td>
+        </tr>
+        <tr>
+          <td><code>TC-P05</code></td>
+          <td>Băng thông truyền luồng mạng Web SSE</td>
+          <td style="text-align: center;">&le; 2.0 Mbps</td>
+          <td style="text-align: center;"><span class="badge badge-green">Đạt chuẩn (0.19 Mbps)</span></td>
+        </tr>
+        <tr>
+          <td><code>TC-P06</code></td>
+          <td>Vi độ trễ thuật toán (Pipeline Latency)</td>
+          <td style="text-align: center;">&lt; 1000 &mu;s (1.0 ms)</td>
+          <td style="text-align: center;"><span class="badge badge-green">Đạt chuẩn (252.8 &mu;s)</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div style="margin-top: 25px; padding-top: 12px; border-top: 1px solid var(--border-color); font-size: 12.5px; color: var(--text-muted); text-align: center;">
+    Kịch bản kiểm thử: Hiệu năng hệ thống &bull; Edge CSI Router &bull; Qualcomm IPQ9650 ARM64 &bull; Ngày lập: 29/10/2026
+  </div>
+
+</div>
+</body>
+</html>

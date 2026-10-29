@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bộ Kịch Bản Kiểm Thử: Nhận Diện Chuyển Động Lớn (Macro-Motion)</title>
+  <style>
+:root {
+  --primary: #1a73e8;
+  --primary-dark: #1557b0;
+  --text-main: #202124;
+  --text-muted: #5f6368;
+  --bg-page: #f8f9fa;
+  --card-bg: #ffffff;
+  --border-color: #dadce0;
+  --tag-green-bg: #e6f4ea;
+  --tag-green-text: #137333;
+  --tag-green-border: #ceead6;
+  --tag-red-bg: #fce8e6;
+  --tag-red-text: #c5221f;
+  --tag-red-border: #fad2cf;
+  --tag-yellow-bg: #fef7e0;
+  --tag-yellow-text: #b06000;
+  --tag-yellow-border: #feefc3;
+  --tag-blue-bg: #e8f0fe;
+  --tag-blue-text: #1a73e8;
+  --tag-blue-border: #d2e3fc;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  line-height: 1.6;
+  color: var(--text-main);
+  background-color: var(--bg-page);
+  padding: 25px 15px;
+}
+.container {
+  max-width: 960px;
+  margin: 0 auto;
+  background: var(--card-bg);
+  padding: 35px 45px;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(60,64,67, 0.12), 0 3px 6px rgba(60,64,67, 0.04);
+  border: 1px solid var(--border-color);
+}
+.nav-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--border-color);
+  font-size: 13.5px;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.breadcrumb a {
+  color: var(--primary);
+  text-decoration: none;
+}
+.breadcrumb a:hover { text-decoration: underline; }
+.sibling-links {
+  display: flex;
+  gap: 8px;
+}
+.sibling-links a {
+  padding: 4px 10px;
+  border-radius: 4px;
+  text-decoration: none;
+  font-size: 12.5px;
+  border: 1px solid var(--border-color);
+  color: #3c4043;
+  background: #f8f9fa;
+}
+.sibling-links a.active {
+  background: var(--tag-blue-bg);
+  color: var(--primary);
+  border-color: var(--tag-blue-border);
+  font-weight: 600;
+}
+.sibling-links a:hover:not(.active) { background: #e8eaed; }
+.header {
+  border-bottom: 2px solid var(--primary);
+  padding-bottom: 16px;
+  margin-bottom: 25px;
+}
+.header h1 {
+  font-size: 22px;
+  font-weight: 700;
+  color: #1a1a1a;
+  margin-bottom: 10px;
+}
+.meta-box {
+  background: #f1f3f4;
+  padding: 10px 16px;
+  border-radius: 6px;
+  font-size: 13px;
+  color: #3c4043;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 6px;
+}
+.meta-item strong { color: #1a1a1a; }
+h2 {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--primary-dark);
+  margin: 28px 0 14px 0;
+  padding-bottom: 5px;
+  border-bottom: 1px solid var(--border-color);
+}
+h3 {
+  font-size: 15.5px;
+  font-weight: 600;
+  color: #333333;
+  margin: 18px 0 8px 0;
+}
+p { margin-bottom: 12px; font-size: 14px; text-align: justify; }
+ul, ol { margin-left: 22px; margin-bottom: 12px; font-size: 14px; }
+li { margin-bottom: 5px; }
+.badge {
+  display: inline-block;
+  padding: 3px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.4;
+  vertical-align: middle;
+  white-space: nowrap;
+}
+.badge-green { background: var(--tag-green-bg); color: var(--tag-green-text); border: 1px solid var(--tag-green-border); }
+.badge-red { background: var(--tag-red-bg); color: var(--tag-red-text); border: 1px solid var(--tag-red-border); }
+.badge-yellow { background: var(--tag-yellow-bg); color: var(--tag-yellow-text); border: 1px solid var(--tag-yellow-border); }
+.badge-blue { background: var(--tag-blue-bg); color: var(--tag-blue-text); border: 1px solid var(--tag-blue-border); }
+
+.table-container {
+  overflow-x: auto;
+  margin: 14px 0 20px 0;
+}
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13.5px;
+  text-align: left;
+}
+th, td {
+  padding: 9px 12px;
+  border: 1px solid var(--border-color);
+  vertical-align: middle;
+}
+th {
+  background-color: #f1f3f4;
+  font-weight: 600;
+  color: #202124;
+}
+tr:nth-child(even) { background-color: #f8f9fa; }
+
+.callout {
+  padding: 12px 16px;
+  border-radius: 6px;
+  margin: 14px 0;
+  font-size: 13.5px;
+  border-left: 4px solid;
+}
+.callout-info { background: var(--tag-blue-bg); border-color: var(--primary); color: #174ea6; }
+.callout-warning { background: var(--tag-yellow-bg); border-color: #f9ab00; color: #7f4f00; }
+.callout-danger { background: var(--tag-red-bg); border-color: #ea4335; color: #a51d24; }
+.callout-success { background: var(--tag-green-bg); border-color: #34a853; color: #0d652d; }
+
+.stat-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 14px;
+  margin: 16px 0 20px 0;
+}
+.stat-card {
+  background: #ffffff;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  padding: 14px;
+  text-align: center;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+}
+.stat-value {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--primary);
+  margin: 4px 0;
+}
+.stat-label {
+  font-size: 12px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  font-weight: 600;
+}
+
+.test-card {
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  margin-bottom: 18px;
+  background: #ffffff;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+}
+.test-header {
+  background: #f8f9fa;
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--border-color);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.test-title {
+  font-weight: 700;
+  font-size: 14.5px;
+  color: #202124;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.test-body {
+  padding: 14px 18px;
+  font-size: 13.5px;
+}
+.test-field { margin-bottom: 8px; }
+.test-field-label { font-weight: 600; color: #444; margin-bottom: 2px; }
+
+code {
+  font-family: SFMono-Regular, Consolas, "Liberation Mono", Menlo, monospace;
+  font-size: 12px;
+  background: #f1f3f4;
+  padding: 2px 4px;
+  border-radius: 3px;
+  color: #c5221f;
+}
+
+@media print {
+  body { background: #fff; padding: 0; }
+  .container { border: none; box-shadow: none; padding: 0; max-width: 100%; }
+  .nav-bar { display: none; }
+  h2 { font-size: 15px; margin: 18px 0 8px 0; }
+  p, li, td, th { font-size: 12px; }
+  .test-card { page-break-inside: avoid; }
+}
+</style>
+</head>
+<body>
+<div class="container">
+
+  <div class="nav-bar">
+    <div class="breadcrumb">
+      <a href="../index.html">&larr; Cổng điều hướng</a> &gt; <span>Chuyển động lớn</span> &gt; <strong>Kịch bản kiểm thử</strong>
+    </div>
+    <div class="sibling-links">
+      <a href="TAI_LIEU_MO_TA.html">Tài liệu mô tả</a>
+      <a href="BAO_CAO_KET_QUA.html">Báo cáo kết quả</a>
+      <a href="KICH_BAN_KIEM_THU.html" class="active">Kịch bản kiểm thử</a>
+    </div>
+  </div>
+
+  <div class="header">
+    <h1>Bộ Kịch Bản Kiểm Thử: Chuyển Động Lớn (Macro-Motion)</h1>
+    <div class="meta-box">
+      <div class="meta-item"><strong>Bộ kịch bản:</strong> TC-M01 đến TC-M05 (5 Kịch bản)</div>
+      <div class="meta-item"><strong>Thiết bị:</strong> Router Qualcomm IPQ9650 &amp; Điện thoại Client</div>
+      <div class="meta-item"><strong>Kênh kiểm tra:</strong> Web Dashboard &amp; JSON SSE Stream :8080/events</div>
+      <div class="meta-item"><strong>Trạng thái:</strong> 4 Đạt chuẩn / 1 Chưa đủ tín hiệu</div>
+    </div>
+  </div>
+
+  <h2>Danh Sách 5 Kịch Bản Kiểm Thử Chi Tiết</h2>
+
+  <!-- TC-M01 -->
+  <div class="test-card">
+    <div class="test-header">
+      <div class="test-title">
+        <span class="badge badge-blue">TC-M01</span>
+        <span>Phòng Trống Tĩnh Hoàn Toàn &amp; Tự Hiệu Chuẩn Nền</span>
+      </div>
+      <span class="badge badge-green">Đạt chuẩn</span>
+    </div>
+    <div class="test-body">
+      <div class="test-field">
+        <div class="test-field-label">Mục tiêu &amp; Tiền điều kiện:</div>
+        <div>Kiểm tra khả năng tự đo đạc nền tĩnh ban đầu (40 frame) và tỷ lệ báo động giả trong phòng không có người. Cửa đóng kín, phòng tĩnh không người, điện thoại đặt cố định.</div>
+      </div>
+      <div class="test-field">
+        <div class="test-field-label">Thao tác &amp; Kết quả đo đạc:</div>
+        <ul>
+          <li>Giữ phòng yên tĩnh trong 60 giây. Hệ thống tự động hoàn tất hiệu chuẩn sau <strong>6.2 giây</strong>.</li>
+          <li>Điểm số chuyển động <code>motion_score</code> ổn định ở mức 0.02 &ndash; 0.03 (dưới ngưỡng báo động 0.08).</li>
+          <li>Giao diện Web hiển thị nhãn: <code>"presence_status": "empty_room"</code>. Tỷ lệ báo giả đạt <strong>2.0%</strong>.</li>
+        </ul>
+      </div>
+      <div class="test-field">
+        <div class="test-field-label">Đánh giá:</div>
+        <div>Hệ thống tự thích ứng tốt với môi trường tĩnh, thiết lập ngưỡng an toàn tự động chuẩn xác.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TC-M02 -->
+  <div class="test-card">
+    <div class="test-header">
+      <div class="test-title">
+        <span class="badge badge-blue">TC-M02</span>
+        <span>Người Bước Vào Phòng &amp; Đi Lại Tự Do</span>
+      </div>
+      <span class="badge badge-green">Đạt chuẩn</span>
+    </div>
+    <div class="test-body">
+      <div class="test-field">
+        <div class="test-field-label">Mục tiêu &amp; Tiền điều kiện:</div>
+        <div>Kiểm tra độ nhạy và thời gian đáp ứng khi có người mở cửa bước vào phòng và đi lại. Hệ thống đang ở trạng thái <code>empty_room</code>.</div>
+      </div>
+      <div class="test-field">
+        <div class="test-field-label">Thao tác &amp; Kết quả đo đạc:</div>
+        <ul>
+          <li>Người bước vào phòng và đi lại với tốc độ bình thường (&sim;1 m/s).</li>
+          <li>Sau <strong>140 ms (3 frame gói tin)</strong>, điểm số chuyển động tăng lên 0.68, vượt ngưỡng kích hoạt.</li>
+          <li>Giao diện Web chuyển sang màu đỏ báo <strong>"CÓ CHUYỂN ĐỘNG (human_moving)"</strong>. Đồ thị CSI biến thiên liên tục theo bước chân.</li>
+        </ul>
+      </div>
+      <div class="test-field">
+        <div class="test-field-label">Đánh giá:</div>
+        <div>Thời gian phản hồi nhanh (140 ms), phát hiện chuẩn xác người đi lại hoặc bước vào phòng.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TC-M03 -->
+  <div class="test-card">
+    <div class="test-header">
+      <div class="test-title">
+        <span class="badge badge-blue">TC-M03</span>
+        <span>Cử Động Tại Chỗ &amp; Rung Chân Khi Ngồi Làm Việc</span>
+      </div>
+      <span class="badge badge-red">Chưa đủ tín hiệu</span>
+    </div>
+    <div class="test-body">
+      <div class="test-field">
+        <div class="test-field-label">Mục tiêu &amp; Tiền điều kiện:</div>
+        <div>Kiểm tra phản ứng khi người ngồi yên trên ghế làm việc (cách router 2m), chỉ rung một chân hoặc ngọ nguậy người nhẹ.</div>
+      </div>
+      <div class="test-field">
+        <div class="test-field-label">Thao tác &amp; Kết quả thực tế:</div>
+        <ul>
+          <li>Người ngồi yên giữ nguyên thân người, rung chân liên tục trong 30 giây. Thử nghiệm 20 lượt.</li>
+          <li>Điểm số chuyển động <code>motion_score</code> dao động quanh mức 0.03 &ndash; 0.05, <strong>chưa đủ để vượt qua ngưỡng an toàn</strong> 0.07.</li>
+          <li>Giao diện Web chỉ bắt được 6/20 lượt, 14 lượt còn lại giữ nhãn <code>empty_room</code>.</li>
+        </ul>
+      </div>
+      <div class="test-field">
+        <div class="test-field-label">Nguyên nhân &amp; Kết luận:</div>
+        <div>Thân người to lớn ngồi yên chiếm 95% diện tích cản sóng, cử động nhỏ của bàn chân chỉ tạo ra biến thiên quá bé và bị nuốt trọn trong khối sóng tĩnh. Nếu hạ ngưỡng thì khi phòng trống sẽ bị báo động giả do nhiễu môi trường. Giới hạn này cần nâng cấp bằng thuật toán vi phân bậc 2 trong giai đoạn tới.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TC-M04 -->
+  <div class="test-card">
+    <div class="test-header">
+      <div class="test-title">
+        <span class="badge badge-blue">TC-M04</span>
+        <span>Người Rời Phòng &amp; Thu Hồi Trạng Thái Phòng Trống</span>
+      </div>
+      <span class="badge badge-green">Đạt chuẩn</span>
+    </div>
+    <div class="test-body">
+      <div class="test-field">
+        <div class="test-field-label">Mục tiêu &amp; Tiền điều kiện:</div>
+        <div>Kiểm tra khả năng tự động tắt báo động và cập nhật lại mức nền tĩnh khi người đi ra ngoài và đóng cửa lại.</div>
+      </div>
+      <div class="test-field">
+        <div class="test-field-label">Thao tác &amp; Kết quả đo đạc:</div>
+        <ul>
+          <li>Người đang đi lại bước ra khỏi phòng và khép cửa lại.</li>
+          <li>Sau 15 frame tín hiệu thấp (&sim;0.85 giây), bộ đếm trễ xác nhận phòng yên tĩnh và trả trạng thái dứt khoát về <code>empty_room</code>.</li>
+          <li>Cơ chế Dynamic Leaky Baseline Tracking tự động học lại mức nền mới trong 45 frame tiếp theo, không bị kẹt báo động đỏ.</li>
+        </ul>
+      </div>
+      <div class="test-field">
+        <div class="test-field-label">Đánh giá:</div>
+        <div>Thu hồi trạng thái ổn định, cơ chế trễ chống chập chờn hoạt động tốt.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TC-M05 -->
+  <div class="test-card">
+    <div class="test-header">
+      <div class="test-title">
+        <span class="badge badge-blue">TC-M05</span>
+        <span>Kháng Nhiễu Rớt Gói Tin Mạng &amp; Đổi Nấc MCS</span>
+      </div>
+      <span class="badge badge-green">Đạt chuẩn</span>
+    </div>
+    <div class="test-body">
+      <div class="test-field">
+        <div class="test-field-label">Mục tiêu &amp; Tiền điều kiện:</div>
+        <div>Kiểm tra xem hệ thống có bị báo động giả khi đường truyền Wi-Fi bị rớt gói hoặc chip đổi tốc độ MCS hay không. Phòng trống hoàn toàn.</div>
+      </div>
+      <div class="test-field">
+        <div class="test-field-label">Thao tác &amp; Kết quả đo đạc:</div>
+        <ul>
+          <li>Tạo 30 sự kiện che chắn anten hoặc ép rớt gói đột ngột trong 0.5 giây.</li>
+          <li>Cổng tương quan thời gian (&rho; &lt; 0.82) phát hiện sự suy hao đường truyền bất thường và tự động khóa đỉnh giả.</li>
+          <li>Giao diện Web giữ nguyên nhãn <code>empty_room</code> trong <strong>29/30 lần thử</strong>.</li>
+        </ul>
+      </div>
+      <div class="test-field">
+        <div class="test-field-label">Đánh giá:</div>
+        <div>Khả năng chống nhiễu đường truyền mạng tốt, phân biệt được sóng xấu với người chuyển động.</div>
+      </div>
+    </div>
+  </div>
+
+  <h2>Ma Trận Nghiệm Thu 5 Kịch Bản Chuyển Động Lớn</h2>
+  <div class="table-container">
+    <table>
+      <thead>
+        <tr>
+          <th style="width: 15%;">Mã Kịch Bản</th>
+          <th style="width: 45%;">Tên Kịch Bản Kiểm Thử</th>
+          <th style="width: 20%; text-align: center;">Hiện Trạng</th>
+          <th style="width: 20%;">Ghi Chú</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code>TC-M01</code></td>
+          <td>Phòng trống tĩnh &amp; Tự hiệu chuẩn nền</td>
+          <td style="text-align: center;"><span class="badge badge-green">Đạt chuẩn</span></td>
+          <td>Hiệu chuẩn xong sau 6.2s, báo giả 2%</td>
+        </tr>
+        <tr>
+          <td><code>TC-M02</code></td>
+          <td>Người bước vào phòng &amp; Đi lại tự do</td>
+          <td style="text-align: center;"><span class="badge badge-green">Đạt chuẩn</span></td>
+          <td>Phát hiện nhanh sau 140 ms</td>
+        </tr>
+        <tr>
+          <td><code>TC-M03</code></td>
+          <td>Cử động tại chỗ &amp; Rung chân khi ngồi</td>
+          <td style="text-align: center;"><span class="badge badge-red">Chưa đủ tín hiệu</span></td>
+          <td>Tín hiệu chưa đủ vượt ngưỡng an toàn</td>
+        </tr>
+        <tr>
+          <td><code>TC-M04</code></td>
+          <td>Người rời phòng &amp; Thu hồi trạng thái</td>
+          <td style="text-align: center;"><span class="badge badge-green">Đạt chuẩn</span></td>
+          <td>Chuyển về empty_room sau 0.85s</td>
+        </tr>
+        <tr>
+          <td><code>TC-M05</code></td>
+          <td>Kháng nhiễu rớt gói &amp; Đổi nấc MCS</td>
+          <td style="text-align: center;"><span class="badge badge-green">Đạt chuẩn</span></td>
+          <td>Chặn tốt đỉnh giả (29/30 lần)</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div style="margin-top: 25px; padding-top: 12px; border-top: 1px solid var(--border-color); font-size: 12.5px; color: var(--text-muted); text-align: center;">
+    Kịch bản kiểm thử: Chuyển động lớn &bull; Edge CSI Router &bull; Qualcomm IPQ9650 ARM64 &bull; Ngày lập: 28/10/2026
+  </div>
+
+</div>
+</body>
+</html>
