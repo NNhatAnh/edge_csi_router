@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Tài Liệu Mô Tả Kỹ Thuật: Vẽ Trong Không Gian (Draw In Air)</title>
+  <title>Báo Cáo Mô Tả: Nhận Diện Hình Nét Vẽ (Hình Tròn / Tam Giác) Qua Wi-Fi</title>
   <style>
 :root {
   --primary: #1a73e8;
@@ -29,7 +29,7 @@
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body {
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-  line-height: 1.6;
+  line-height: 1.65;
   color: var(--text-main);
   background-color: var(--bg-page);
   padding: 25px 15px;
@@ -92,32 +92,32 @@ body {
 }
 .meta-box {
   background: #f1f3f4;
-  padding: 10px 16px;
+  padding: 12px 18px;
   border-radius: 6px;
   font-size: 13px;
   color: #3c4043;
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-  gap: 6px;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 8px;
 }
 .meta-item strong { color: #1a1a1a; }
 h2 {
   font-size: 18px;
   font-weight: 700;
   color: var(--primary-dark);
-  margin: 28px 0 14px 0;
-  padding-bottom: 5px;
+  margin: 30px 0 14px 0;
+  padding-bottom: 6px;
   border-bottom: 1px solid var(--border-color);
 }
 h3 {
   font-size: 15.5px;
   font-weight: 600;
-  color: #333333;
-  margin: 18px 0 8px 0;
+  color: #202124;
+  margin: 20px 0 10px 0;
 }
-p { margin-bottom: 12px; font-size: 14px; text-align: justify; }
-ul, ol { margin-left: 22px; margin-bottom: 12px; font-size: 14px; }
-li { margin-bottom: 5px; }
+p { margin-bottom: 12px; font-size: 14.5px; text-align: justify; }
+ul, ol { margin-left: 22px; margin-bottom: 14px; font-size: 14.5px; }
+li { margin-bottom: 6px; }
 .badge {
   display: inline-block;
   padding: 3px 8px;
@@ -133,33 +133,11 @@ li { margin-bottom: 5px; }
 .badge-yellow { background: var(--tag-yellow-bg); color: var(--tag-yellow-text); border: 1px solid var(--tag-yellow-border); }
 .badge-blue { background: var(--tag-blue-bg); color: var(--tag-blue-text); border: 1px solid var(--tag-blue-border); }
 
-.table-container {
-  overflow-x: auto;
-  margin: 14px 0 20px 0;
-}
-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 13.5px;
-  text-align: left;
-}
-th, td {
-  padding: 9px 12px;
-  border: 1px solid var(--border-color);
-  vertical-align: middle;
-}
-th {
-  background-color: #f1f3f4;
-  font-weight: 600;
-  color: #202124;
-}
-tr:nth-child(even) { background-color: #f8f9fa; }
-
 .callout {
-  padding: 12px 16px;
+  padding: 14px 18px;
   border-radius: 6px;
-  margin: 14px 0;
-  font-size: 13.5px;
+  margin: 16px 0;
+  font-size: 14px;
   border-left: 4px solid;
 }
 .callout-info { background: var(--tag-blue-bg); border-color: var(--primary); color: #174ea6; }
@@ -167,81 +145,41 @@ tr:nth-child(even) { background-color: #f8f9fa; }
 .callout-danger { background: var(--tag-red-bg); border-color: #ea4335; color: #a51d24; }
 .callout-success { background: var(--tag-green-bg); border-color: #34a853; color: #0d652d; }
 
-.stat-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-  gap: 14px;
-  margin: 16px 0 20px 0;
-}
-.stat-card {
+.card-box {
   background: #ffffff;
   border: 1px solid var(--border-color);
   border-radius: 6px;
-  padding: 14px;
-  text-align: center;
-  box-shadow: 0 1px 2px rgba(0,0,0,0.04);
-}
-.stat-value {
-  font-size: 22px;
-  font-weight: 700;
-  color: var(--primary);
-  margin: 4px 0;
-}
-.stat-label {
-  font-size: 12px;
-  color: var(--text-muted);
-  text-transform: uppercase;
-  font-weight: 600;
-}
-
-.test-card {
-  border: 1px solid var(--border-color);
-  border-radius: 6px;
-  margin-bottom: 18px;
-  background: #ffffff;
+  padding: 16px 20px;
+  margin-bottom: 16px;
   box-shadow: 0 1px 2px rgba(0,0,0,0.03);
 }
-.test-header {
-  background: #f8f9fa;
-  padding: 10px 16px;
-  border-bottom: 1px solid var(--border-color);
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-.test-title {
+.card-title {
   font-weight: 700;
-  font-size: 14.5px;
-  color: #202124;
-  display: flex;
-  align-items: center;
-  gap: 8px;
+  font-size: 15px;
+  color: var(--primary-dark);
+  margin-bottom: 8px;
 }
-.test-body {
-  padding: 14px 18px;
+
+.compare-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 16px 0;
   font-size: 13.5px;
 }
-.test-field { margin-bottom: 8px; }
-.test-field-label { font-weight: 600; color: #444; margin-bottom: 2px; }
-
-code {
-  font-family: SFMono-Regular, Consolas, "Liberation Mono", Menlo, monospace;
-  font-size: 12px;
-  background: #f1f3f4;
-  padding: 2px 4px;
-  border-radius: 3px;
-  color: #c5221f;
+.compare-table th, .compare-table td {
+  padding: 10px 14px;
+  border: 1px solid var(--border-color);
+  text-align: left;
 }
+.compare-table th { background: #f1f3f4; font-weight: 600; }
+.compare-table tr:nth-child(even) { background: #f8f9fa; }
 
 @media print {
   body { background: #fff; padding: 0; }
   .container { border: none; box-shadow: none; padding: 0; max-width: 100%; }
   .nav-bar { display: none; }
-  h2 { font-size: 15px; margin: 18px 0 8px 0; }
+  h2 { font-size: 16px; margin: 20px 0 10px 0; }
   p, li, td, th { font-size: 12px; }
-  .test-card { page-break-inside: avoid; }
 }
 </style>
 </head>
@@ -260,103 +198,151 @@ code {
   </div>
 
   <div class="header">
-    <h1>Tài Liệu Mô Tả: Vẽ Trong Không Gian (Draw In Air)</h1>
+    <h1>Báo Cáo Kỹ Thuật: Nhận Diện Nét Vẽ Trong Không Gian (Air Draw)</h1>
     <div class="meta-box">
-      <div class="meta-item"><strong>Bài toán:</strong> Theo dõi chuyển động tay và vẽ nét trong không gian</div>
-      <div class="meta-item"><strong>Mô hình:</strong> 1 Router Qualcomm IPQ9650 nối 1 Điện thoại</div>
-      <div class="meta-item"><strong>Tệp nguồn:</strong> src/air_draw.cpp, src/csi_rf_model1.c</div>
-      <div class="meta-item"><strong>Hiện trạng:</strong> Chưa đạt chuẩn do nhiễu cao, con trỏ nhảy ngẫu nhiên</div>
+      <div class="meta-item"><strong>Người báo cáo:</strong> Nhóm nghiên cứu &amp; phát triển CSI</div>
+      <div class="meta-item"><strong>Thiết bị sử dụng:</strong> 01 Router Wi-Fi 7 RDP499 và 01 Điện thoại di động</div>
+      <div class="meta-item"><strong>Trọng tâm bài toán:</strong> Nhận diện người dùng cầm điện thoại vẽ <strong>Hình tròn</strong> hoặc <strong>Hình tam giác</strong></div>
+      <div class="meta-item"><strong>Tình trạng hiện tại:</strong> Đang phân tích các hạn chế và thử nghiệm 2 hướng giải pháp song song</div>
     </div>
   </div>
 
-  <h2>1. Mục Tiêu Bài Toán</h2>
-  <p>
-    Bài toán Draw In Air hướng đến việc cho phép người dùng khua tay hoặc cầm thiết bị vẽ nét, viết chữ trong không gian. Sóng Wi-Fi phản xạ từ cử động tay được router thu nhận nhằm ước lượng tọa độ 2D (X, Y) và di chuyển con trỏ trên màn hình máy tính theo thời gian thực.
-  </p>
-  <p>
-    Mục tiêu thiết kế ban đầu:
-  </p>
-  <ul>
-    <li>Ước lượng hướng di chuyển và tọa độ con trỏ (X, Y) từ pha sóng vi sai giữa các anten.</li>
-    <li>Tự động nhận biết khi nào bắt đầu vẽ (Đặt bút) và khi nào dừng lại (Nhấc bút) dựa trên năng lượng chuyển động.</li>
-    <li>Khóa tâm con trỏ tại vị trí cố định khi tay đứng yên, tránh bị rung lắc do chuyển động cơ thể.</li>
-  </ul>
-
-  <h2>2. Cơ Chế Thuật Toán Đang Cài Đặt (src/air_draw.cpp)</h2>
-  <p>
-    Thuật toán hiện tại xử lý luồng CSI theo các bước:
-  </p>
-  <ol>
-    <li>
-      <strong>Căn tâm tham chiếu:</strong> Chốt vector pha gốc (u_anchor, v_anchor) từ 5 khung truyền liên tiếp để đưa con trỏ về tâm (0.5, 0.5).
-    </li>
-    <li>
-      <strong>Tính góc tới (AoA) và độ lệch pha vi sai:</strong> Đo độ lệch pha giữa Anten 0 và Anten 1. Khi tay di chuyển, sóng tới 2 anten lệch thời gian, tạo độ lệch pha vi sai để tính hướng dời con trỏ.
-    </li>
-    <li>
-      <strong>Bộ tích lũy năng lượng Đặt bút / Nhấc bút:</strong> Khi vận tốc vượt ngưỡng 0.085 m/s, hệ thống kích hoạt chế độ vẽ. Khi vận tốc giảm dưới ngưỡng trong 450 ms, hệ thống dừng nét vẽ.
-    </li>
-    <li>
-      <strong>Kẹp chặn vận tốc tối đa:</strong> Giới hạn tốc độ con trỏ không vượt quá 0.91 m/s nhằm hạn chế điểm nhảy vọt khi mất tín hiệu.
-    </li>
-  </ol>
-
-  <h2>3. Hiện Trạng Vận Hành Thực Tế: Chưa Đạt Chuẩn Kỹ Thuật</h2>
-
-  <div class="callout callout-danger">
-    <strong>Đánh giá thực tế:</strong> Tính năng Draw In Air hiện tại <strong>hoàn toàn chưa đạt chuẩn</strong>. Hệ thống chưa thể ứng dụng vào thực tế do tín hiệu CSI thu được chứa mức nhiễu nền quá lớn.
-  </div>
-
-  <p>
-    Các hiện tượng lỗi cụ thể ghi nhận trong quá trình kiểm thử thực tế bao gồm:
-  </p>
-  <ul>
-    <li>
-      <strong>Con trỏ di chuyển ngẫu nhiên liên tục:</strong> Ngay cả khi người dùng giữ yên tay hoặc chỉ cử động nhẹ, con trỏ trên màn hình vẫn nhảy giật liên tục qua các vị trí ngẫu nhiên mà không thể neo giữ tại tâm hay theo quỹ đạo mong muốn.
-    </li>
-    <li>
-      <strong>Hiện tượng đảo ngược hướng trái / phải:</strong> Khi người dùng vung tay sang trái thì con trỏ nhảy sang phải, và ngược lại khi đưa tay sang phải con trỏ lại chạy sang trái do góc lệch pha bị đảo dấu bởi phản xạ tường.
-    </li>
-    <li>
-      <strong>Trục lên / xuống hoàn toàn chưa nhận được:</strong> Do phần cứng router chỉ bố trí anten theo một hàng ngang (cùng độ cao), hệ thống không có khoảng cách tham chiếu theo phương thẳng đứng để đo góc nâng (Elevation), khiến thao tác đưa tay lên hoặc xuống không tạo ra dịch chuyển tọa độ Y tương ứng.
-    </li>
-    <li>
-      <strong>Nét vẽ rung lắc hỗn loạn:</strong> Đường vẽ thu được trên màn hình bị gãy khúc, giật cục và vỡ hình hoàn toàn, không thể hiện được bất kỳ chữ viết hay hình vẽ nét liền nào.
-    </li>
-  </ul>
-
-  <h2>4. Bốn Nguyên Nhân Vật Lý Khiến Tính Toán Tọa Độ Bị Sai Lệch</h2>
-  <p>
-    Thuật toán dựa trên giả định sóng truyền thẳng trực tiếp từ tay đến anten. Trong điều kiện phòng thực tế, các nguyên nhân vật lý sau làm tín hiệu bị sai lệch:
-  </p>
-
-  <h3>4.1. Nhiễu phản xạ đa đường (Multipath)</h3>
-  <p>
-    Sóng Wi-Fi phản xạ từ sàn, tường, trần và các vật dụng kim loại trong phòng trước khi tới anten. Khi tay cử động, toàn bộ các đường phản xạ phụ bị biến đổi pha đồng thời, làm giá trị góc tới tính được bị sai lệch lớn so với vị trí bàn tay thực tế.
-  </p>
-
-  <h3>4.2. Cử động bả vai và thân người lấn át ngón tay</h3>
-  <p>
-    Khi vung tay vẽ, bả vai và cánh tay cùng chuyển động. Do diện tích phản xạ của vai và ngực lớn hơn bàn tay, năng lượng phản xạ từ thân người chiếm ưu thế và làm dịch chuyển góc pha theo hướng chuyển động của cơ thể thay vì bàn tay.
-  </p>
-
-  <h3>4.3. Bước sóng 5.8 GHz ngắn và hiện tượng lật pha chu kỳ (2.9 cm)</h3>
-  <p>
-    Ở dải tần 5 GHz, nửa bước sóng tương ứng 2.9 cm. Mỗi khi bàn tay di chuyển qua quãng đường 2.9 cm, pha sóng bị quay đủ một chu kỳ (phase wrapping). Với nét vẽ dài 10-15 cm, pha bị lật nhiều vòng liên tiếp khiến thuật toán tính toán nhầm lẫn giữa tiến và lùi, gây ra rung lắc cục bộ.
-  </p>
-
-  <h3>4.4. Thiếu anten phân bố theo trục đứng (Elevation)</h3>
-  <p>
-    Hệ thống hiện chỉ có 2 chuỗi thu phát trên mặt phẳng ngang. Để đo được chuyển động lên / xuống, phần cứng bắt buộc phải có ít nhất một cặp anten bố trí vuông góc theo chiều dọc để tạo đường đáy pha theo phương cao độ.
-  </p>
-
-  <h2>5. Định Hướng Kỹ Thuật Tiếp Theo</h2>
+  <!-- PHẦN 1: MÔ TẢ BÀI TOÁN -->
+  <h2>1. Trọng Tâm Bài Toán (Mục Tiêu Cần Đạt)</h2>
   <div class="callout callout-info">
-    <strong>Kết luận &amp; Giải pháp:</strong> Với mô hình 1 Router và 1 Client cùng cặp anten đơn mặt phẳng ngang, việc dùng công thức hình học góc tới để giải bài toán vẽ tự do 2D là không khả thi. Nhóm chuyển hướng sang nhận diện các mẫu cử chỉ rời rạc (cử chỉ vẫy tay, gạt trái, gạt phải) bằng bộ phân loại Random Forest / TinyML trên chuỗi đặc trưng năng lượng, thay vì tính toán tọa độ liên tục.
+    <strong>Trọng tâm cốt lõi của bài toán:</strong> Người dùng cầm chiếc điện thoại trên tay và di chuyển để vẽ thành một hình cụ thể trong không gian (trước mắt là <strong>Hình tròn</strong> hoặc <strong>Hình tam giác</strong>). Hệ thống router Wi-Fi thông qua sự thay đổi của sóng vô tuyến (CSI) cần nhận diện chính xác xem người dùng vừa vẽ ra hình gì.
+  </div>
+  <p>
+    Cách tiếp cận này có ưu điểm là người dùng chỉ cần cầm điện thoại bình thường, không cần phải lắp thêm camera giám sát (tránh ngại về riêng tư), cũng không cần gắn thêm cảm biến chuyên dụng đắt tiền lên người.
+  </p>
+  <p>
+    Hệ thống sẽ tập trung vào 3 yêu cầu cụ thể:
+  </p>
+  <ul>
+    <li><strong>Phát hiện có chuyển động vẽ:</strong> Nhận biết được lúc nào người dùng bắt đầu vung tay vẽ và lúc nào kết thúc, tránh nhầm lẫn với lúc người dùng chỉ cầm điện thoại đứng yên hoặc thao tác bấm màn hình bình thường.</li>
+    <li><strong>Đo tốc độ di chuyển của tay:</strong> Theo dõi được tay đang vẽ nhanh hay chậm để phục vụ phân loại nét vẽ.</li>
+    <li><strong>Phân biệt rõ ràng giữa Hình tròn và Hình tam giác:</strong> Đây là yêu cầu quan trọng nhất. Khi người dùng kết thúc nét vẽ, hệ thống phải đưa ra kết luận đó là hình tròn hay hình tam giác.</li>
+  </ul>
+
+  <!-- PHẦN 2: CÁC VẤN ĐỀ VÀ KHÓ KHĂN HIỆN TẠI -->
+  <h2>2. Các Khó Khăn Và Vướng Mắc Thực Tế Hiện Nay</h2>
+  <p>
+    Qua quá trình nghiên cứu tài liệu từ Qualcomm, đo đạc trực tiếp trên router thực tế và tham khảo các thử nghiệm trước đó, em nhận thấy hệ thống hiện tại đang gặp 3 khó khăn lớn:
+  </p>
+
+  <div class="card-box">
+    <div class="card-title">Khó khăn 1: Thuật toán hiện tại chưa có khả năng nhận diện hình vẽ</div>
+    <p>
+      Thuật toán đang chạy trên router hiện nay mới chỉ là phiên bản thử nghiệm sơ khai. Thuật toán này chỉ đơn giản là tính toán hướng gạt tay theo các đường thẳng cơ bản (như gạt sang trái, gạt sang phải, đưa lên trên hoặc đưa xuống dưới).
+    </p>
+    <p>
+      Thuật toán này hoàn toàn chưa được thiết kế để học hay nhận diện các hình vẽ khép kín phức tạp. Vì vậy, hệ thống hiện tại chưa thể tự phân biệt được đâu là hình tròn, đâu là hình tam giác.
+    </p>
   </div>
 
-  <div style="margin-top: 25px; padding-top: 12px; border-top: 1px solid var(--border-color); font-size: 12.5px; color: var(--text-muted); text-align: center;">
-    Tài liệu kỹ thuật: Draw In Air &bull; Edge CSI Router &bull; Qualcomm IPQ9650 ARM64 &bull; Ngày lập: 28/10/2026
+  <div class="card-box">
+    <div class="card-title">Khó khăn 2: Đặc tính anten router khó bắt được chuyển động lên - xuống</div>
+    <p>
+      Trên router RDP499 hiện tại, cả 3 anten đều đang được dựng thẳng đứng và xếp thành một hàng ngang. Do đặc tính vật lý của sóng Wi-Fi:
+    </p>
+    <ul>
+      <li>Khi tay người dùng di chuyển <strong>qua lại trái - phải</strong>, tín hiệu sóng lệch pha giữa các anten rất rõ, router nhận biết rất tốt.</li>
+      <li>Nhưng khi tay di chuyển <strong>lên trên - xuống dưới</strong>, tín hiệu sóng thu được ở cả 3 anten lại gần như tương tự nhau, router rất khó cảm nhận được chuyển động theo chiều dọc.</li>
+    </ul>
+    <p>
+      Chính vì router bị "mờ nhạt" ở chiều lên - xuống, nên khi người dùng vẽ hình tròn hay hình tam giác, router nhìn vào chủ yếu chỉ thấy tay đưa qua đưa lại. Báo cáo thử nghiệm thực tế trước đây (tài liệu DrawCSI) cho thấy: tỷ lệ máy đoán đúng giữa hình tròn và hình tam giác chỉ đạt <strong>khoảng 58% đến 68%</strong>, tức là gần tương đương với việc tung đồng xu đoán mò (khoảng 65%).
+    </p>
+  </div>
+
+  <div class="card-box">
+    <div class="card-title">Khó khăn 3: Tính năng đo góc phần cứng của chip Qualcomm bị báo lỗi (0xFFFF)</div>
+    <p>
+      Về mặt lý thuyết, chip Wi-Fi Qualcomm trên router có tính năng tự động đo góc tới của sóng (Angle-of-Arrival - AoA). Nhóm em đã bật tính năng này trên router và bắt được các bản tin sự kiện của chip.
+    </p>
+    <p>
+      <strong>Tuy nhiên, khi kiểm tra thực tế:</strong> Chip Qualcomm lại luôn trả về giá trị góc là <code>0xFFFF</code> (đây là mã báo lỗi giá trị không hợp lệ từ chip).
+    </p>
+    <p>
+      <strong>Nguyên nhân:</strong> Để chip tự tính được góc chuẩn, chip cần được nhà sản xuất nạp sẵn một bảng dữ liệu cân chỉnh anten (gọi là bảng caldata) từ khi xuất xưởng. Nhưng phiên bản router thương mại này hiện chưa được nhà máy nạp dữ liệu cân chỉnh đó, dẫn đến việc chip không có đủ thông số để tự tính ra góc và đành trả về mã lỗi.
+    </p>
+  </div>
+
+  <!-- PHẦN 3: HƯỚNG THỬ NGHIỆM TIẾP THEO -->
+  <h2>3. Kế Hoạch Và Hướng Thử Nghiệm Tiếp Theo Của Em</h2>
+  <p>
+    Nhận định đây là một bài toán khó và còn nhiều biến số, em xin phép <strong>không khẳng định chắc chắn 100%</strong> mà đề xuất kế hoạch triển khai thử nghiệm đồng thời <strong>2 hướng song song</strong> để tìm giải pháp tối ưu nhất cho hệ thống:
+  </p>
+
+  <div class="card-box" style="border-left: 4px solid var(--primary);">
+    <div class="card-title" style="color: var(--primary);">Hướng 1: Thử nghiệm giải pháp tự tính toán góc bằng phần mềm (Software AoA)</div>
+    <p>
+      Dù chip Qualcomm không tự tính ra góc, nhưng chip vẫn trả về cho router dữ liệu sóng thô (CSI) rất chi tiết của cả 3 anten ở băng thông 80 MHz.
+    </p>
+    <p>
+      Em sẽ thử nghiệm thuật toán tự phân tích độ lệch pha giữa các anten trong phần mềm để ước tính hướng chuyển động. Cùng với đó, em sẽ kết hợp nhận diện dựa trên <strong>thói quen vung tay tự nhiên</strong> của người dùng:
+    </p>
+    <ul>
+      <li><strong>Khi vẽ hình tam giác:</strong> Tay người dùng khi đến 3 đỉnh của tam giác sẽ có quán tính <em>khựng lại một nhịp rất ngắn</em> để bẻ góc đổi hướng, sau đó mới vẽ cạnh tiếp theo. Em sẽ thử bắt các điểm khựng tốc độ này.</li>
+      <li><strong>Khi vẽ hình tròn:</strong> Tay người dùng thường vung đều, mượt mà và chuyển động tròn liên tục, không có các điểm dừng đột ngột như hình tam giác.</li>
+    </ul>
+    <p>
+      Nếu thuật toán phần mềm bắt được chính xác 3 nhịp khựng của tay, hệ thống có thể phân biệt được hình tam giác với hình tròn mà không cần phần cứng quá phức tạp.
+    </p>
+  </div>
+
+  <div class="card-box" style="border-left: 4px solid #137333;">
+    <div class="card-title" style="color: #137333;">Hướng 2: Tạo case ticket hỏi trực tiếp hãng Qualcomm</div>
+    <p>
+      Song song với việc tự làm phần mềm, em sẽ soạn tài liệu kỹ thuật và mở một case ticket chính thức gửi tới đội ngũ hỗ trợ kỹ thuật của hãng Qualcomm:
+    </p>
+    <ul>
+      <li>Gửi kèm log đo đạc thực tế của router và mô tả rõ hiện tượng trường pha góc bị trả về mã <code>0xFFFF</code>.</li>
+      <li>Nhờ Qualcomm tư vấn xem với dòng chip và phiên bản phần mềm hiện tại trên router của mình, có cách nào cấu hình hoặc nạp bổ sung file dữ liệu cân chỉnh (caldata) để kích hoạt được tính năng đo góc sẵn có của chip hay không.</li>
+    </ul>
+    <p>
+      Nếu Qualcomm cung cấp được phương án hoặc bản vá để kích hoạt thành công tính năng đo góc phần cứng này, độ chính xác của bài toán sẽ được hỗ trợ rất lớn từ gốc phần cứng.
+    </p>
+  </div>
+
+  <!-- PHẦN 4: TỔNG KẾT -->
+  <h2>4. Bảng Tổng Hợp Kế Hoạch Triển Khai</h2>
+  <table class="compare-table">
+    <thead>
+      <tr>
+        <th style="width: 25%;">Hạng mục</th>
+        <th style="width: 35%;">Hiện trạng hiện tại</th>
+        <th style="width: 40%;">Kế hoạch thử nghiệm tiếp theo</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>Bài toán trọng tâm</strong></td>
+        <td>Mới chỉ nhận biết hướng gạt tay đơn giản (trái, phải, lên, xuống).</td>
+        <td>Tập trung phân biệt rõ giữa <strong>Hình tròn</strong> và <strong>Hình tam giác</strong> khi người dùng cầm điện thoại vẽ.</td>
+      </tr>
+      <tr>
+        <td><strong>Xử lý đo góc</strong></td>
+        <td>Tính năng đo góc trên chip Qualcomm báo lỗi mã <code>0xFFFF</code> do thiếu dữ liệu cân chỉnh từ nhà máy.</td>
+        <td><strong>Triển khai 2 hướng song song:</strong><br>
+          1. Tự tính toán góc bằng phần mềm (Software AoA) từ dữ liệu sóng thô.<br>
+          2. Tạo case ticket gửi Qualcomm để nhờ hỗ trợ kỹ thuật về tính năng đo góc trên chip.
+        </td>
+      </tr>
+      <tr>
+        <td><strong>Cách phân biệt hình</strong></td>
+        <td>Chưa có cơ chế phân biệt (đoán ngẫu nhiên chỉ đạt ~60%).</td>
+        <td>Thử nghiệm bắt các nhịp khựng tay ở 3 góc (hình tam giác) so với chuyển động lướt đều (hình tròn).</td>
+      </tr>
+      <tr>
+        <td><strong>Đánh giá khả thi</strong></td>
+        <td>Là bài toán khó, chưa đủ cơ sở để kết luận ngay.</td>
+        <td>Sẽ đo đạc thực nghiệm cụ thể và báo cáo số liệu thực tế sau khi chạy thử nghiệm 2 hướng.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div style="margin-top: 30px; padding-top: 15px; border-top: 1px solid var(--border-color); font-size: 13px; color: var(--text-muted); text-align: center;">
+    Báo cáo kỹ thuật Air Draw &bull; Trình ban quản lý dự án &bull; Nhóm R&amp;D Wi-Fi CSI &bull; Tháng 10/2026
   </div>
 
 </div>

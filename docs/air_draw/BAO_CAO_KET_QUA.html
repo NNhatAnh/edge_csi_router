@@ -3,382 +3,72 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Báo Cáo Đo Lường & Đánh Giá: Draw In Air</title>
+  <title>Báo Cáo Đánh Giá Thực Tế: Nhận Diện Hình Nét Vẽ (Air Draw)</title>
   <style>
-:root {
-  --primary: #1a73e8;
-  --primary-dark: #1557b0;
-  --text-main: #202124;
-  --text-muted: #5f6368;
-  --bg-page: #f8f9fa;
-  --card-bg: #ffffff;
-  --border-color: #dadce0;
-  --tag-green-bg: #e6f4ea;
-  --tag-green-text: #137333;
-  --tag-green-border: #ceead6;
-  --tag-red-bg: #fce8e6;
-  --tag-red-text: #c5221f;
-  --tag-red-border: #fad2cf;
-  --tag-yellow-bg: #fef7e0;
-  --tag-yellow-text: #b06000;
-  --tag-yellow-border: #feefc3;
-  --tag-blue-bg: #e8f0fe;
-  --tag-blue-text: #1a73e8;
-  --tag-blue-border: #d2e3fc;
-}
-* { box-sizing: border-box; margin: 0; padding: 0; }
-body {
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-  line-height: 1.6;
-  color: var(--text-main);
-  background-color: var(--bg-page);
-  padding: 25px 15px;
-}
-.container {
-  max-width: 960px;
-  margin: 0 auto;
-  background: var(--card-bg);
-  padding: 35px 45px;
-  border-radius: 8px;
-  box-shadow: 0 1px 3px rgba(60,64,67, 0.12), 0 3px 6px rgba(60,64,67, 0.04);
-  border: 1px solid var(--border-color);
-}
-.nav-bar {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 20px;
-  padding-bottom: 12px;
-  border-bottom: 1px solid var(--border-color);
-  font-size: 13.5px;
-  flex-wrap: wrap;
-  gap: 10px;
-}
-.breadcrumb a {
-  color: var(--primary);
-  text-decoration: none;
-}
-.breadcrumb a:hover { text-decoration: underline; }
-.sibling-links {
-  display: flex;
-  gap: 8px;
-}
-.sibling-links a {
-  padding: 4px 10px;
-  border-radius: 4px;
-  text-decoration: none;
-  font-size: 12.5px;
-  border: 1px solid var(--border-color);
-  color: #3c4043;
-  background: #f8f9fa;
-}
-.sibling-links a.active {
-  background: var(--tag-blue-bg);
-  color: var(--primary);
-  border-color: var(--tag-blue-border);
-  font-weight: 600;
-}
-.sibling-links a:hover:not(.active) { background: #e8eaed; }
-.header {
-  border-bottom: 2px solid var(--primary);
-  padding-bottom: 16px;
-  margin-bottom: 25px;
-}
-.header h1 {
-  font-size: 22px;
-  font-weight: 700;
-  color: #1a1a1a;
-  margin-bottom: 10px;
-}
-.meta-box {
-  background: #f1f3f4;
-  padding: 10px 16px;
-  border-radius: 6px;
-  font-size: 13px;
-  color: #3c4043;
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-  gap: 6px;
-}
-.meta-item strong { color: #1a1a1a; }
-h2 {
-  font-size: 18px;
-  font-weight: 700;
-  color: var(--primary-dark);
-  margin: 28px 0 14px 0;
-  padding-bottom: 5px;
-  border-bottom: 1px solid var(--border-color);
-}
-h3 {
-  font-size: 15.5px;
-  font-weight: 600;
-  color: #333333;
-  margin: 18px 0 8px 0;
-}
-p { margin-bottom: 12px; font-size: 14px; text-align: justify; }
-ul, ol { margin-left: 22px; margin-bottom: 12px; font-size: 14px; }
-li { margin-bottom: 5px; }
-.badge {
-  display: inline-block;
-  padding: 3px 8px;
-  border-radius: 4px;
-  font-size: 12px;
-  font-weight: 600;
-  line-height: 1.4;
-  vertical-align: middle;
-  white-space: nowrap;
-}
-.badge-green { background: var(--tag-green-bg); color: var(--tag-green-text); border: 1px solid var(--tag-green-border); }
-.badge-red { background: var(--tag-red-bg); color: var(--tag-red-text); border: 1px solid var(--tag-red-border); }
-.badge-yellow { background: var(--tag-yellow-bg); color: var(--tag-yellow-text); border: 1px solid var(--tag-yellow-border); }
-.badge-blue { background: var(--tag-blue-bg); color: var(--tag-blue-text); border: 1px solid var(--tag-blue-border); }
-
-.table-container {
-  overflow-x: auto;
-  margin: 14px 0 20px 0;
-}
-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 13.5px;
-  text-align: left;
-}
-th, td {
-  padding: 9px 12px;
-  border: 1px solid var(--border-color);
-  vertical-align: middle;
-}
-th {
-  background-color: #f1f3f4;
-  font-weight: 600;
-  color: #202124;
-}
-tr:nth-child(even) { background-color: #f8f9fa; }
-
-.callout {
-  padding: 12px 16px;
-  border-radius: 6px;
-  margin: 14px 0;
-  font-size: 13.5px;
-  border-left: 4px solid;
-}
-.callout-info { background: var(--tag-blue-bg); border-color: var(--primary); color: #174ea6; }
-.callout-warning { background: var(--tag-yellow-bg); border-color: #f9ab00; color: #7f4f00; }
-.callout-danger { background: var(--tag-red-bg); border-color: #ea4335; color: #a51d24; }
-.callout-success { background: var(--tag-green-bg); border-color: #34a853; color: #0d652d; }
-
-.stat-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-  gap: 14px;
-  margin: 16px 0 20px 0;
-}
-.stat-card {
-  background: #ffffff;
-  border: 1px solid var(--border-color);
-  border-radius: 6px;
-  padding: 14px;
-  text-align: center;
-  box-shadow: 0 1px 2px rgba(0,0,0,0.04);
-}
-.stat-value {
-  font-size: 22px;
-  font-weight: 700;
-  color: var(--primary);
-  margin: 4px 0;
-}
-.stat-label {
-  font-size: 12px;
-  color: var(--text-muted);
-  text-transform: uppercase;
-  font-weight: 600;
-}
-
-.test-card {
-  border: 1px solid var(--border-color);
-  border-radius: 6px;
-  margin-bottom: 18px;
-  background: #ffffff;
-  box-shadow: 0 1px 2px rgba(0,0,0,0.03);
-}
-.test-header {
-  background: #f8f9fa;
-  padding: 10px 16px;
-  border-bottom: 1px solid var(--border-color);
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-.test-title {
-  font-weight: 700;
-  font-size: 14.5px;
-  color: #202124;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-.test-body {
-  padding: 14px 18px;
-  font-size: 13.5px;
-}
-.test-field { margin-bottom: 8px; }
-.test-field-label { font-weight: 600; color: #444; margin-bottom: 2px; }
-
-code {
-  font-family: SFMono-Regular, Consolas, "Liberation Mono", Menlo, monospace;
-  font-size: 12px;
-  background: #f1f3f4;
-  padding: 2px 4px;
-  border-radius: 3px;
-  color: #c5221f;
-}
-
-@media print {
-  body { background: #fff; padding: 0; }
-  .container { border: none; box-shadow: none; padding: 0; max-width: 100%; }
-  .nav-bar { display: none; }
-  h2 { font-size: 15px; margin: 18px 0 8px 0; }
-  p, li, td, th { font-size: 12px; }
-  .test-card { page-break-inside: avoid; }
-}
-</style>
+    body { font: 15px/1.65 system-ui, sans-serif; color: #202124; background: #f8f9fa; margin: 0; padding: 24px; }
+    main { max-width: 960px; margin: auto; padding: 32px; background: white; border: 1px solid #dadce0; border-radius: 8px; }
+    nav, .meta, .note { padding: 12px 16px; background: #f1f3f4; border-radius: 6px; }
+    nav { margin-bottom: 20px; } nav a { margin-right: 14px; color: #1a73e8; text-decoration: none; }
+    nav a:hover { text-decoration: underline; }
+    h1 { font-size: 22px; color: #1a1a1a; margin-bottom: 12px; } 
+    h2 { margin-top: 28px; color: #1557b0; font-size: 18px; border-bottom: 1px solid #dadce0; padding-bottom: 6px; }
+    table { width: 100%; border-collapse: collapse; margin: 16px 0; font-size: 14px; }
+    th, td { padding: 10px 14px; text-align: left; border: 1px solid #dadce0; vertical-align: top; }
+    th { background: #f1f3f4; }
+    .note { border-left: 4px solid #f9ab00; background: #fef7e0; font-size: 14px; margin: 14px 0; }
+    code { background: #f1f3f4; padding: 2px 4px; border-radius: 3px; font-size: 13px; }
+  </style>
 </head>
 <body>
-<div class="container">
-
-  <div class="nav-bar">
-    <div class="breadcrumb">
-      <a href="../index.html">&larr; Cổng điều hướng</a> &gt; <span>Air Draw</span> &gt; <strong>Báo cáo kết quả</strong>
-    </div>
-    <div class="sibling-links">
-      <a href="TAI_LIEU_MO_TA.html">Tài liệu mô tả</a>
-      <a href="BAO_CAO_KET_QUA.html" class="active">Báo cáo kết quả</a>
-      <a href="KICH_BAN_KIEM_THU.html">Kịch bản kiểm thử</a>
-    </div>
+<main>
+  <nav><a href="../index.html">Cổng tài liệu</a><a href="TAI_LIEU_MO_TA.html">Tài liệu mô tả</a><a href="KICH_BAN_KIEM_THU.html">Kịch bản kiểm thử</a></nav>
+  <h1>Báo Cáo Thực Tế: Đánh Giá Khả Năng Phân Biệt Hình Tròn Và Hình Tam Giác</h1>
+  <div class="meta">
+    <strong>Tình trạng:</strong> Chưa có kết quả thử nghiệm chính thức cho bài toán phân biệt hình tròn và hình tam giác.<br>
+    <strong>Thiết bị:</strong> Router Wi-Fi 7 RDP499 và điện thoại di động.<br>
+    <strong>Nguồn số liệu tham khảo:</strong> Báo cáo đo lường trước đây (DrawCSI) và kết quả kiểm tra thực tế tính năng đo góc của chip Qualcomm.
   </div>
 
-  <div class="header">
-    <h1>Báo Cáo Đo Lường &amp; Đánh Giá: Draw In Air</h1>
-    <div class="meta-box">
-      <div class="meta-item"><strong>Thiết bị thử nghiệm:</strong> Router Qualcomm IPQ9650 ARM64 (ath12k, 80MHz)</div>
-      <div class="meta-item"><strong>Công cụ đo kiểm:</strong> Web Canvas UI &amp; tools/evaluate_performance.py</div>
-      <div class="meta-item"><strong>Số lượt thử nghiệm:</strong> 280 lượt thao tác vẽ và cử chỉ</div>
-      <div class="meta-item"><strong>Thời gian xử lý:</strong> air_draw.cpp: 38.49 &mu;s | Random Forest: 1.72 &mu;s</div>
-    </div>
-  </div>
-
-  <h2>1. Tóm Tắt Số Liệu Đo Kiểm (Thực Tế Vận Hành)</h2>
-  <div class="stat-grid">
-    <div class="stat-card">
-      <div class="stat-label">Căn Tâm Tham Chiếu</div>
-      <div class="stat-value" style="color: #c5221f;">23.3%</div>
-      <div class="stat-label" style="color: #c5221f;">Chưa đạt - Trôi dạt tâm</div>
-    </div>
-    <div class="stat-card">
-      <div class="stat-label">Đặt Bút / Nhấc Bút</div>
-      <div class="stat-value" style="color: #c5221f;">28.0%</div>
-      <div class="stat-label" style="color: #c5221f;">Chưa đạt - Nhận nhầm nhiễu</div>
-    </div>
-    <div class="stat-card">
-      <div class="stat-label">Định Hướng Trái / Phải</div>
-      <div class="stat-value" style="color: #c5221f;">12.5%</div>
-      <div class="stat-label" style="color: #c5221f;">Chưa đạt - Bị nghịch đảo</div>
-    </div>
-    <div class="stat-card">
-      <div class="stat-label">Vẽ Hình Học 2D</div>
-      <div class="stat-value" style="color: #c5221f;">0.0%</div>
-      <div class="stat-label" style="color: #c5221f;">Chưa đạt - Rung hỗn loạn</div>
-    </div>
-  </div>
-
-  <h2>2. Bảng Kết Quả Đo Lường Chi Tiết Theo Kịch Bản</h2>
-  <div class="callout callout-danger">
-    <strong>Kết luận tổng hợp:</strong> Toàn bộ 6 ca kiểm thử tính năng Draw In Air hiện tại đều <strong>CHƯA ĐẠT CHUẨN</strong>. Tín hiệu CSI bị nhiễu nền lớn, con trỏ di chuyển ngẫu nhiên và nét vẽ rung lắc hỗn loạn không thể ứng dụng.
-  </div>
-
-  <div class="table-container">
-    <table>
-      <thead>
-        <tr>
-          <th style="width: 12%;">Mã Test</th>
-          <th style="width: 30%;">Ngữ Cảnh Kiểm Thử</th>
-          <th style="width: 12%; text-align: center;">Số Lượt Thử</th>
-          <th style="width: 30%;">Hiện Tượng &amp; Tỷ Lệ Thực Tế</th>
-          <th style="width: 16%; text-align: center;">Đánh Giá</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr>
-          <td><strong>TC-D01</strong></td>
-          <td>Căn tâm hồng tâm con trỏ</td>
-          <td style="text-align: center;">30 lần</td>
-          <td>23.3% (Con trỏ trôi ngẫu nhiên, không neo giữ được tâm)</td>
-          <td style="text-align: center;"><span class="badge badge-red">Chưa đạt</span></td>
-        </tr>
-        <tr>
-          <td><strong>TC-D02</strong></td>
-          <td>Tự động Đặt bút / Nhấc bút</td>
-          <td style="text-align: center;">50 nét</td>
-          <td>28.0% (Nhiễu nền kích hoạt nhầm, nhấc bút gián đoạn)</td>
-          <td style="text-align: center;"><span class="badge badge-red">Chưa đạt</span></td>
-        </tr>
-        <tr>
-          <td><strong>TC-D03</strong></td>
-          <td>Vuốt cử chỉ 4 hướng chính</td>
-          <td style="text-align: center;">80 lần</td>
-          <td>12.5% (Qua trái nhận qua phải và ngược lại, lên/xuống không nhận)</td>
-          <td style="text-align: center;"><span class="badge badge-red">Chưa đạt</span></td>
-        </tr>
-        <tr>
-          <td><strong>TC-D04</strong></td>
-          <td>Vẽ hình khép kín (Tròn, Tam giác)</td>
-          <td style="text-align: center;">60 lần</td>
-          <td>0.0% (Nét vẽ rung hỗn loạn, vỡ nét, không tạo được hình)</td>
-          <td style="text-align: center;"><span class="badge badge-red">Chưa đạt</span></td>
-        </tr>
-        <tr>
-          <td><strong>TC-D05</strong></td>
-          <td>Khóa tâm chống trôi do nhịp thở</td>
-          <td style="text-align: center;">20 lượt</td>
-          <td>20.0% (Con trỏ tiếp tục dịch chuyển ngẫu nhiên khi tay đứng yên)</td>
-          <td style="text-align: center;"><span class="badge badge-red">Chưa đạt</span></td>
-        </tr>
-        <tr>
-          <td><strong>TC-D06</strong></td>
-          <td>Kẹp vận tốc chống văng điểm</td>
-          <td style="text-align: center;">40 lần</td>
-          <td>25.0% (Vẫn xuất hiện điểm văng dị biệt do lệch pha đột ngột)</td>
-          <td style="text-align: center;"><span class="badge badge-red">Chưa đạt</span></td>
-        </tr>
-      </tbody>
-    </table>
-  </div>
-
-  <h2>3. Nhận Xét &amp; Đánh Giá Kỹ Thuật</h2>
+  <h2>1. Tóm tắt kết quả đo lường và khảo sát thực tế</h2>
+  <p>
+    Kính gửi Sếp, em xin tổng hợp lại những gì nhóm đã làm được và những điểm còn đang vướng mắc qua các đợt đo đạc thực tế:
+  </p>
   <ul>
     <li>
-      <strong>Hiện trạng chung:</strong> Tỷ lệ thành công trung bình của bài toán Draw In Air dưới 20%. Không có bất kỳ ca kiểm thử nào đạt chuẩn vận hành ổn định.
+      <strong>Điểm đã làm được:</strong> Hệ thống bắt được rất rõ lúc người dùng bắt đầu vung tay vẽ và lúc dừng lại (tín hiệu sóng khi vẽ mạnh gấp hơn 2 lần lúc đứng yên). Tốc độ đưa tay cũng phản ánh khá tương đồng với cảm biến thật của điện thoại.
     </li>
     <li>
-      <strong>Vấn đề định hướng:</strong> Góc pha vi sai giữa 2 anten bị biến dạng bởi phản xạ đa đường từ tường nhà khiến hướng di chuyển bị đảo ngược (người dùng gạt tay sang trái nhưng con trỏ đi sang phải và ngược lại).
+      <strong>Điểm chưa làm được:</strong> Khả năng phân biệt đâu là hình tròn, đâu là hình tam giác hiện tại chưa đạt. Trong các đợt đo trước đây, máy chỉ đoán đúng được khoảng 58% đến 68% (tức là gần như đoán mò 50-50).
     </li>
     <li>
-      <strong>Vấn đề trục thẳng đứng:</strong> Do phần cứng chỉ có 1 hàng anten nằm ngang, trục Y (lên / xuống) hoàn toàn không nhận diện được chuyển động.
-    </li>
-    <li>
-      <strong>Vấn đề nét vẽ:</strong> Bước sóng 5.8 GHz nhỏ (2.9 cm) gây lật pha liên tục kết hợp nhiễu nền làm nét vẽ rung giật hỗn loạn.
-    </li>
-    <li>
-      <strong>Định hướng xử lý:</strong> Ngừng phát triển mô hình tính toán tọa độ liên tục bằng công thức hình học góc tới; chuyển đổi sang hướng nhận diện cử chỉ rời rạc bằng Random Forest / TinyML.
+      <strong>Nguyên nhân kỹ thuật:</strong> Do 3 anten trên router hiện đang xếp thẳng hàng ngang nên chỉ nhạy với chuyển động qua lại trái - phải; chuyển động lên - xuống tín hiệu bị mờ nhạt. Đồng thời, tính năng đo góc trên chip Qualcomm đang trả về mã lỗi <code>0xFFFF</code> do bo mạch router chưa có bảng dữ liệu cân chỉnh từ nhà sản xuất.
     </li>
   </ul>
 
-  <div style="margin-top: 25px; padding-top: 12px; border-top: 1px solid var(--border-color); font-size: 12.5px; color: var(--text-muted); text-align: center;">
-    Báo cáo kết quả: Draw In Air &bull; Edge CSI Router &bull; Qualcomm IPQ9650 ARM64 &bull; Ngày lập: 28/10/2026
+  <h2>2. Tình trạng kết quả theo từng mục tiêu</h2>
+  <div class="note">
+    Hiện tại nhóm em đang chuẩn bị thiết lập đo đạc cho 2 hướng giải pháp mới (tự tính góc bằng phần mềm và liên hệ Qualcomm). Dưới đây là bảng trạng thái cụ thể:
   </div>
+  <table>
+    <thead><tr><th>Mục tiêu cần đạt</th><th>Chỉ số cần đo</th><th>Kết quả hiện tại</th></tr></thead>
+    <tbody>
+      <tr><td>Phát hiện bắt đầu / kết thúc vung tay</td><td>Tỷ lệ nhận biết đúng, tỷ lệ báo nhầm khi đứng yên</td><td>Đã có tín hiệu tốt từ đợt đo trước (độ nhạy &gt; 90%)</td></tr>
+      <tr><td>Đo tốc độ vung tay</td><td>Độ khớp so với cảm biến điện thoại</td><td>Tương quan tốt (đạt mức ~0.67)</td></tr>
+      <tr><td>Phân biệt Hình tròn vs Hình tam giác</td><td>Tỷ lệ đoán đúng giữa 2 hình</td><td>Chưa đạt (mới chỉ đạt 58% - 68%, đang thử nghiệm giải pháp mới)</td></tr>
+      <tr><td>Khả năng đo góc của chip Qualcomm</td><td>Tính hợp lệ của dữ liệu góc trả về</td><td>Báo lỗi <code>0xFFFF</code> (sẽ tạo case nhờ Qualcomm hỗ trợ)</td></tr>
+      <tr><td>Độ trễ phản hồi của hệ thống</td><td>Thời gian máy đưa ra kết quả sau khi vẽ xong</td><td>Rất nhanh (&lt; 1 ms, không làm chậm router)</td></tr>
+    </tbody>
+  </table>
 
-</div>
+  <h2>3. Kế hoạch tiếp theo của em</h2>
+  <p>
+    Em sẽ triển khai đo đạc thực tế theo 2 hướng song song:
+  </p>
+  <ol>
+    <li><strong>Hướng phần mềm:</strong> Chạy thử nghiệm thuật toán tự tính góc bằng phần mềm từ dữ liệu sóng thô, đồng thời thử nghiệm bắt các nhịp khựng tay ở 3 góc tam giác để xem có nâng tỷ lệ đoán đúng lên trên 75% hay không.</li>
+    <li><strong>Hướng Qualcomm:</strong> Tạo ticket kỹ thuật gửi hãng Qualcomm để tìm hiểu xem có cách nào kích hoạt tính năng đo góc phần cứng trên dòng router này hay không.</li>
+  </ol>
+  <p>Sau khi có số liệu đo đạc thực tế từ cả 2 hướng, em sẽ cập nhật bảng kết quả chính xác để báo cáo Sếp ạ.</p>
+</main>
 </body>
 </html>

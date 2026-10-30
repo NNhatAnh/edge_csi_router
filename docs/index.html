@@ -99,16 +99,17 @@
         <span>3. Vẽ Trong Không Gian (Draw In Air)</span>
       </div>
       <div>
-        <span class="badge badge-red">Chưa đạt chuẩn nào</span>
+        <span class="badge badge-yellow">Đang đánh giá khả thi</span>
+        <span class="badge badge-blue">Thử nghiệm 2 hướng song song</span>
       </div>
     </div>
     <div class="topic-body">
       <div class="topic-desc">
-        Theo dõi chuyển động tay để vẽ trong không gian. Hiện tại toàn bộ tính năng hoàn toàn chưa đạt chuẩn: con trỏ di chuyển ngẫu nhiên liên tục, vuốt qua trái lại nhận qua phải và ngược lại, trục lên/xuống chưa nhận diện được do router chỉ có anten nằm ngang, nét vẽ rung lắc hỗn loạn do nhiễu nền và bước sóng 2.9 cm lật pha. Đề xuất chuyển sang nhận diện cử chỉ rời rạc bằng Random Forest / TinyML.
+        Nhận diện người dùng cầm điện thoại vẽ hình tròn hoặc hình tam giác trong không gian qua sóng Wi-Fi. Phân tích thực tế cho thấy mảng anten ngang hiện tại khó bắt chuyển động lên-xuống, và tính năng đo góc trên chip Qualcomm báo lỗi do thiếu dữ liệu cân chỉnh từ nhà máy. Nhóm đang triển khai thử nghiệm 2 hướng song song: tự tính toán góc bằng phần mềm kết hợp bắt nhịp dừng tay ở 3 góc tam giác, đồng thời tạo case ticket gửi hãng Qualcomm để nhờ hỗ trợ kỹ thuật về tính năng đo góc của chip.
       </div>
       <div class="btn-group">
-        <a href="air_draw/TAI_LIEU_MO_TA.html" class="btn btn-desc">Tài liệu mô tả giải pháp</a>
-        <a href="air_draw/BAO_CAO_KET_QUA.html" class="btn btn-report">Báo cáo đo lường &amp; đánh giá</a>
+        <a href="air_draw/TAI_LIEU_MO_TA.html" class="btn btn-desc">Báo cáo mô tả bài toán &amp; giải pháp</a>
+        <a href="air_draw/BAO_CAO_KET_QUA.html" class="btn btn-report">Báo cáo đo lường thực tế</a>
         <a href="air_draw/KICH_BAN_KIEM_THU.html" class="btn btn-test">Kịch bản kiểm thử (TC-D01 &rarr; TC-D06)</a>
       </div>
     </div>
