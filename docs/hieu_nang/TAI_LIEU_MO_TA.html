@@ -223,7 +223,7 @@ code {
   </p>
   <ul>
     <li>
-      <strong>Nhẹ tải tuyệt đối:</strong> Phần mềm không được gây nghẽn CPU, không chiếm dụng nhiều bộ nhớ RAM và tuyệt đối không để xảy ra hiện tượng rò rỉ bộ nhớ (Memory Leak) làm treo thiết bị sau nhiều ngày hoạt động.
+      <strong>Nhẹ:</strong> Phần mềm không được gây nghẽn CPU, không chiếm dụng nhiều bộ nhớ RAM và tuyệt đối không để xảy ra hiện tượng rò rỉ bộ nhớ (Memory Leak) làm treo thiết bị sau nhiều ngày hoạt động.
     </li>
     <li>
       <strong>Độ trễ xử lý thấp và ổn định thời gian:</strong> Các khung dữ liệu CSI phải được tiếp nhận đều đặn, tính toán xong trong vòng dưới 1 mili-giây và truyền về giao diện Web theo thời gian thực mà không làm nghẽn băng thông truyền tải của mạng Wi-Fi.
@@ -234,7 +234,7 @@ code {
     <strong>Nguyên tắc đánh giá:</strong> Bài toán kiểm thử hiệu năng chỉ tập trung đo lường tài nguyên máy tính (CPU, RAM, thời gian chạy thuật toán, độ giật khung hình, băng thông mạng). Các đánh giá về độ chính xác của các mô hình nhận diện (chuyển động, nhịp thở, cử chỉ) được tách riêng thành các bài toán kiểm thử độc lập ở các thư mục tương ứng.
   </div>
 
-  <h2>2. Sáu Tiêu Chí Hiệu Năng Then Chốt (KPI)</h2>
+  <h2>2. Sáu Tiêu Chí Hiệu Năng</h2>
 
   <div class="stat-grid">
     <div class="stat-card">
@@ -261,7 +261,7 @@ code {
 
   <h3>2.1. Tần số khung hình CSI (Frame Rate / FPS)</h3>
   <p>
-    Tần số khung hình đo lường số lượng khung tin CSI được tiếp nhận và xử lý trong mỗi giây. Chu kỳ phát tiêu chuẩn là 50 mili-giây (tương ứng 20 khung/giây - 20 Hz). Hệ thống yêu cầu tốc độ thực tế duy trì từ 14 Hz trở lên để các thuật toán phát hiện chuyển động và nhịp thở có đủ mẫu dữ liệu liên tục.
+    Tần số khung hình đo lường số lượng khung tin CSI được tiếp nhận và xử lý trong mỗi giây. Chu kỳ phát tiêu chuẩn là 50 mili-giây (tương ứng 20 khung/giây - 20 Hz). Hệ thống yêu cầu tốc độ thực tế duy trì từ 14 Hz trở lên để xác nhận được có sự chuyển động trong phòng, mục tiêu tiếp theo là tăng tần số lên để các thuật toán phát hiện chuyển động và nhịp thở có đủ mẫu dữ liệu liên tục.
   </p>
 
   <h3>2.2. Độ ổn định thời gian và độ giật (Inter-frame Jitter &sigma;)</h3>
