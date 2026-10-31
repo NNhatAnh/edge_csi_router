@@ -10,6 +10,7 @@ compile_commands.json
 CTestTestfile.cmake
 _deps
 CMakeUserPresets.json
+report/
 
 # ==========================================
 # 1. Tệp đầu ra biên dịch (Compiled Output)
