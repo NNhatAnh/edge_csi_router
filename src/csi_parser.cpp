@@ -115,6 +115,13 @@ std::string CSIData::toJson() const {
          << ",\"wave_samples_in_window\":" << wave_samples_in_window
          << ",\"wave_raw_prob\":" << wave_raw_prob
          << ",\"wave_reason\":\"" << wave_reason << "\""
+         << ",\"rssi_comb_db\":" << static_cast<int>(rssi_comb_db)
+         << ",\"estimated_distance_m\":" << estimated_distance_m
+         << ",\"distance_confidence\":" << distance_confidence
+         << ",\"distance_zone\":\"" << distance_zone << "\""
+         << ",\"distance_trend\":\"" << distance_trend << "\""
+         << ",\"csi_los_ratio\":" << csi_los_ratio
+         << ",\"csi_rician_k\":" << csi_rician_k
          << ",\"ap_mac\":\"" << ap_mac << "\",\"amplitude_gain_ratio\":[";
 
     for (size_t i = 0; i < 5; ++i) {
@@ -222,7 +229,10 @@ bool CSIParser::feed(const uint8_t *data, size_t size,
     return true;
 }
 
-void CSIParser::reset() { pending_.clear(); }
+void CSIParser::reset() {
+    pending_.clear();
+    last_valid_rssi_db_ = 0;
+}
 
 bool CSIParser::decodeRecord(const uint8_t *record, size_t size,
                              CSIData &frame) {
@@ -253,6 +263,31 @@ bool CSIParser::decodeRecord(const uint8_t *record, size_t size,
     frame.nss = cfr_header[19];
     frame.channel_bw = cfr_header[20];
     frame.packet_bw = cfr_header[21];
+
+    if (metadata_size >= 70) {
+        const uint8_t *meta = record + kRelayHeaderSize;
+        const uint32_t cr7 = readU32(meta + 42);
+        if ((cr7 >> 24) == 0xC0) {
+            const uint8_t raw_rssi = cr7 & 0xFF;
+            if (raw_rssi > 0) {
+                // Qualcomm ath12k: raw_rssi là SNR (dB so với sàn nhiễu noise floor -95 dBm)
+                // Càng gần router thì tín hiệu càng mạnh (raw_rssi càng cao: ví dụ 65 ở 0.3m, 51 ở 1.5m, 38 ở 3m)
+                // RSSI thực tế (dBm) = raw_rssi - 95 dBm
+                frame.rssi_comb_db = static_cast<int8_t>(static_cast<int>(raw_rssi) - 95);
+                last_valid_rssi_db_ = frame.rssi_comb_db;
+            } else if (last_valid_rssi_db_ < 0) {
+                frame.rssi_comb_db = last_valid_rssi_db_;
+            }
+        } else if (last_valid_rssi_db_ < 0) {
+            // Giữ mức RSSI hợp lệ gần nhất khi driver chưa kịp ghép WMI RxStatus (tránh rơi về 0)
+            frame.rssi_comb_db = last_valid_rssi_db_;
+        }
+        frame.agc_indices[0] = meta[66];
+        frame.agc_indices[1] = meta[67];
+        frame.agc_indices[2] = meta[68];
+    } else if (last_valid_rssi_db_ < 0) {
+        frame.rssi_comb_db = last_valid_rssi_db_;
+    }
 
     for (size_t i = 0; i < 5; ++i)
         frame.amplitude_gain_ratio[i] = cfr_header[44 + i];

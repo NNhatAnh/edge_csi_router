@@ -379,6 +379,31 @@ h2 {
     transition: border-color 0.3s ease, background 0.3s ease;
 }
 
+.fspl-band-badge {
+    font-family: "DM Mono", monospace;
+    font-size: 8px;
+    padding: 1px 6px;
+    border-radius: 4px;
+    background: rgba(75, 226, 208, 0.12);
+    border: 1px solid rgba(75, 226, 208, 0.25);
+    color: #4be2d0;
+    margin-left: auto;
+    margin-right: 4px;
+    line-height: 1.2;
+}
+
+.fspl-band-badge.band-2g {
+    background: rgba(255, 184, 107, 0.12);
+    border-color: rgba(255, 184, 107, 0.3);
+    color: #ffb86b;
+}
+
+.fspl-band-badge.band-5g {
+    background: rgba(169, 140, 255, 0.15);
+    border-color: rgba(169, 140, 255, 0.35);
+    color: #c4b5fd;
+}
+
 .metric-card-wave.detected {
     border-color: rgba(75, 226, 208, 0.45);
     background: linear-gradient(145deg, rgba(19, 40, 52, 0.95), rgba(14, 28, 42, 0.96));
@@ -416,6 +441,7 @@ h2 {
 .violet { color: var(--violet); }
 .orange { color: var(--orange); }
 .green { color: var(--green); }
+.blue { color: #3b82f6; }
 
 .metric-value {
     margin-top: 14px;
@@ -1366,6 +1392,27 @@ footer {
     border: 1px solid rgba(75, 226, 208, 0.2);
 }
 
+.card-rssi-summary-badge {
+    font-family: "DM Mono", monospace;
+    font-size: 8px;
+    padding: 2px 8px;
+    border-radius: 10px;
+    background: rgba(75, 226, 208, 0.08);
+    border: 1px solid rgba(75, 226, 208, 0.25);
+    color: #4be2d0;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.card-rssi-dot {
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: #4be2d0;
+    box-shadow: 0 0 4px #4be2d0;
+}
+
 .card-bulk-btn {
     padding: 2px 7px;
     background: #0d1522;
@@ -1498,6 +1545,13 @@ footer {
 .signal-indicator-dot.poor {
     background: #ff7f9d;
     box-shadow: 0 0 5px #ff7f9d;
+}
+
+.station-rssi-text {
+    font-family: "DM Mono", monospace;
+    font-size: 9.5px;
+    font-weight: 600;
+    color: #e2e8f0;
 }
 
 .card-empty-row td,

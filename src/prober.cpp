@@ -218,20 +218,18 @@ void ActiveProber::scanNetwork(std::vector<WifiCardInfo> &cards,
         }
     }
 
-    // 3. Quét các Card Wi-Fi và Station kết nối (Ưu tiên iwinfo khớp checkwifi script, fallback iw dev)
+    // 3. Quét các Card Wi-Fi và Station kết nối (Quét iw dev trước để lấy avg ack signal chuẩn ath12k, kết hợp iwinfo)
     std::string cmd =
-        "if which iwinfo >/dev/null 2>&1; then "
-        "  for dev in $(iwinfo 2>/dev/null | grep -oE \"phy[0-9]+\\.[0-9]+-[0-9]+\"); do "
+        "for dev in $(iw dev 2>/dev/null | awk '$1==\"Interface\"{print $2}'); do "
+        "  ssid=\"\"; "
+        "  if which iwinfo >/dev/null 2>&1; then "
         "    ssid=$(iwinfo \"$dev\" info 2>/dev/null | grep -oE 'ESSID: \"[^\"]+\"' | cut -d'\"' -f2); "
-        "    echo \"===CARD:$dev:$ssid===\"; "
-        "    iwinfo \"$dev\" assoclist 2>/dev/null; "
-        "  done; "
-        "else "
-        "  for iface in $(iw dev 2>/dev/null | awk '$1==\"Interface\"{print $2}'); do "
-        "    echo \"===CARD:$iface:Wi-Fi===\"; "
-        "    iw dev \"$iface\" station dump 2>/dev/null; "
-        "  done; "
-        "fi";
+        "  fi; "
+        "  [ -z \"$ssid\" ] && ssid=\"Wi-Fi Network\"; "
+        "  echo \"===CARD:$dev:$ssid===\"; "
+        "  iw dev \"$dev\" station dump 2>/dev/null; "
+        "  if which iwinfo >/dev/null 2>&1; then iwinfo \"$dev\" assoclist 2>/dev/null; fi; "
+        "done";
 
     FILE *pipe = popen(cmd.c_str(), "r");
     if (pipe) {
@@ -351,21 +349,16 @@ void ActiveProber::scanNetwork(std::vector<WifiCardInfo> &cards,
                 // Trích xuất Signal dBm
                 size_t dbm_pos = line.find("dBm");
                 if (dbm_pos != std::string::npos) {
-                    size_t slash_pos = line.find('/');
-                    if (slash_pos != std::string::npos && slash_pos < dbm_pos) {
-                        size_t start = line.rfind(' ', dbm_pos - 1);
-                        if (start != std::string::npos) {
-                            c.signal_dbm = trim(line.substr(start + 1, dbm_pos + 3 - (start + 1)));
+                    size_t end_num = line.find_last_not_of(" \t", dbm_pos - 1);
+                    if (end_num != std::string::npos) {
+                        size_t start_num = line.find_last_of(" \t/", end_num);
+                        if (start_num != std::string::npos) {
+                            c.signal_dbm = trim(line.substr(start_num + 1, end_num - start_num)) + " dBm";
                         } else {
-                            c.signal_dbm = trim(line.substr(slash_pos + 1, dbm_pos + 3 - (slash_pos + 1)));
+                            c.signal_dbm = trim(line.substr(0, end_num + 1)) + " dBm";
                         }
                     } else {
-                        size_t start = line.rfind(' ', dbm_pos - 1);
-                        if (start != std::string::npos) {
-                            c.signal_dbm = trim(line.substr(start + 1, dbm_pos + 3 - (start + 1)));
-                        } else {
-                            c.signal_dbm = trim(line.substr(0, dbm_pos + 3));
-                        }
+                        c.signal_dbm = "—";
                     }
                 } else if (!c.snr.empty()) {
                     c.signal_dbm = "SNR " + c.snr;
@@ -421,8 +414,20 @@ void ActiveProber::scanNetwork(std::vector<WifiCardInfo> &cards,
                     iw_dev_client.mac = mac;
                 }
             } else if (in_iw_dev_station) {
-                if (line.find("signal avg:") != std::string::npos) {
-                    iw_dev_client.signal_dbm = trim(line.substr(line.find("signal avg:") + 11));
+                if (line.find("avg ack signal:") != std::string::npos) {
+                    iw_dev_client.signal_dbm = trim(line.substr(line.find("avg ack signal:") + 15));
+                } else if (line.find("last ack signal:") != std::string::npos && iw_dev_client.signal_dbm.empty()) {
+                    iw_dev_client.signal_dbm = trim(line.substr(line.find("last ack signal:") + 16));
+                } else if (line.find("signal avg:") != std::string::npos && iw_dev_client.signal_dbm.empty()) {
+                    std::string s = trim(line.substr(line.find("signal avg:") + 11));
+                    if (s.find("-101") == std::string::npos && s.find("-100") == std::string::npos) {
+                        iw_dev_client.signal_dbm = s;
+                    }
+                } else if (line.find("signal:") != std::string::npos && iw_dev_client.signal_dbm.empty()) {
+                    std::string s = trim(line.substr(line.find("signal:") + 7));
+                    if (s != "0 dBm") {
+                        iw_dev_client.signal_dbm = s;
+                    }
                 } else if (line.find("tx bitrate:") != std::string::npos) {
                     iw_dev_client.bitrate = trim(line.substr(line.find("tx bitrate:") + 11));
                 } else if (line.find("inactive time:") != std::string::npos) {

@@ -184,6 +184,40 @@ void WebServer::publish(const CSIData &frame) {
     breath_detector_.update(latest_frame_);
     wave_detector_.update(latest_frame_);
 
+    // Tự động nhận diện băng tần (2.4 GHz vs 5.2 GHz) và fallback RSSI từ router prober
+    int fallback_rssi = 0;
+    if (cfr_controller_) {
+        const CFRCaptureStatus cstat = cfr_controller_->getStatus();
+        if (!cstat.iface.empty()) {
+            if (cstat.iface.find(".1-") != std::string::npos ||
+                cstat.iface.find("2.4") != std::string::npos ||
+                cstat.iface.find("2g") != std::string::npos) {
+                distance_estimator_.setBand(WifiBand::Band24GHz);
+            } else {
+                distance_estimator_.setBand(WifiBand::Band52GHz);
+            }
+        }
+    }
+
+    if (latest_frame_.rssi_comb_db == 0 && prober_) {
+        const ProberStatus pstat = prober_->getStatus(false);
+        const std::string &target_mac = (cfr_controller_ ? cfr_controller_->getStatus().target_mac : "");
+        const std::string &target_ip = pstat.target_ip;
+        for (const auto &client : pstat.clients) {
+            bool match = false;
+            if (!target_mac.empty() && client.mac == target_mac) match = true;
+            if (!match && !target_ip.empty() && target_ip != "auto" && client.ip == target_ip) match = true;
+            if (match && !client.signal_dbm.empty() && client.signal_dbm != "—") {
+                try {
+                    fallback_rssi = std::stoi(client.signal_dbm);
+                } catch (...) {}
+                break;
+            }
+        }
+    }
+
+    distance_estimator_.process(latest_frame_, fallback_rssi);
+
     // Quyết định hiện diện hợp nhất 3 trạng thái cốt lõi:
     // 1. Chuyển động vĩ mô (người đi lại / cử động) - đồng bộ cờ presence_detected đã qua bộ lọc Hysteresis & Deadband từ motion_detector_
     const bool is_macro_moving =
@@ -215,6 +249,7 @@ void WebServer::resetMotionCalibration() {
         motion_detector_.reset();
         breath_detector_.reset();
         wave_detector_.reset();
+        distance_estimator_.reset();
         if (has_frame_) {
             latest_frame_.motion_score = 0.0f;
             latest_frame_.motion_threshold_high = 0.0f;

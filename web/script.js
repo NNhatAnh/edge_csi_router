@@ -80,7 +80,7 @@ const i18n = {
         col_device: 'Tên thiết bị',
         col_ip: 'Địa chỉ IP',
         col_mac: 'Địa chỉ MAC',
-        col_signal: 'Tín hiệu / SNR',
+        col_signal: 'RSSI',
         col_bitrate: 'Tốc độ TX',
         col_activity: 'Lần cuối thấy',
         no_card_stations: 'Không có thiết bị nào đang kết nối trên card này',
@@ -221,7 +221,7 @@ const i18n = {
         col_device: 'Device Name',
         col_ip: 'IP Address',
         col_mac: 'MAC Address',
-        col_signal: 'Signal / SNR',
+        col_signal: 'RSSI',
         col_bitrate: 'TX Rate',
         col_activity: 'Last Seen',
         no_card_stations: 'No stations connected on this interface',
@@ -345,6 +345,10 @@ const domElements = {
     waveCaption: document.getElementById('wave-caption'),
     waveChip: document.getElementById('wave-confidence-chip'),
     waveCard: document.getElementById('metric-card-wave'),
+    distanceVal: document.getElementById('distance-val'),
+    distanceZoneChip: document.getElementById('distance-zone-chip'),
+    distanceCaption: document.getElementById('distance-caption'),
+    fsplBandBadge: document.getElementById('fspl-band-badge'),
     frameRate: document.getElementById('frame-rate'),
     chipTsf: document.getElementById('chip-tsf'),
     ppduId: document.getElementById('ppdu-id'),
@@ -501,12 +505,74 @@ function updateDomMetrics(frame, isNewFrame, now) {
         }
     }
 
+    if (domElements.distanceVal && domElements.distanceCaption) {
+        const dist = Number(frame.estimated_distance_m) || 0;
+        const zone = frame.distance_zone || 'unknown';
+        const trend = frame.distance_trend || 'stationary';
+        const rssi = frame.rssi_comb_db !== undefined ? frame.rssi_comb_db : '—';
+        const los = Math.round((Number(frame.csi_los_ratio) || 0) * 100);
+
+        // Cập nhật tag băng tần FSPL (2.4 GHz vs 5.2 GHz)
+        if (domElements.fsplBandBadge) {
+            const iface = (cfrState && cfrState.iface) ? cfrState.iface : '';
+            const is2g = (iface.includes('2.4') || iface.includes('.1-') || iface.includes('2g'));
+            domElements.fsplBandBadge.textContent = is2g ? 'FSPL 2.4 GHz' : 'FSPL 5.2 GHz';
+            domElements.fsplBandBadge.className = is2g ? 'fspl-band-badge band-2g' : 'fspl-band-badge band-5g';
+        }
+
+        if (dist > 0) {
+            domElements.distanceVal.textContent = dist.toFixed(1);
+
+            let zoneText = '—';
+            let zoneClass = 'motion-chip';
+            if (zone === 'immediate') {
+                zoneText = currentLang === 'vi' ? 'Sát router (<0.6m)' : 'Immediate (<0.6m)';
+                zoneClass = 'motion-chip motion-chip-active';
+            } else if (zone === 'near') {
+                zoneText = currentLang === 'vi' ? 'Gần (0.6-1.8m)' : 'Near (0.6-1.8m)';
+                zoneClass = 'motion-chip motion-chip-active';
+            } else if (zone === 'mid') {
+                zoneText = currentLang === 'vi' ? 'Trung bình (1.8-4m)' : 'Mid (1.8-4m)';
+                zoneClass = 'motion-chip';
+            } else {
+                zoneText = currentLang === 'vi' ? 'Xa (>4m)' : 'Far (>4m)';
+                zoneClass = 'motion-chip';
+            }
+            if (domElements.distanceZoneChip) {
+                domElements.distanceZoneChip.textContent = zoneText;
+                domElements.distanceZoneChip.className = zoneClass;
+            }
+
+            let trendIcon = '•';
+            let trendText = currentLang === 'vi' ? 'Đứng yên' : 'Stationary';
+            if (trend === 'approaching') {
+                trendIcon = '↓';
+                trendText = currentLang === 'vi' ? 'Đang lại gần' : 'Approaching';
+            } else if (trend === 'departing') {
+                trendIcon = '↑';
+                trendText = currentLang === 'vi' ? 'Đang đi xa' : 'Departing';
+            }
+
+            domElements.distanceCaption.textContent = `${trendIcon} ${trendText} · RSSI: ${rssi} dBm · LoS: ${los}% (FSPL)`;
+        } else {
+            domElements.distanceVal.textContent = '—';
+            if (domElements.distanceZoneChip) domElements.distanceZoneChip.textContent = '—';
+            domElements.distanceCaption.textContent = currentLang === 'vi' ? 'Chờ tín hiệu RSSI + CSI (FSPL)' : 'Waiting RSSI + CSI (FSPL)';
+        }
+    }
+
     if (domElements.frameRate) domElements.frameRate.textContent = frameRate.toFixed(1);
     if (domElements.chipTsf) domElements.chipTsf.textContent = frame.chip_tsf_us ? `${Number(frame.chip_tsf_us).toLocaleString()} µs` : '—';
     if (domElements.ppduId) domElements.ppduId.textContent = frame.phy_ppdu_id ?? '—';
     if (domElements.bandwidth) domElements.bandwidth.textContent = frame.channel_bw_code ?? '—';
     if (domElements.apMac) domElements.apMac.textContent = frame.ap_mac || '—';
     if (domElements.frameId) domElements.frameId.textContent = `PPDU ${frame.phy_ppdu_id ?? '—'}`;
+    if (frame && frame.rssi_comb_db !== undefined) {
+        const liveValEl = document.querySelector('.capturing-row .station-rssi-text');
+        if (liveValEl) {
+            liveValEl.textContent = `${frame.rssi_comb_db} dBm`;
+        }
+    }
     if (isNewFrame) {
         setStatus('live', (currentLang === 'vi' ? 'Nhận frame ' : 'Frame received ') + new Date().toLocaleTimeString());
     }
@@ -1415,7 +1481,8 @@ function renderProberUI(data, isFullRender = true) {
             const matchedClient = Array.isArray(data.clients) ? data.clients.find(c => c.ip === targetIp) : null;
             if (proberElements.selectionBadge) {
                 if (matchedClient) {
-                    proberElements.selectionBadge.textContent = `${t('selecting_device')}${matchedClient.hostname || matchedClient.ip} (${matchedClient.ip})`;
+                    const rssiPart = (matchedClient.signal_dbm && matchedClient.signal_dbm !== '—') ? ` · RSSI: ${matchedClient.signal_dbm}` : '';
+                    proberElements.selectionBadge.textContent = `${t('selecting_device')}${matchedClient.hostname || matchedClient.ip} (${matchedClient.ip})${rssiPart}`;
                 } else {
                     proberElements.selectionBadge.textContent = `${t('selecting_device')}${targetIp}`;
                 }
@@ -1561,6 +1628,24 @@ function renderCardsTables(cards, clients, mode, currentTargetIp) {
         countBadge.textContent = `${cardStations.length} ${t('devices_count')}`;
         right.appendChild(countBadge);
 
+        let bestCardRssi = -999;
+        cardStations.forEach(c => {
+            if (c.signal_dbm && c.signal_dbm !== '—') {
+                const m = c.signal_dbm.match(/-?\d+/);
+                if (m) {
+                    const v = parseInt(m[0], 10);
+                    if (v > bestCardRssi) bestCardRssi = v;
+                }
+            }
+        });
+        if (bestCardRssi > -900) {
+            const cardRssiBadge = document.createElement('span');
+            cardRssiBadge.className = 'card-rssi-summary-badge';
+            cardRssiBadge.title = currentLang === 'vi' ? 'Cường độ RSSI mạnh nhất trên card này' : 'Strongest RSSI on this card';
+            cardRssiBadge.innerHTML = `<span class="card-rssi-dot"></span>RSSI max: <strong>${bestCardRssi} dBm</strong>`;
+            right.appendChild(cardRssiBadge);
+        }
+
         if (mode === 'multi' && cardStations.length > 0) {
             const allSelectedInCard = cardStations.every(c => selectedMultiIps.has(c.ip || c.mac));
             const cardBulkBtn = document.createElement('button');
@@ -1621,6 +1706,11 @@ function renderCardsTables(cards, clients, mode, currentTargetIp) {
                 const tr = document.createElement('tr');
                 tr.className = 'wifi-station-row';
                 const clientKey = c.ip || c.mac;
+
+                const isCapturingThis = cfrState.running && (
+                    (cfrState.target_mac && c.mac && cfrState.target_mac.toUpperCase() === c.mac.toUpperCase()) ||
+                    (cfrState.target_ip && c.ip && cfrState.target_ip === c.ip)
+                );
 
                 let isSelected = false;
                 if (mode === 'single') {
@@ -1707,12 +1797,22 @@ function renderCardsTables(cards, clients, mode, currentTargetIp) {
                 const tdMac = document.createElement('td');
                 tdMac.innerHTML = `<span class="mac-badge">${c.mac}</span>`;
 
-                // 5. Signal / SNR cell
+                // 5. RSSI cell (chỉ giữ lại RSSI, loại bỏ SNR và bỏ badge Live riêng)
                 const tdSignal = document.createElement('td');
-                const sigClass = getSignalClass(c.snr, c.signal_dbm);
-                const snrPart = (c.snr && c.snr !== '—') ? ` (SNR ${c.snr})` : '';
-                const sigText = (c.signal_dbm && c.signal_dbm !== '—') ? `${c.signal_dbm}${snrPart}` : (c.snr ? `SNR ${c.snr}` : '—');
-                tdSignal.innerHTML = `<span class="signal-cell"><span class="signal-indicator-dot ${sigClass}"></span><span>${sigText}</span></span>`;
+                let rssiText = '—';
+                if (isCapturingThis && latestFrame && latestFrame.rssi_comb_db !== undefined && latestFrame.rssi_comb_db !== 0) {
+                    rssiText = `${latestFrame.rssi_comb_db} dBm`;
+                } else if (c.signal_dbm && c.signal_dbm !== '—') {
+                    const m = c.signal_dbm.match(/-?\d+/);
+                    if (m) {
+                        rssiText = `${m[0]} dBm`;
+                    } else if (!c.signal_dbm.startsWith('SNR')) {
+                        rssiText = c.signal_dbm;
+                    }
+                }
+
+                const sigClass = getSignalClass(null, rssiText);
+                tdSignal.innerHTML = `<span class="signal-cell"><span class="signal-indicator-dot ${sigClass}"></span><span class="station-rssi-text">${rssiText}</span></span>`;
 
                 // 6. Bitrate cell
                 const tdRate = document.createElement('td');
@@ -1732,10 +1832,6 @@ function renderCardsTables(cards, clients, mode, currentTargetIp) {
                 // 8. Quick Action (CFR Capture) cell
                 const tdAction = document.createElement('td');
                 tdAction.style.textAlign = 'center';
-                const isCapturingThis = cfrState.running && (
-                    (cfrState.target_mac && c.mac && cfrState.target_mac.toUpperCase() === c.mac.toUpperCase()) ||
-                    (cfrState.target_ip && c.ip && cfrState.target_ip === c.ip)
-                );
                 if (isCapturingThis) {
                     tr.classList.add('capturing-row');
                     const pill = document.createElement('span');

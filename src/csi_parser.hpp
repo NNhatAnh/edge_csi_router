@@ -57,6 +57,18 @@ struct CSIData {
     float wave_raw_prob = 0.0f;
     std::string wave_reason = "idle";
 
+    // RSSI & AGC Hardware Metadata
+    int8_t rssi_comb_db = 0;
+    uint8_t agc_indices[3]{};
+
+    // Distance Estimation (RSSI + CSI Fusion)
+    float estimated_distance_m = 0.0f;
+    float distance_confidence = 0.0f;
+    std::string distance_zone = "unknown";      // "immediate", "near", "mid", "far"
+    std::string distance_trend = "stationary";  // "approaching", "departing", "stationary"
+    float csi_los_ratio = 0.0f;
+    float csi_rician_k = 0.0f;
+
     size_t tonesPerChain() const;
     std::string toJson() const;
 };
@@ -68,6 +80,7 @@ class CSIParser {
 
   private:
     std::vector<uint8_t> pending_;
+    int8_t last_valid_rssi_db_ = 0;
     bool decodeRecord(const uint8_t *record, size_t size, CSIData &frame);
 };
 
