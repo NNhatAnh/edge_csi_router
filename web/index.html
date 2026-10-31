@@ -19,6 +19,7 @@
             <div class="sidebar-label" data-i18n="nav_workspace">WORKSPACE</div>
             <nav class="tabs" aria-label="Signal views">
                 <button class="tab-btn active" data-view="overview"><span class="nav-icon">◉</span><span data-i18n="tab_overview">Tổng quan</span></button>
+                <button class="tab-btn" data-view="airdraw"><span class="nav-icon">✎</span><span data-i18n="tab_airdraw">Quỹ đạo không gian</span></button>
                 <button class="tab-btn" data-view="breath"><span class="nav-icon">∿</span><span data-i18n="tab_breath">Dạng sóng thở</span></button>
                 <button class="tab-btn" data-view="amplitude"><span class="nav-icon">⌁</span><span data-i18n="tab_amplitude">Biên độ CSI</span></button>
                 <button class="tab-btn" data-view="phase"><span class="nav-icon">∠</span><span data-i18n="tab_phase">Pha CSI</span></button>
@@ -279,6 +280,17 @@
                     </div>
                     <div class="metric-caption" id="wave-caption" data-i18n="caption_wave_idle">Chưa phát hiện cử chỉ</div>
                 </article>
+                <article class="metric-card metric-card-draw" id="metric-card-draw">
+                    <div class="metric-heading">
+                        <span data-i18n="metric_draw">NÉT VẼ KHÔNG GIAN (AI)</span>
+                        <span class="metric-symbol violet">✎</span>
+                    </div>
+                    <div class="metric-value-row">
+                        <div class="metric-value presence-value" id="draw-value" data-i18n="draw_idle">ĐỨNG YÊN</div>
+                        <span class="draw-shape-chip" id="draw-shape-chip">NEO TẠI TÂM</span>
+                    </div>
+                    <div class="metric-caption" id="draw-caption" data-i18n="caption_draw_idle">Điện thoại đứng yên · Con trỏ neo tại chỗ</div>
+                </article>
                 <article class="metric-card">
                     <div class="metric-heading"><span data-i18n="metric_framerate">FRAME RATE</span><span class="metric-symbol green">↗</span></div>
                     <div class="metric-value"><span id="frame-rate">—</span><small>Hz</small></div>
@@ -296,6 +308,17 @@
                         <span data-i18n="label_chain">CHAIN</span>
                         <select id="chain-select" aria-label="Chọn antenna chain"></select>
                     </label>
+                    <div class="airdraw-toolbar" id="airdraw-toolbar" hidden>
+                        <button type="button" class="mini-btn airdraw-btn active" id="airdraw-toggle-map-btn" title="Bật/Tắt Lưới Bản Đồ Sóng">
+                            <span>🗺</span> <span data-i18n="draw_toggle_map">Bản đồ sóng</span>
+                        </button>
+                        <button type="button" class="mini-btn airdraw-btn" id="airdraw-clear-btn">
+                            <span>🗑</span> <span data-i18n="draw_clear">Xóa nét vẽ</span>
+                        </button>
+                        <button type="button" class="mini-btn airdraw-btn" id="airdraw-center-btn">
+                            <span>⌖</span> <span data-i18n="draw_center">Căn tâm</span>
+                        </button>
+                    </div>
                 </div>
                 <div class="chart-wrap">
                     <canvas id="signal-chart" aria-label="Biểu đồ CSI"></canvas>

@@ -26,65 +26,87 @@
   <nav><a href="../index.html">Cổng tài liệu</a><a href="TAI_LIEU_MO_TA.html">Tài liệu mô tả</a><a href="BAO_CAO_KET_QUA.html">Báo cáo thực tế</a></nav>
   <h1>Kế Hoạch Kiểm Thử: Nhận Diện Nét Vẽ Hình Tròn Và Tam Giác</h1>
   <div class="note">
-    Kính gửi Sếp, đây là kế hoạch chi tiết các bài kiểm thử thực tế mà nhóm em sẽ tiến hành để đánh giá tính khả thi khi người dùng cầm điện thoại vẽ hình tròn hoặc hình tam giác.
+    Đây là kế hoạch, chưa có kết quả. Các tiêu chí chấp nhận định lượng phải được chốt trước khi thu tập đánh giá; không xem các con số tham khảo trong DrawCSI là ngưỡng nghiệm thu cho hệ thống này.
   </div>
 
-  <h2>1. Các bài kiểm thử cụ thể</h2>
+  <h2>1. Quy tắc chung khi thu và đánh giá</h2>
+  <ul>
+    <li>Ghi cấu hình router/firmware, channel/bandwidth, số chain và vị trí anten, model điện thoại, khoảng cách, phiên thu và điều kiện tải Wi-Fi.</li>
+    <li>Giữ dữ liệu CSI phức I/Q gốc; tính sampling rate từ timestamp thực tế, đồng thời báo cáo jitter, mất gói và khoảng trống thời gian. Không suy ra sampling rate từ tốc độ UDP.</li>
+    <li>Gắn nhãn thời điểm/hình bằng giao diện thu và gyro/IMU đồng bộ. Gyro/IMU chỉ làm ground truth/đối chiếu, không đưa vào đầu vào classifier CSI-only.</li>
+    <li>Đánh giá trên tập độc lập theo phiên hoặc người dùng; không chia ngẫu nhiên các cửa sổ chồng lấn của cùng một nét sang train và test.</li>
+    <li>Báo cáo số trial mỗi lớp, balanced accuracy, per-class recall, confusion matrix, false alarms/hour, độ trễ và chất lượng đầu vào; luôn so với baseline đoán lớp đa số.</li>
+  </ul>
+
+  <h2>2. Các bài kiểm thử</h2>
 
   <section>
-    <h3>TC-D01: Kiểm tra lúc đứng yên (Không báo nhầm)</h3>
-    <p><strong>Thao tác:</strong> Người dùng cầm điện thoại đứng yên tự nhiên hoặc đặt điện thoại cố định trên bàn trong vòng 10 phút.</p>
-    <p><strong>Mục tiêu:</strong> Đo xem lúc không có ai vẽ thì hệ thống có bị nhảy báo động nhầm hay không.</p>
-    <p><strong>Kỳ vọng của em:</strong> Trong 10 phút đứng yên, hệ thống không được báo nhầm quá 1 lần.</p>
+    <h3>TC-D01: Chất lượng luồng CSI và đồng bộ nhãn</h3>
+    <p><strong>Thao tác:</strong> Thu các phiên tĩnh và chuyển động; kiểm tra timestamp, packet sequence nếu có, số chain, metadata station và nhãn gyro đồng bộ.</p>
+    <p><strong>Ghi nhận:</strong> Sampling rate từ timestamp, phân bố Δt/jitter, mất gói, khoảng trống lớn nhất, CSI không hợp lệ và tỷ lệ nhãn đồng bộ.</p>
+    <p><strong>Tiêu chí:</strong> Chốt trước quy tắc loại/giữ trial theo chất lượng dữ liệu. Mốc ≥25 mẫu/s trong DrawCSI chỉ là điều kiện từng quan sát được trong khảo sát, cần đo xác nhận trên phần cứng thực tế.</p>
   </section>
 
   <section>
-    <h3>TC-D02: Kiểm tra nhận biết bắt đầu và kết thúc vung tay</h3>
-    <p><strong>Thao tác:</strong> Người dùng cầm điện thoại vung tay vẽ các nét tự do trong không gian với tốc độ chậm, vừa và nhanh.</p>
-    <p><strong>Mục tiêu:</strong> Đánh giá xem hệ thống có bắt đúng thời điểm tay bắt đầu vẽ và lúc tay dừng lại hay không.</p>
-    <p><strong>Kỳ vọng của em:</strong> Nhận biết đúng trên 90% số lần vung tay, thời gian phản hồi dưới 0.1 giây.</p>
+    <h3>TC-D02: Phát hiện hoạt động so với trạng thái tĩnh</h3>
+    <p><strong>Thao tác:</strong> Thu các đoạn điện thoại đặt yên, được cầm yên, bắt đầu/kết thúc chuyển động và vẽ tự do ở các tốc độ khác nhau.</p>
+    <p><strong>Mục tiêu:</strong> Đo khả năng phân đoạn thời điểm có chuyển động và tỷ lệ báo nhầm khi tĩnh; đối chiếu đặc trưng CSI với nhãn gyro/IMU.</p>
+    <p><strong>Báo cáo:</strong> Recall/sensitivity, precision, false alarms/hour và sai số thời điểm bắt đầu/kết thúc. Không giả định đã đạt các tỷ lệ/độ trễ trước khi chạy.</p>
   </section>
 
   <section>
-    <h3>TC-D03: Kiểm tra phân biệt Hình tròn và Hình tam giác</h3>
-    <p><strong>Thao tác:</strong> Người dùng cầm điện thoại vẽ luân phiên 20 lần hình tròn và 20 lần hình tam giác khép kín trong không gian trước mặt router.</p>
-    <p><strong>Mục tiêu:</strong> Kiểm tra xem thuật toán mới (theo dõi nhịp khựng lại ở 3 góc tam giác) có phân biệt đúng đâu là hình tròn, đâu là hình tam giác hay không.</p>
-    <p><strong>Kỳ vọng của em:</strong> Tỷ lệ máy đoán đúng đạt từ 75% trở lên (cải thiện rõ rệt so với tỷ lệ đoán mò ~60% trước đây).</p>
+    <h3>TC-D03: Phân biệt hình tròn và hình tam giác trong điều kiện cân bằng</h3>
+    <p><strong>Thao tác:</strong> Thu xen kẽ ngẫu nhiên hai lớp; cân bằng số nét, thời lượng, tốc độ, kích thước, hướng bắt đầu và hướng quay. Lưu nhãn gyro/IMU làm ground truth.</p>
+    <p><strong>Mục tiêu:</strong> Đo xem CSI phân biệt hình dạng hay chỉ khai thác tốc độ/thời lượng/bối cảnh; so với baseline lớp đa số và baseline ML đơn giản.</p>
+    <p><strong>Báo cáo:</strong> Balanced accuracy, per-class recall, confusion matrix, số nét và độ bất định trên test độc lập theo phiên/người. Tập tham khảo DrawCSI có 31 nét công bằng nhất với baseline 0.65, Widar DFS 0.61, CARM 0.58, CIR 0.65–0.68; không dùng các số này làm kết quả hiện tại.</p>
   </section>
 
   <section>
-    <h3>TC-D04: Kiểm tra các thao tác điện thoại thường ngày (Tránh nhận nhầm)</h3>
-    <p><strong>Thao tác:</strong> Người dùng làm các động tác sinh hoạt thông thường: lướt web, gõ tin nhắn, nhấc điện thoại lên nghe hoặc cầm điện thoại đi lại trong phòng.</p>
-    <p><strong>Mục tiêu:</strong> Đảm bảo hệ thống thông minh, không bị nhầm các cử động lướt web hay gõ phím thành việc người dùng đang vẽ hình.</p>
-    <p><strong>Kỳ vọng của em:</strong> Không bị nhận nhầm thành hình tròn hay hình tam giác khi người dùng sinh hoạt bình thường.</p>
+    <h3>TC-D04: Negative controls và chuyển động nền</h3>
+    <p><strong>Thao tác:</strong> Thu thao tác thường ngày như lướt/gõ điện thoại, nhấc máy, đi bộ khi cầm máy, vẽ nét không thuộc lớp mục tiêu; thêm điều kiện người khác di chuyển khi điện thoại mục tiêu đứng yên nếu môi trường thử cho phép.</p>
+    <p><strong>Mục tiêu:</strong> Đo nhầm lẫn giữa hành vi mục tiêu với thao tác điện thoại và biến thiên nền RF. Ghi riêng số người và thiết bị đang truyền dữ liệu.</p>
+    <p><strong>Báo cáo:</strong> Số false positive theo loại đối chứng và false alarms/hour; không gộp tất cả nhiễu thành một lớp.</p>
   </section>
 
   <section>
-    <h3>TC-D05: Kiểm tra với nhiều người dùng khác nhau</h3>
-    <p><strong>Thao tác:</strong> Mời 3 đến 5 người khác nhau thử nghiệm, với các thói quen vung tay nhanh chậm và kích thước hình vẽ khác nhau.</p>
-    <p><strong>Mục tiêu:</strong> Đánh giá xem thuật toán có dùng được cho nhiều người hay chỉ đúng với một người duy nhất.</p>
-    <p><strong>Kỳ vọng của em:</strong> Tỷ lệ đoán đúng không bị sụt giảm quá 10% khi đổi sang người thử nghiệm mới.</p>
+    <h3>TC-D05: Khả năng lặp lại và tổng quát hóa</h3>
+    <p><strong>Thao tác:</strong> Lặp lại protocol ở các phiên/ngày và với người dùng, điện thoại hoặc bố trí anten khác nếu nằm trong phạm vi sản phẩm.</p>
+    <p><strong>Mục tiêu:</strong> Phân biệt kết quả chỉ khớp một người/phiên với kết quả có thể chuyển sang người hoặc phiên chưa thấy.</p>
+    <p><strong>Báo cáo:</strong> Metric theo từng người/phiên và suy giảm so với split cùng người; không khẳng định dùng được cho mọi người từ một pilot nhỏ.</p>
   </section>
 
   <section>
-    <h3>TC-D06: Kiểm tra độ trễ phản hồi</h3>
-    <p><strong>Thao tác:</strong> Đo thời gian từ lúc người dùng vừa vẽ xong nét cuối cùng đến lúc trên màn hình hiện ra kết quả.</p>
-    <p><strong>Mục tiêu:</strong> Đảm bảo hệ thống chạy mượt mà, phản hồi ngay lập tức, không gây nặng tải cho router.</p>
-    <p><strong>Kỳ vọng của em:</strong> Thời gian tính toán dưới 2 mili-giây, người dùng cảm thấy kết quả hiện ra tức thì.</p>
+    <h3>TC-D06: Độ trễ và chi phí xử lý</h3>
+    <p><strong>Thao tác:</strong> Đo từ thời điểm kết thúc hành động theo ground truth đến khi hệ thống phát kết quả; ghi riêng thời gian xử lý, chờ cửa sổ CSI và truyền tới dashboard.</p>
+    <p><strong>Mục tiêu:</strong> Tách độ trễ thuật toán khỏi độ trễ thu/hiển thị; đo CPU/RAM trên router trong trạng thái rảnh và tải.</p>
+    <p><strong>Tiêu chí:</strong> Chốt giới hạn theo yêu cầu sản phẩm trước khi chạy. Không dùng thời gian xử lý đơn lẻ trong kiểm thử tổng hợp làm độ trễ end-to-end.</p>
   </section>
 
-  <h2>2. Bảng theo dõi tiến độ kiểm thử</h2>
+  <section>
+    <h3>TC-D07: Ghi nhận thử nghiệm thu AoA</h3>
+    <p><strong>Kết quả đã quan sát:</strong> Đã thử thu AoA nhưng trường phase trả về <code>0xFFFF</code>, nên lần thử chưa thu được dữ liệu AoA hợp lệ.</p>
+    <p><strong>Trạng thái:</strong> Thử nghiệm đã thực hiện, lỗi chưa được giải quyết; nguyên nhân chưa được kết luận.</p>
+  </section>
+
+  <h2>3. Trạng thái kiểm thử</h2>
   <table>
-    <thead><tr><th>Mã</th><th>Tên bài test</th><th>Mục đích kiểm tra</th><th>Tình trạng</th></tr></thead>
+    <thead><tr><th>Mã</th><th>Nội dung</th><th>Trạng thái</th></tr></thead>
     <tbody>
-      <tr><td>TC-D01</td><td>Kiểm tra đứng yên</td><td>Tránh báo nhầm khi không vẽ</td><td>Sẵn sàng chạy</td></tr>
-      <tr><td>TC-D02</td><td>Nhận biết vung tay</td><td>Bắt đúng lúc bắt đầu và kết thúc</td><td>Sẵn sàng chạy</td></tr>
-      <tr><td>TC-D03</td><td>Phân biệt Tròn vs Tam giác</td><td>Nhận diện đúng hình người dùng vẽ</td><td>Đang chuẩn bị chạy thử nghiệm</td></tr>
-      <tr><td>TC-D04</td><td>Thao tác sinh hoạt</td><td>Không nhầm với lướt web, gõ phím</td><td>Sẵn sàng chạy</td></tr>
-      <tr><td>TC-D05</td><td>Thử với nhiều người</td><td>Đảm bảo dùng được cho mọi người</td><td>Kế hoạch</td></tr>
-      <tr><td>TC-D06</td><td>Đo độ trễ</td><td>Đảm bảo phản hồi nhanh, máy nhẹ</td><td>Sẵn sàng chạy</td></tr>
+      <tr><td>TC-D01</td><td>Chất lượng CSI và đồng bộ nhãn</td><td>Chưa chạy</td></tr>
+      <tr><td>TC-D02</td><td>Phát hiện hoạt động</td><td>Chưa chạy</td></tr>
+      <tr><td>TC-D03</td><td>Phân loại tròn/tam giác cân bằng</td><td>Chưa chạy</td></tr>
+      <tr><td>TC-D04</td><td>Negative controls/nhiễu nền</td><td>Chưa chạy</td></tr>
+      <tr><td>TC-D05</td><td>Lặp lại/tổng quát hóa</td><td>Chưa chạy</td></tr>
+      <tr><td>TC-D06</td><td>Độ trễ/tài nguyên</td><td>Chưa chạy</td></tr>
+      <tr><td>TC-D07</td><td>Thử nghiệm thu AoA</td><td>Đã thử; trường phase lỗi 0xFFFF</td></tr>
     </tbody>
   </table>
+
+  <h2>4. Tài liệu tham khảo</h2>
+  <ul>
+    <li><a href="../../report/Drawcsi.pdf">DrawCSI.pdf</a> — kết quả khảo sát chuyển động và phân loại hình từ CSI.</li>
+    <li><a href="../../report/QCN9625%20CFR%20Capture%20Issue%20Summary.pdf">QCN9625 CFR Capture Issue Summary.pdf</a> — ghi nhận lần thử thu AoA gặp lỗi trường phase.</li>
+  </ul>
 </main>
 </body>
 </html>

@@ -24,51 +24,67 @@
   <nav><a href="../index.html">Cổng tài liệu</a><a href="TAI_LIEU_MO_TA.html">Tài liệu mô tả</a><a href="KICH_BAN_KIEM_THU.html">Kịch bản kiểm thử</a></nav>
   <h1>Báo Cáo Thực Tế: Đánh Giá Khả Năng Phân Biệt Hình Tròn Và Hình Tam Giác</h1>
   <div class="meta">
-    <strong>Tình trạng:</strong> Chưa có kết quả thử nghiệm chính thức cho bài toán phân biệt hình tròn và hình tam giác.<br>
-    <strong>Thiết bị:</strong> Router Wi-Fi 7 RDP499 và điện thoại di động.<br>
-    <strong>Nguồn số liệu tham khảo:</strong> Báo cáo đo lường trước đây (DrawCSI) và kết quả kiểm tra thực tế tính năng đo góc của chip Qualcomm.
+    <strong>Tình trạng:</strong> Chưa có kết quả thử nghiệm chính thức cho bài toán mới; các số liệu dưới đây là tài liệu tham khảo, không phải kết quả nghiệm thu của code hiện tại.<br>
+    <strong>Phạm vi:</strong> Phát hiện điện thoại đang chuyển động và khảo sát phân loại hành động tròn/tam giác bằng CSI.<br>
+    <strong>Nguồn:</strong> DrawCSI và ghi nhận lần thử thu AoA gặp lỗi.
   </div>
 
-  <h2>1. Tóm tắt kết quả đo lường và khảo sát thực tế</h2>
+  <h2>1. Trạng thái kết quả của dự án</h2>
   <p>
-    Kính gửi Sếp, em xin tổng hợp lại những gì nhóm đã làm được và những điểm còn đang vướng mắc qua các đợt đo đạc thực tế:
+    Chưa có bộ dữ liệu gắn nhãn và phép đo chính thức trên phiên bản hiện tại để kết luận về độ nhạy phát hiện, tỷ lệ báo nhầm, độ chính xác phân loại, độ trễ hoặc mức tải CPU. Các kết quả kiểm thử heuristic bằng frame tổng hợp không thay thế cho thử nghiệm CSI thực tế.
   </p>
-  <ul>
-    <li>
-      <strong>Điểm đã làm được:</strong> Hệ thống bắt được rất rõ lúc người dùng bắt đầu vung tay vẽ và lúc dừng lại (tín hiệu sóng khi vẽ mạnh gấp hơn 2 lần lúc đứng yên). Tốc độ đưa tay cũng phản ánh khá tương đồng với cảm biến thật của điện thoại.
-    </li>
-    <li>
-      <strong>Điểm chưa làm được:</strong> Khả năng phân biệt đâu là hình tròn, đâu là hình tam giác hiện tại chưa đạt. Trong các đợt đo trước đây, máy chỉ đoán đúng được khoảng 58% đến 68% (tức là gần như đoán mò 50-50).
-    </li>
-    <li>
-      <strong>Nguyên nhân kỹ thuật:</strong> Do 3 anten trên router hiện đang xếp thẳng hàng ngang nên chỉ nhạy với chuyển động qua lại trái - phải; chuyển động lên - xuống tín hiệu bị mờ nhạt. Đồng thời, tính năng đo góc trên chip Qualcomm đang trả về mã lỗi <code>0xFFFF</code> do bo mạch router chưa có bảng dữ liệu cân chỉnh từ nhà sản xuất.
-    </li>
-  </ul>
 
-  <h2>2. Tình trạng kết quả theo từng mục tiêu</h2>
-  <div class="note">
-    Hiện tại nhóm em đang chuẩn bị thiết lập đo đạc cho 2 hướng giải pháp mới (tự tính góc bằng phần mềm và liên hệ Qualcomm). Dưới đây là bảng trạng thái cụ thể:
-  </div>
+  <h2>2. Kết quả tham khảo từ DrawCSI (không phải kết quả dự án)</h2>
+  <p>
+    DrawCSI khảo sát iPhone phát Wi-Fi với router RDP499 (IPQ5210 + QCN9625), 5 GHz/80 MHz. Dữ liệu là một người trong một ngày, các tập nhỏ khoảng 19–48 nét; vì vậy các số liệu chỉ định hướng thiết kế thí nghiệm, chưa đủ để khẳng định hiệu năng tổng quát.
+  </p>
   <table>
-    <thead><tr><th>Mục tiêu cần đạt</th><th>Chỉ số cần đo</th><th>Kết quả hiện tại</th></tr></thead>
+    <thead><tr><th>Phép đo / tập</th><th>Kết quả trong tài liệu</th><th>Ý nghĩa và giới hạn</th></tr></thead>
     <tbody>
-      <tr><td>Phát hiện bắt đầu / kết thúc vung tay</td><td>Tỷ lệ nhận biết đúng, tỷ lệ báo nhầm khi đứng yên</td><td>Đã có tín hiệu tốt từ đợt đo trước (độ nhạy &gt; 90%)</td></tr>
-      <tr><td>Đo tốc độ vung tay</td><td>Độ khớp so với cảm biến điện thoại</td><td>Tương quan tốt (đạt mức ~0.67)</td></tr>
-      <tr><td>Phân biệt Hình tròn vs Hình tam giác</td><td>Tỷ lệ đoán đúng giữa 2 hình</td><td>Chưa đạt (mới chỉ đạt 58% - 68%, đang thử nghiệm giải pháp mới)</td></tr>
-      <tr><td>Khả năng đo góc của chip Qualcomm</td><td>Tính hợp lệ của dữ liệu góc trả về</td><td>Báo lỗi <code>0xFFFF</code> (sẽ tạo case nhờ Qualcomm hỗ trợ)</td></tr>
-      <tr><td>Độ trễ phản hồi của hệ thống</td><td>Thời gian máy đưa ra kết quả sau khi vẽ xong</td><td>Rất nhanh (&lt; 1 ms, không làm chậm router)</td></tr>
+      <tr>
+        <td>CSI động trong nét; tốc độ tương quan với gyro</td>
+        <td>Năng lượng CSI động khoảng 2.4× (router 11.1) và 1.8× (5.1) so với trước/sau nét. Tương quan tốc độ CARM-gyro: r = 0.67 và 0.64.</td>
+        <td>Có cơ sở nghiên cứu cho pilot phát hiện hoạt động/tốc độ tương đối; không phải độ nhạy phát hiện và không phải số đo của code hiện tại.</td>
+      </tr>
+      <tr>
+        <td>Phân loại công bằng nhất: 31 nét, router 11.1, CSI ≥ 25/s, thời lượng 1.5–2.6 s</td>
+        <td>Baseline lớp đa số 0.65; Widar DFS 0.61; CARM 0.58; CIR 0.65–0.68; gyro 0.94.</td>
+        <td>CSI không vượt baseline trong tập này. Gyro là ground truth/đối chiếu, không phải đầu vào CSI. Số mẫu nhỏ nên bất định cao.</td>
+      </tr>
+      <tr>
+        <td>Các tập khác và kiểm tra yếu tố gây nhầm</td>
+        <td>Một số kết quả CARM cao hơn (tới 0.75 hoặc 0.96 ở tập xen kẽ ban đầu), nhưng giảm khi cân bằng thời lượng/tốc độ; dữ liệu thu theo khối trên 5.1 có thể bị dự đoán từ bối cảnh.</td>
+        <td>Không lấy kết quả cao nhất làm ước lượng hiệu năng. Cần xen kẽ ngẫu nhiên, cân bằng điều kiện và đánh giá trên phiên độc lập.</td>
+      </tr>
+      <tr>
+        <td>Tốc độ và hình học thu CSI</td>
+        <td>Router 11.1 thường 25–35 bản ghi/s; 5.1 thường khoảng 14/s. Ba chain 5 GHz trên 11.1 và hai chain trên 5.1; bố trí anten khác nhau.</td>
+        <td>Tốc độ CSI thực, số chain và vị trí anten phải được ghi lại cho từng cấu hình; quan sát 25/s không đảm bảo cho thiết bị khác.</td>
+      </tr>
+      <tr>
+        <td>Độ phân giải thời gian/tần số và CIR</td>
+        <td>Với khoảng 30 CSI/s, STFT cửa sổ 0.4–0.53 s cho độ phân giải khoảng 2–2.5 Hz, gần mức Doppler tay ±2 Hz trong khảo sát. CIR từ 80 MHz có bước delay khoảng 3.75 m.</td>
+        <td>Giải thích vì sao đặc trưng thời gian/tần số và CIR có thể khó phân biệt hình trong cấu hình đó; cần xác minh CSI mapping và phần cứng trước khi ngoại suy.</td>
+      </tr>
     </tbody>
   </table>
 
-  <h2>3. Kế hoạch tiếp theo của em</h2>
+  <h2>3. Thử nghiệm thu AoA</h2>
   <p>
-    Em sẽ triển khai đo đạc thực tế theo 2 hướng song song:
+    Đã thử thu AoA nhưng trường phase trả về <code>0xFFFF</code>, nên lần thử chưa thu được dữ liệu AoA hợp lệ. Xem <a href="../../report/QCN9625%20CFR%20Capture%20Issue%20Summary.pdf">báo cáo lỗi thu CFR/AoA</a>.
   </p>
+  <div class="note">
+    Nguyên nhân lỗi chưa được kết luận. Ghi nhận này chỉ mô tả lần thử thu AoA, không phải kết quả phân loại hình bằng CSI.
+  </div>
+
+  <h2>4. Việc cần làm trước khi có kết quả mới</h2>
   <ol>
-    <li><strong>Hướng phần mềm:</strong> Chạy thử nghiệm thuật toán tự tính góc bằng phần mềm từ dữ liệu sóng thô, đồng thời thử nghiệm bắt các nhịp khựng tay ở 3 góc tam giác để xem có nâng tỷ lệ đoán đúng lên trên 75% hay không.</li>
-    <li><strong>Hướng Qualcomm:</strong> Tạo ticket kỹ thuật gửi hãng Qualcomm để tìm hiểu xem có cách nào kích hoạt tính năng đo góc phần cứng trên dòng router này hay không.</li>
+    <li>Chốt cấu hình phần cứng/phần mềm và đo chất lượng CSI: timestamp, sampling rate, jitter, packet loss, số chain và ánh xạ anten.</li>
+    <li>Thu pilot có nhãn đồng bộ; dùng gyro/IMU làm ground truth, không làm đầu vào khi đánh giá CSI-only.</li>
+    <li>Kiểm tra phát hiện hoạt động trước; sau đó đánh giá tròn-vs-tam giác bằng dữ liệu cân bằng và baseline lớp đa số, tách theo phiên/người dùng.</li>
+    <li>Bổ sung negative controls (đứng yên, thao tác điện thoại, đi lại/nhiễu nền) và ghi false alarms/hour, balanced accuracy, per-class recall, độ trễ cùng chất lượng CSI.</li>
+    <li>Chỉ cập nhật kết quả sau khi có dữ liệu chạy thật, số lượng trial, cấu hình, cách chia tập và metric tái lập.</li>
   </ol>
-  <p>Sau khi có số liệu đo đạc thực tế từ cả 2 hướng, em sẽ cập nhật bảng kết quả chính xác để báo cáo Sếp ạ.</p>
 </main>
 </body>
 </html>

@@ -70,8 +70,11 @@ CFRController::CFRController() {
     pci_path_ = findAth12kPciPath();
 
     // Dọn dẹp trạng thái mồ côi khi khởi động:
-    // 1. Tiêu diệt triệt để tiến trình cfr_test_app cũ nếu còn sót lại từ phiên trước
-    int kill_res = system("killall -9 cfr_test_app 2>/dev/null");
+    // 1. Dừng êm dịu (SIGTERM) trước khi ép buộc để giải phóng DMA buffer an toàn, tránh Kernel Panic
+    int kill_res = system("killall -TERM cfr_test_app 2>/dev/null");
+    (void)kill_res;
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    kill_res = system("killall -KILL cfr_test_app 2>/dev/null");
     (void)kill_res;
 
     // 2. Đưa toàn bộ thanh ghi enable_cfr của các mac device trên card ath12k về 0
@@ -410,8 +413,11 @@ bool CFRController::startCapture(const std::string &mac,
         return false;
     }
 
-    // Tiêu diệt tiến trình cfr_test_app còn tồn đọng trước khi khởi chạy mới
-    int kill_res = system("killall -9 cfr_test_app 2>/dev/null");
+    // Dừng êm dịu tiến trình cfr_test_app còn tồn đọng trước khi khởi chạy mới
+    int kill_res = system("killall -TERM cfr_test_app 2>/dev/null");
+    (void)kill_res;
+    std::this_thread::sleep_for(std::chrono::milliseconds(80));
+    kill_res = system("killall -KILL cfr_test_app 2>/dev/null");
     (void)kill_res;
     std::this_thread::sleep_for(std::chrono::milliseconds(50));
 
@@ -533,6 +539,8 @@ bool CFRController::stopCaptureLocked() {
                            "/cfr_capture";
         }
         writeSysfs(sta_cfr_path, "0 0 0 0");
+        // Chờ ngắn để nhân Linux và chip ath12k xả hết các descriptor DMA đang dở dang
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
     }
 
     // Tắt enable_cfr trên mac dev

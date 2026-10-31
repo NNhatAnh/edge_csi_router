@@ -7,6 +7,7 @@
 #include "motion.hpp"
 #include "prober.hpp"
 #include "wave_detector.hpp"
+#include "air_draw.hpp"
 
 #include <atomic>
 #include <condition_variable>
@@ -25,6 +26,8 @@ class WebServer {
     void stop();
     void publish(const CSIData &frame);
     void resetMotionCalibration();
+    void clearAirDraw();
+    void clearFrameData();
 
   private:
     int web_port_;
@@ -48,6 +51,7 @@ class WebServer {
     MotionDetector motion_detector_;
     BreathDetector breath_detector_;
     WaveDetector wave_detector_;
+    AirDrawTracker air_draw_tracker_;
     CSIData latest_frame_;
     uint64_t sequence_ = 0;
     bool has_frame_ = false;

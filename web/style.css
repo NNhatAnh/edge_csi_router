@@ -478,6 +478,12 @@ h2 {
     color: #4be2d0;
 }
 
+.motion-chip.motion-disconnected {
+    background: rgba(255, 107, 107, 0.15);
+    border-color: rgba(255, 107, 107, 0.35);
+    color: #ff6b6b;
+}
+
 .threshold-pill-container {
     display: flex;
     align-items: center;
@@ -1982,4 +1988,80 @@ footer {
 .wifi-client-table tbody tr.capturing-row {
     background: rgba(75, 226, 208, 0.12) !important;
     border-left: 2px solid #4be2d0;
+}
+
+/* Air Drawing Toolbar & UI Controls */
+.airdraw-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.airdraw-toolbar[hidden] {
+    display: none !important;
+}
+
+.airdraw-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 5px 10px;
+    background: rgba(169, 140, 255, 0.12);
+    border: 1px solid rgba(169, 140, 255, 0.3);
+    border-radius: 6px;
+    color: #a98cff;
+    font-size: 11px;
+    font-family: inherit;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.airdraw-btn:hover {
+    background: rgba(169, 140, 255, 0.25);
+    border-color: #a98cff;
+    box-shadow: 0 0 10px rgba(169, 140, 255, 0.3);
+}
+
+.airdraw-btn.active {
+    background: rgba(75, 226, 208, 0.22);
+    border-color: #4be2d0;
+    color: #4be2d0;
+    box-shadow: 0 0 10px rgba(75, 226, 208, 0.3);
+}
+
+/* Metric Card Air Draw */
+.metric-card-draw {
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.metric-card-draw.drawing-active {
+    border-color: rgba(75, 226, 208, 0.6) !important;
+    box-shadow: 0 0 15px rgba(75, 226, 208, 0.2);
+}
+
+.draw-shape-chip {
+    display: inline-block;
+    padding: 2px 7px;
+    background: rgba(255, 255, 255, 0.06);
+    border-radius: 4px;
+    font-family: "DM Mono", monospace;
+    font-size: 10px;
+    color: var(--muted);
+    font-weight: 600;
+    transition: all 0.2s ease;
+}
+
+.draw-chip-active {
+    background: rgba(75, 226, 208, 0.18);
+    color: #4be2d0;
+    border: 1px solid rgba(75, 226, 208, 0.4);
+    animation: cfrPulse 1.2s infinite;
+}
+
+.draw-chip-success {
+    background: rgba(169, 140, 255, 0.2);
+    color: #a98cff;
+    border: 1px solid rgba(169, 140, 255, 0.5);
+    box-shadow: 0 0 8px rgba(169, 140, 255, 0.3);
 }

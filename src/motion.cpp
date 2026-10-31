@@ -33,6 +33,8 @@ void MotionDetector::resetCalibration() {
     baseline_mean_ = 0.0f;
     baseline_deviation_ = 0.0f;
     quiet_frames_ = 0;
+    static_amplitudes_.clear();
+    has_static_amplitudes_ = false;
 }
 
 void MotionDetector::update(CSIData &frame) {
@@ -43,8 +45,31 @@ void MotionDetector::update(CSIData &frame) {
                                   chain.amplitudes.end());
     }
 
+    if (current_amplitudes.empty()) {
+        frame.motion_ready = false;
+        frame.motion_score = 0.0f;
+        return;
+    }
+
+    // 1. Chuẩn hóa Frobenius Norm trên toàn bộ vector biên độ
+    // Triệt tiêu 100% bước nhảy độ lợi phần cứng do ath12k AGC hunting
+    const size_t n = current_amplitudes.size();
+    float sum_sq = 0.0f;
+    for (float a : current_amplitudes) {
+        sum_sq += a * a;
+    }
+    const float rms = std::sqrt(sum_sq / static_cast<float>(n));
+    if (rms > 1.0e-5f) {
+        const float inv_rms = 1.0f / rms;
+        for (float &a : current_amplitudes) {
+            a *= inv_rms;
+        }
+    }
+
     if (current_amplitudes.size() != previous_amplitudes_.size()) {
-        previous_amplitudes_ = std::move(current_amplitudes);
+        previous_amplitudes_ = current_amplitudes;
+        static_amplitudes_ = current_amplitudes;
+        has_static_amplitudes_ = true;
         motion_window_.clear();
         resetCalibration();
         frame.motion_ready = false;
@@ -53,7 +78,41 @@ void MotionDetector::update(CSIData &frame) {
     }
 
     if (!previous_amplitudes_.empty()) {
-        const size_t n = current_amplitudes.size();
+        // 2. WiDraw Temporal Correlation Gating (Section 4.2)
+        // Kiểm tra tính tương đồng thời gian để loại bỏ frame lỗi/rớt gói đột ngột
+        float dot_prod = 0.0f;
+        float pwr_curr = 0.0f;
+        float pwr_prev = 0.0f;
+        for (size_t i = 0; i < n; ++i) {
+            dot_prod += current_amplitudes[i] * previous_amplitudes_[i];
+            pwr_curr += current_amplitudes[i] * current_amplitudes[i];
+            pwr_prev += previous_amplitudes_[i] * previous_amplitudes_[i];
+        }
+        float temporal_corr = 1.0f;
+        if (pwr_curr > 1.0e-7f && pwr_prev > 1.0e-7f) {
+            temporal_corr = dot_prod / std::sqrt(pwr_curr * pwr_prev);
+            temporal_corr = std::clamp(temporal_corr, -1.0f, 1.0f);
+        }
+
+        // 3. WiDraw Static Path Removal (Tách đường truyền tĩnh H_static)
+        if (!has_static_amplitudes_ || static_amplitudes_.size() != n) {
+            static_amplitudes_ = current_amplitudes;
+            has_static_amplitudes_ = true;
+        } else {
+            const float alpha_static = 0.005f;
+            for (size_t i = 0; i < n; ++i) {
+                static_amplitudes_[i] =
+                    (1.0f - alpha_static) * static_amplitudes_[i] + alpha_static * current_amplitudes[i];
+            }
+        }
+
+        float dynamic_energy = 0.0f;
+        for (size_t i = 0; i < n; ++i) {
+            float d = current_amplitudes[i] - static_amplitudes_[i];
+            dynamic_energy += d * d;
+        }
+        dynamic_energy /= static_cast<float>(n);
+
         float mean_x = std::accumulate(current_amplitudes.begin(),
                                        current_amplitudes.end(), 0.0f) /
                        n;
@@ -78,21 +137,29 @@ void MotionDetector::update(CSIData &frame) {
             correlation = num / std::sqrt(den_x * den_y);
             correlation = std::clamp(correlation, -1.0f, 1.0f);
         }
-        const float pearson_score = 1.0f - correlation;
+        float pearson_score = 1.0f - correlation;
 
-        // Tính biến động vi mô trên từng subcarrier (bắt rung chân, cử động nhỏ)
+        // Tính biến động vi mô trên từng subcarrier đã chuẩn hóa
         std::vector<float> diffs(n);
         for (size_t i = 0; i < n; ++i) {
-            const float base = std::max(current_amplitudes[i], 1.0f);
+            const float base = std::max(current_amplitudes[i], 0.1f);
             diffs[i] = std::abs(current_amplitudes[i] - previous_amplitudes_[i]) / base;
         }
-        // Lấy top 10% subcarrier biến động mạnh nhất
         const size_t top_k = std::max<size_t>(3, n / 10);
         std::nth_element(diffs.begin(), diffs.begin() + top_k, diffs.end(), std::greater<float>());
-        const float top_k_diff = std::accumulate(diffs.begin(), diffs.begin() + top_k, 0.0f) / static_cast<float>(top_k);
+        const float top_k_diff =
+            std::accumulate(diffs.begin(), diffs.begin() + top_k, 0.0f) / static_cast<float>(top_k);
 
-        // Kết hợp cả biến đổi tương quan toàn dải và biến động vi mô top-k (hệ số 0.08 vừa bắt rung chân vừa không thổi phồng nhiễu RF)
-        const float combined_score = pearson_score + top_k_diff * 0.08f;
+        // Nếu temporal_corr < 0.82 (frame bị méo đột ngột do rớt gói/chuyển MCS), kẹp chặn điểm số giả
+        if (temporal_corr < 0.82f) {
+            pearson_score = std::min(pearson_score, 0.025f);
+        }
+
+        // Cổng năng lượng động (Dynamic Energy Gate theo chuẩn WiDraw):
+        // Khi môi trường đứng yên, dynamic_energy rất nhỏ (< 0.001) -> dynamic_gate = 0.08
+        // Khi có người cử động, dynamic_energy > 0.003 -> dynamic_gate = 1.0
+        const float dynamic_gate = std::clamp((dynamic_energy - 0.0006f) / 0.0030f, 0.08f, 1.0f);
+        const float combined_score = (pearson_score + top_k_diff * 0.08f) * dynamic_gate;
 
         motion_window_.push_back(combined_score);
         if (motion_window_.size() > kMotionWindowSize)
@@ -180,9 +247,6 @@ void MotionDetector::update(CSIData &frame) {
                 }
                 ++quiet_frames_;
             } else {
-                // ĐANG TRONG KHOẢNG CHẾT (DEADBAND): motion_threshold_low_ <= score <= motion_threshold_high_
-                // Nếu cửa sổ rất phẳng (window_std < 0.012f), đây là nhiễu nền tĩnh (xuyên kính hoặc trôi nhiệt)
-                // chứ không phải người đang bước đi. Cho phép xả trạng thái có người sau 20 frame.
                 if (window_std < 0.012f) {
                     if (++low_motion_frames_ >= (kLowMotionFramesToClear + 5)) {
                         presence_detected_ = false;
@@ -194,9 +258,7 @@ void MotionDetector::update(CSIData &frame) {
                     quiet_frames_ = 0;
                 }
             }
-
-            // Dynamic Leaky Baseline: Khi phòng tĩnh lặng liên tục (> 45 frame ~1.5s),
-            // bộ bám EMA chậm (alpha = 0.008) tự thích ứng với sàn nhiễu và nhiệt độ chip của phòng hiện tại.
+            
             if (!presence_detected_ && quiet_frames_ >= 45 && window_std < 0.015f) {
                 const float alpha = 0.008f;
                 baseline_mean_ = (1.0f - alpha) * baseline_mean_ + alpha * frame.motion_score;

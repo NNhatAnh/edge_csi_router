@@ -27,6 +27,10 @@ class MotionDetector {
     float baseline_deviation_ = 0.0f;
     size_t quiet_frames_ = 0;
 
+    // WiDraw Static Path Removal & Temporal Correlation Tracking
+    std::vector<float> static_amplitudes_;
+    bool has_static_amplitudes_ = false;
+
     void resetCalibration();
 };
 

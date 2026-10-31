@@ -115,6 +115,17 @@ std::string CSIData::toJson() const {
          << ",\"wave_samples_in_window\":" << wave_samples_in_window
          << ",\"wave_raw_prob\":" << wave_raw_prob
          << ",\"wave_reason\":\"" << wave_reason << "\""
+         << ",\"draw_active\":" << (draw_active ? "true" : "false")
+         << ",\"draw_cursor_x\":" << draw_cursor_x
+         << ",\"draw_cursor_y\":" << draw_cursor_y
+         << ",\"draw_stroke_completed\":" << (draw_stroke_completed ? "true" : "false")
+         << ",\"draw_shape\":\"" << draw_shape << "\""
+         << ",\"draw_shape_confidence\":" << draw_shape_confidence
+         << ",\"draw_delta_theta\":" << draw_delta_theta
+         << ",\"draw_delta_pwr\":" << draw_delta_pwr
+         << ",\"draw_has_anchor\":" << (draw_has_anchor ? "true" : "false")
+         << ",\"draw_heading_deg\":" << draw_heading_deg
+         << ",\"draw_heading_dir\":\"" << draw_heading_dir << "\""
          << ",\"ap_mac\":\"" << ap_mac << "\",\"amplitude_gain_ratio\":[";
 
     for (size_t i = 0; i < 5; ++i) {

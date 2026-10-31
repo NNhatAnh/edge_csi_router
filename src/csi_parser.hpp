@@ -57,6 +57,19 @@ struct CSIData {
     float wave_raw_prob = 0.0f;
     std::string wave_reason = "idle";
 
+    // In-Air Drawing Telemetry (Cầm điện thoại vẽ hình trong không gian)
+    bool draw_active = false;
+    float draw_cursor_x = 0.5f;
+    float draw_cursor_y = 0.5f;
+    bool draw_stroke_completed = false;
+    std::string draw_shape = "none";
+    float draw_shape_confidence = 0.0f;
+    float draw_delta_theta = 0.0f;
+    float draw_delta_pwr = 0.0f;
+    bool draw_has_anchor = false;
+    float draw_heading_deg = 0.0f;
+    std::string draw_heading_dir = "none";
+
     size_t tonesPerChain() const;
     std::string toJson() const;
 };

@@ -203,7 +203,7 @@ li { margin-bottom: 6px; }
       <div class="meta-item"><strong>Người báo cáo:</strong> Nhóm nghiên cứu &amp; phát triển CSI</div>
       <div class="meta-item"><strong>Thiết bị sử dụng:</strong> 01 Router Wi-Fi 7 RDP499 và 01 Điện thoại di động</div>
       <div class="meta-item"><strong>Trọng tâm bài toán:</strong> Nhận diện người dùng cầm điện thoại vẽ <strong>Hình tròn</strong> hoặc <strong>Hình tam giác</strong></div>
-      <div class="meta-item"><strong>Tình trạng hiện tại:</strong> Đang phân tích các hạn chế và thử nghiệm 2 hướng giải pháp song song</div>
+      <div class="meta-item"><strong>Tình trạng hiện tại:</strong> Chưa có kết quả thử nghiệm chính thức cho bài toán mới; đang xác định tính khả thi và quy trình đo</div>
     </div>
   </div>
 
@@ -224,125 +224,67 @@ li { margin-bottom: 6px; }
     <li><strong>Phân biệt rõ ràng giữa Hình tròn và Hình tam giác:</strong> Đây là yêu cầu quan trọng nhất. Khi người dùng kết thúc nét vẽ, hệ thống phải đưa ra kết luận đó là hình tròn hay hình tam giác.</li>
   </ul>
 
-  <!-- PHẦN 2: CÁC VẤN ĐỀ VÀ KHÓ KHĂN HIỆN TẠI -->
-  <h2>2. Các Khó Khăn Và Vướng Mắc Thực Tế Hiện Nay</h2>
+  <h2>2. Bằng Chứng Tham Khảo Và Giới Hạn Kỹ Thuật</h2>
   <p>
-    Qua quá trình nghiên cứu tài liệu từ Qualcomm, đo đạc trực tiếp trên router thực tế và tham khảo các thử nghiệm trước đó, em nhận thấy hệ thống hiện tại đang gặp 3 khó khăn lớn:
+    Các kết quả dưới đây lấy từ <a href="../../report/Drawcsi.pdf">báo cáo DrawCSI</a>, không phải phép đo nghiệm thu cho code hiện tại. DrawCSI khảo sát điện thoại iPhone phát Wi-Fi tới các router RDP499 (IPQ5210 + QCN9625) ở 5 GHz, 80 MHz; điều kiện này chỉ gần với cấu hình hiện tại và cần được lặp lại trên đúng thiết bị, firmware, vị trí anten và quy trình sử dụng của sản phẩm.
   </p>
-
-  <div class="card-box">
-    <div class="card-title">Khó khăn 1: Thuật toán hiện tại chưa có khả năng nhận diện hình vẽ</div>
-    <p>
-      Thuật toán đang chạy trên router hiện nay mới chỉ là phiên bản thử nghiệm sơ khai. Thuật toán này chỉ đơn giản là tính toán hướng gạt tay theo các đường thẳng cơ bản (như gạt sang trái, gạt sang phải, đưa lên trên hoặc đưa xuống dưới).
-    </p>
-    <p>
-      Thuật toán này hoàn toàn chưa được thiết kế để học hay nhận diện các hình vẽ khép kín phức tạp. Vì vậy, hệ thống hiện tại chưa thể tự phân biệt được đâu là hình tròn, đâu là hình tam giác.
-    </p>
-  </div>
-
-  <div class="card-box">
-    <div class="card-title">Khó khăn 2: Đặc tính anten router khó bắt được chuyển động lên - xuống</div>
-    <p>
-      Trên router RDP499 hiện tại, cả 3 anten đều đang được dựng thẳng đứng và xếp thành một hàng ngang. Do đặc tính vật lý của sóng Wi-Fi:
-    </p>
-    <ul>
-      <li>Khi tay người dùng di chuyển <strong>qua lại trái - phải</strong>, tín hiệu sóng lệch pha giữa các anten rất rõ, router nhận biết rất tốt.</li>
-      <li>Nhưng khi tay di chuyển <strong>lên trên - xuống dưới</strong>, tín hiệu sóng thu được ở cả 3 anten lại gần như tương tự nhau, router rất khó cảm nhận được chuyển động theo chiều dọc.</li>
-    </ul>
-    <p>
-      Chính vì router bị "mờ nhạt" ở chiều lên - xuống, nên khi người dùng vẽ hình tròn hay hình tam giác, router nhìn vào chủ yếu chỉ thấy tay đưa qua đưa lại. Báo cáo thử nghiệm thực tế trước đây (tài liệu DrawCSI) cho thấy: tỷ lệ máy đoán đúng giữa hình tròn và hình tam giác chỉ đạt <strong>khoảng 58% đến 68%</strong>, tức là gần tương đương với việc tung đồng xu đoán mò (khoảng 65%).
-    </p>
-  </div>
-
-  <div class="card-box">
-    <div class="card-title">Khó khăn 3: Tính năng đo góc phần cứng của chip Qualcomm bị báo lỗi (0xFFFF)</div>
-    <p>
-      Về mặt lý thuyết, chip Wi-Fi Qualcomm trên router có tính năng tự động đo góc tới của sóng (Angle-of-Arrival - AoA). Nhóm em đã bật tính năng này trên router và bắt được các bản tin sự kiện của chip.
-    </p>
-    <p>
-      <strong>Tuy nhiên, khi kiểm tra thực tế:</strong> Chip Qualcomm lại luôn trả về giá trị góc là <code>0xFFFF</code> (đây là mã báo lỗi giá trị không hợp lệ từ chip).
-    </p>
-    <p>
-      <strong>Nguyên nhân:</strong> Để chip tự tính được góc chuẩn, chip cần được nhà sản xuất nạp sẵn một bảng dữ liệu cân chỉnh anten (gọi là bảng caldata) từ khi xuất xưởng. Nhưng phiên bản router thương mại này hiện chưa được nhà máy nạp dữ liệu cân chỉnh đó, dẫn đến việc chip không có đủ thông số để tự tính ra góc và đành trả về mã lỗi.
-    </p>
-  </div>
-
-  <!-- PHẦN 3: HƯỚNG THỬ NGHIỆM TIẾP THEO -->
-  <h2>3. Kế Hoạch Và Hướng Thử Nghiệm Tiếp Theo Của Em</h2>
-  <p>
-    Nhận định đây là một bài toán khó và còn nhiều biến số, em xin phép <strong>không khẳng định chắc chắn 100%</strong> mà đề xuất kế hoạch triển khai thử nghiệm đồng thời <strong>2 hướng song song</strong> để tìm giải pháp tối ưu nhất cho hệ thống:
-  </p>
-
-  <div class="card-box" style="border-left: 4px solid var(--primary);">
-    <div class="card-title" style="color: var(--primary);">Hướng 1: Thử nghiệm giải pháp tự tính toán góc bằng phần mềm (Software AoA)</div>
-    <p>
-      Dù chip Qualcomm không tự tính ra góc, nhưng chip vẫn trả về cho router dữ liệu sóng thô (CSI) rất chi tiết của cả 3 anten ở băng thông 80 MHz.
-    </p>
-    <p>
-      Em sẽ thử nghiệm thuật toán tự phân tích độ lệch pha giữa các anten trong phần mềm để ước tính hướng chuyển động. Cùng với đó, em sẽ kết hợp nhận diện dựa trên <strong>thói quen vung tay tự nhiên</strong> của người dùng:
-    </p>
-    <ul>
-      <li><strong>Khi vẽ hình tam giác:</strong> Tay người dùng khi đến 3 đỉnh của tam giác sẽ có quán tính <em>khựng lại một nhịp rất ngắn</em> để bẻ góc đổi hướng, sau đó mới vẽ cạnh tiếp theo. Em sẽ thử bắt các điểm khựng tốc độ này.</li>
-      <li><strong>Khi vẽ hình tròn:</strong> Tay người dùng thường vung đều, mượt mà và chuyển động tròn liên tục, không có các điểm dừng đột ngột như hình tam giác.</li>
-    </ul>
-    <p>
-      Nếu thuật toán phần mềm bắt được chính xác 3 nhịp khựng của tay, hệ thống có thể phân biệt được hình tam giác với hình tròn mà không cần phần cứng quá phức tạp.
-    </p>
-  </div>
-
-  <div class="card-box" style="border-left: 4px solid #137333;">
-    <div class="card-title" style="color: #137333;">Hướng 2: Tạo case ticket hỏi trực tiếp hãng Qualcomm</div>
-    <p>
-      Song song với việc tự làm phần mềm, em sẽ soạn tài liệu kỹ thuật và mở một case ticket chính thức gửi tới đội ngũ hỗ trợ kỹ thuật của hãng Qualcomm:
-    </p>
-    <ul>
-      <li>Gửi kèm log đo đạc thực tế của router và mô tả rõ hiện tượng trường pha góc bị trả về mã <code>0xFFFF</code>.</li>
-      <li>Nhờ Qualcomm tư vấn xem với dòng chip và phiên bản phần mềm hiện tại trên router của mình, có cách nào cấu hình hoặc nạp bổ sung file dữ liệu cân chỉnh (caldata) để kích hoạt được tính năng đo góc sẵn có của chip hay không.</li>
-    </ul>
-    <p>
-      Nếu Qualcomm cung cấp được phương án hoặc bản vá để kích hoạt thành công tính năng đo góc phần cứng này, độ chính xác của bài toán sẽ được hỗ trợ rất lớn từ gốc phần cứng.
-    </p>
-  </div>
-
-  <!-- PHẦN 4: TỔNG KẾT -->
-  <h2>4. Bảng Tổng Hợp Kế Hoạch Triển Khai</h2>
   <table class="compare-table">
-    <thead>
-      <tr>
-        <th style="width: 25%;">Hạng mục</th>
-        <th style="width: 35%;">Hiện trạng hiện tại</th>
-        <th style="width: 40%;">Kế hoạch thử nghiệm tiếp theo</th>
-      </tr>
-    </thead>
+    <thead><tr><th>Bằng chứng tham khảo</th><th>Diễn giải có căn cứ</th><th>Giới hạn</th></tr></thead>
     <tbody>
       <tr>
-        <td><strong>Bài toán trọng tâm</strong></td>
-        <td>Mới chỉ nhận biết hướng gạt tay đơn giản (trái, phải, lên, xuống).</td>
-        <td>Tập trung phân biệt rõ giữa <strong>Hình tròn</strong> và <strong>Hình tam giác</strong> khi người dùng cầm điện thoại vẽ.</td>
+        <td>CSI động trong nét cao khoảng 2.4 lần so với vùng trước/sau trên router 11.1 và 1.8 lần trên 5.1. CARM tương quan với tốc độ gyro ở mức r = 0.67 và 0.64.</td>
+        <td>Có cơ sở để thử phát hiện hoạt động và ước lượng tốc độ tương đối từ CSI; đây không phải chỉ số độ nhạy phát hiện.</td>
+        <td>Đo trên tập nhỏ; không suy ra hiệu năng vận hành hoặc tốc độ tuyệt đối cho thiết bị khác.</td>
       </tr>
       <tr>
-        <td><strong>Xử lý đo góc</strong></td>
-        <td>Tính năng đo góc trên chip Qualcomm báo lỗi mã <code>0xFFFF</code> do thiếu dữ liệu cân chỉnh từ nhà máy.</td>
-        <td><strong>Triển khai 2 hướng song song:</strong><br>
-          1. Tự tính toán góc bằng phần mềm (Software AoA) từ dữ liệu sóng thô.<br>
-          2. Tạo case ticket gửi Qualcomm để nhờ hỗ trợ kỹ thuật về tính năng đo góc trên chip.
-        </td>
+        <td>Tập phân loại công bằng nhất có 31 nét trên 11.1, CSI ≥ 25 mẫu/s và thời lượng khoảng 1.5–2.6 s: baseline lớp đa số 0.65, Widar DFS 0.61, CARM 0.58, CIR 0.65–0.68; gyro 0.94.</td>
+        <td>Trong điều kiện này CSI chưa chứng minh được khả năng phân biệt tròn/tam giác vượt baseline. Gyro là ground truth/đối chiếu, không phải đầu vào CSI.</td>
+        <td>Tập 31 nét nhỏ; kết quả không phải ước lượng tổng quát. Các tập khác cho số cao hơn nhưng nhạy với thời lượng, tốc độ hoặc bối cảnh thu.</td>
       </tr>
       <tr>
-        <td><strong>Cách phân biệt hình</strong></td>
-        <td>Chưa có cơ chế phân biệt (đoán ngẫu nhiên chỉ đạt ~60%).</td>
-        <td>Thử nghiệm bắt các nhịp khựng tay ở 3 góc (hình tam giác) so với chuyển động lướt đều (hình tròn).</td>
+        <td>CSI khoảng 25–35 bản ghi/s trên 11.1; router 5.1 thường khoảng 14/s. Khi tốc độ CSI thấp hơn 25/s, tín hiệu bám chuyển động giảm rõ trong khảo sát.</td>
+        <td>Tốc độ lấy mẫu thực tế và jitter cần được đo trước khi chọn đặc trưng thời gian/tần số.</td>
+        <td>Ngưỡng 25/s là quan sát của khảo sát, không phải bảo đảm phần cứng hay yêu cầu đã xác nhận cho hệ thống này.</td>
       </tr>
       <tr>
-        <td><strong>Đánh giá khả thi</strong></td>
-        <td>Là bài toán khó, chưa đủ cơ sở để kết luận ngay.</td>
-        <td>Sẽ đo đạc thực nghiệm cụ thể và báo cáo số liệu thực tế sau khi chạy thử nghiệm 2 hướng.</td>
+        <td>Ba anten 5 GHz của 11.1 có bố trí gần cùng mặt phẳng ngang, một anten được bẻ nằm ngang; 5.1 chỉ có hai chain và cách bố trí/phân cực khác.</td>
+        <td>Hình học anten, số chain và ánh xạ chain-vật lý ảnh hưởng đến thông tin không gian và khả năng tổng quát hóa.</td>
+        <td>Không khái quát thành “cả ba anten thẳng hàng” cho mọi RDP499; cần đo và ghi lại cấu hình cụ thể từng router.</td>
+      </tr>
+      <tr>
+        <td>Ở khoảng 30 CSI/s, cửa sổ STFT 0.4–0.53 s chỉ cho độ phân giải khoảng 2–2.5 Hz, trong khi Doppler của tay trong khảo sát ở khoảng ±2 Hz. CIR từ 80 MHz có bước delay khoảng 3.75 m.</td>
+        <td>Độ dài cửa sổ và băng thông giới hạn khả năng tách biến thiên Doppler nhỏ hoặc đường phản xạ của tay trong cấu hình khảo sát.</td>
+        <td>Đây là giới hạn đo của cấu hình trong DrawCSI; cần đo lại với phần cứng/mapping subcarrier mục tiêu trước khi quyết định bỏ nhánh xử lý.</td>
       </tr>
     </tbody>
   </table>
 
+  <div class="card-box">
+    <div class="card-title">Thử nghiệm thu AoA</div>
+    <p>
+      Đã thử thu AoA nhưng trường phase trả về <code>0xFFFF</code>, nên lần thử chưa thu được dữ liệu AoA hợp lệ. Chưa kết luận nguyên nhân lỗi.
+    </p>
+  </div>
+
+  <h2>3. Hướng Khả Thi Và Thứ Tự Thực Hiện</h2>
+  <ol>
+    <li><strong>Xác minh đầu vào:</strong> ghi nhận board, firmware, channel/bandwidth, số chain, ánh xạ anten, cấu trúc CSI, timestamp, sampling rate, jitter và packet loss. Giữ CSI I/Q thô và đồng bộ nhãn gyro/IMU; không đưa gyro vào classifier CSI.</li>
+    <li><strong>Pilot phát hiện hoạt động:</strong> so sánh đoạn đứng yên, cầm điện thoại di chuyển/vẽ và hoạt động nền. Ưu tiên đặc trưng biên độ theo từng chain/CARM vì khảo sát cho thấy hướng Doppler chung của điện thoại có thể bị triệt khi lấy CSI-ratio liên anten.</li>
+    <li><strong>Pilot phân loại hình:</strong> thu tròn/tam giác xen kẽ, cân bằng thời lượng và tốc độ, thay đổi hướng bắt đầu; so sánh baseline lớp đa số với baseline ML đơn giản. Tách tập theo phiên/người dùng và báo cáo balanced accuracy, per-class recall, confusion matrix cùng số lần thử.</li>
+    <li><strong>Mở rộng có điều kiện:</strong> nếu CSI chưa chứa thông tin đủ phân biệt, cần thiết kế thử nghiệm tiếp theo dựa trên kết quả pilot và đặc tính phần cứng đã đo.</li>
+  </ol>
+  <div class="callout callout-warning">
+    <strong>Kết luận khả thi:</strong> phát hiện chuyển động và tốc độ tương đối là mục tiêu pilot hợp lý; phân loại tròn-vs-tam giác bằng CSI hiện chưa được chứng minh. Không có kết quả thử nghiệm chính thức mới cho code hiện tại, và mọi ngưỡng nghiệm thu cần được chốt trước khi thu dữ liệu.
+  </div>
+
+  <h2>4. Tài Liệu Nguồn</h2>
+  <ul>
+    <li><a href="../../report/Drawcsi.pdf">DrawCSI.pdf</a> — khảo sát CSI nhận diện nét tròn/tam giác và các phân tích tín hiệu.</li>
+    <li><a href="../../report/QCN9625%20CFR%20Capture%20Issue%20Summary.pdf">QCN9625 CFR Capture Issue Summary.pdf</a> — ghi nhận lần thử thu AoA gặp lỗi trường phase.</li>
+  </ul>
+
   <div style="margin-top: 30px; padding-top: 15px; border-top: 1px solid var(--border-color); font-size: 13px; color: var(--text-muted); text-align: center;">
-    Báo cáo kỹ thuật Air Draw &bull; Trình ban quản lý dự án &bull; Nhóm R&amp;D Wi-Fi CSI &bull; Tháng 10/2026
+    Báo cáo kỹ thuật Air Draw &bull; Nhóm R&amp;D Wi-Fi CSI
   </div>
 
 </div>

@@ -183,6 +183,7 @@ void WebServer::publish(const CSIData &frame) {
     motion_detector_.update(latest_frame_);
     breath_detector_.update(latest_frame_);
     wave_detector_.update(latest_frame_);
+    air_draw_tracker_.update(latest_frame_);
 
     // Quyết định hiện diện hợp nhất 3 trạng thái cốt lõi:
     // 1. Chuyển động vĩ mô (người đi lại / cử động) - đồng bộ cờ presence_detected đã qua bộ lọc Hysteresis & Deadband từ motion_detector_
@@ -215,6 +216,7 @@ void WebServer::resetMotionCalibration() {
         motion_detector_.reset();
         breath_detector_.reset();
         wave_detector_.reset();
+        air_draw_tracker_.reset();
         if (has_frame_) {
             latest_frame_.motion_score = 0.0f;
             latest_frame_.motion_threshold_high = 0.0f;
@@ -230,8 +232,55 @@ void WebServer::resetMotionCalibration() {
             latest_frame_.is_sleeping = false;
             latest_frame_.breath_regularity = 0.0f;
             latest_frame_.presence_status = "calibrating";
+            latest_frame_.draw_active = false;
+            latest_frame_.draw_cursor_x = 0.5f;
+            latest_frame_.draw_cursor_y = 0.5f;
+            latest_frame_.draw_stroke_completed = false;
+            latest_frame_.draw_shape = "none";
+            latest_frame_.draw_shape_confidence = 0.0f;
+            latest_frame_.draw_delta_theta = 0.0f;
+            latest_frame_.draw_delta_pwr = 0.0f;
+            latest_frame_.draw_has_anchor = false;
+            latest_frame_.draw_heading_deg = 0.0f;
+            latest_frame_.draw_heading_dir = "none";
             ++sequence_;
         }
+    }
+    data_changed_.notify_all();
+}
+
+void WebServer::clearAirDraw() {
+    {
+        std::lock_guard<std::mutex> lock(data_mutex_);
+        air_draw_tracker_.centerCursor();
+        if (has_frame_) {
+            latest_frame_.draw_active = false;
+            latest_frame_.draw_cursor_x = 0.5f;
+            latest_frame_.draw_cursor_y = 0.5f;
+            latest_frame_.draw_stroke_completed = false;
+            latest_frame_.draw_shape = "none";
+            latest_frame_.draw_shape_confidence = 0.0f;
+            latest_frame_.draw_delta_theta = 0.0f;
+            latest_frame_.draw_delta_pwr = 0.0f;
+            latest_frame_.draw_has_anchor = true;
+            latest_frame_.draw_heading_deg = 0.0f;
+            latest_frame_.draw_heading_dir = "none";
+            ++sequence_;
+        }
+    }
+    data_changed_.notify_all();
+}
+
+void WebServer::clearFrameData() {
+    {
+        std::lock_guard<std::mutex> lock(data_mutex_);
+        has_frame_ = false;
+        latest_frame_ = CSIData{};
+        motion_detector_.reset();
+        breath_detector_.reset();
+        wave_detector_.reset();
+        air_draw_tracker_.reset();
+        ++sequence_;
     }
     data_changed_.notify_all();
 }
@@ -372,6 +421,16 @@ void WebServer::handleWebClient(int client_fd) {
             httpResponse(
                 "200 OK", "application/json; charset=utf-8",
                 "{\"status\":\"calibrating\",\"stable_frames_required\":50}"));
+        return;
+    }
+
+    if (method == "POST" && path == "/api/airdraw/clear") {
+        clearAirDraw();
+        sendAll(
+            client_fd,
+            httpResponse(
+                "200 OK", "application/json; charset=utf-8",
+                "{\"status\":\"ok\",\"action\":\"cleared\"}"));
         return;
     }
 
@@ -986,13 +1045,23 @@ void WebServer::handleEventStream(int client_fd) {
                 frame = latest_frame_;
         }
 
-        if (has_frame && current_sequence != last_sequence) {
+        if (!has_frame && current_sequence != last_sequence) {
+            const std::string event =
+                "id: " + std::to_string(current_sequence) +
+                "\nevent: csi\ndata: {\"has_data\":false,\"disconnected\":true,"
+                "\"subcarriers_count\":0,\"num_chains\":0,\"motion_score\":0.0,"
+                "\"presence_detected\":false,\"presence_status\":\"disconnected\","
+                "\"wave_detected\":false,\"draw_active\":false}\n\n";
+            if (!sendAll(client_fd, event))
+                break;
+            last_sequence = current_sequence;
+        } else if (has_frame && current_sequence != last_sequence) {
             const auto now = std::chrono::steady_clock::now();
             const auto elapsed_ms =
                 std::chrono::duration_cast<std::chrono::milliseconds>(now - last_send_time).count();
 
-            // Giới hạn tần suất đẩy SSE tối đa ~30 FPS (mỗi 33ms) để không làm nghẽn Wi-Fi và CPU browser
-            if (elapsed_ms >= 33) {
+            // Tần suất đẩy SSE đáp ứng chuẩn 60 FPS (mỗi ~16ms) cho nét vẽ thời gian thực mượt mà
+            if (elapsed_ms >= 16) {
                 last_send_time = now;
                 const std::string event =
                     "id: " + std::to_string(current_sequence) +
@@ -1004,9 +1073,8 @@ void WebServer::handleEventStream(int client_fd) {
                     break;
                 last_sequence = current_sequence;
             } else {
-                // Đã có frame mới nhưng chưa đến nhịp 33ms: ngủ ngắn bù nhịp để không chạy loop rỗng
                 std::this_thread::sleep_for(
-                    std::chrono::milliseconds(std::max<int64_t>(1, 33 - elapsed_ms)));
+                    std::chrono::milliseconds(std::min<int64_t>(4, std::max<int64_t>(1, 16 - elapsed_ms))));
             }
         } else if (!sendAll(client_fd, ": keep-alive\n\n")) {
             break;

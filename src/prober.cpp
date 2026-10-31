@@ -737,7 +737,7 @@ void ActiveProber::run() {
 
     while (is_running_) {
         std::vector<std::string> targets;
-        int interval = 50;
+        int interval = 25;
         bool should_probe = false;
 
         {

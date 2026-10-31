@@ -42,7 +42,7 @@ struct ProberStatus {
     std::string mode = "single"; // "single" hoặc "multi"
     std::string target_ip;       // Cho single mode
     std::vector<std::string> target_ips; // Cho multi mode
-    int interval_ms = 50;
+    int interval_ms = 25;
     std::string interface_name;
     uint64_t packets_sent = 0;
     bool active = false;
@@ -79,7 +79,7 @@ class ActiveProber {
     bool enabled_ = false;
     std::string mode_ = "single";
     std::vector<std::string> target_ips_;
-    int interval_ms_ = 50;
+    int interval_ms_ = 25;
     uint64_t packets_sent_ = 0;
 
     int udp_fd_ = -1;

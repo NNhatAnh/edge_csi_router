@@ -7,6 +7,7 @@ const i18n = {
         brand_sub: 'WIRELESS SENSING',
         nav_workspace: 'WORKSPACE',
         tab_overview: 'Tổng quan',
+        tab_airdraw: 'Quỹ đạo không gian',
         tab_breath: 'Dạng sóng thở',
         tab_amplitude: 'Biên độ CSI',
         tab_phase: 'Pha CSI',
@@ -24,6 +25,9 @@ const i18n = {
         status_disrupted: 'Stream gián đoạn · đang nối lại',
         status_calibrating: 'Đang chờ hiệu chuẩn nền mới',
         status_packet_wait: 'Đang chờ gói (Client ngủ hoặc chu kỳ beacon thưa)',
+        status_disconnected: 'Điện thoại đã ngắt kết nối mạng',
+        chip_disconnected: 'NGẮT KẾT NỐI',
+        caption_disconnected: 'Điện thoại đã ngắt kết nối · Chờ tín hiệu mới',
         metric_sc: 'SUBCARRIERS',
         metric_chains: 'ANTENNA CHAINS',
         metric_motion: 'MOTION SCORE',
@@ -35,6 +39,16 @@ const i18n = {
         caption_wave_idle: 'Chưa phát hiện cử chỉ',
         caption_wave_detected: 'Cử chỉ vẫy tay đang diễn ra',
         caption_wave_waiting: 'Cần luồng CSI 80 MHz (BW=2)',
+        metric_draw: 'NÉT VẼ KHÔNG GIAN (AI)',
+        draw_idle: 'ĐỨNG YÊN',
+        draw_active: 'BÁM QUỸ ĐẠO',
+        draw_completed: 'DỪNG CỬ ĐỘNG',
+        caption_draw_idle: 'Điện thoại đứng yên · Con trỏ neo tại chỗ',
+        caption_draw_active: 'Bám quỹ đạo chuyển động thời gian thực',
+        draw_clear: 'Xóa nét vẽ',
+        draw_center: 'Căn tâm',
+        draw_toggle_map: 'Bản đồ sóng',
+        draw_snap: 'Nắn hình chuẩn',
         metric_framerate: 'TỐC ĐỘ GÓI',
         caption_waiting_csi: 'Chờ dữ liệu CSI',
         caption_framerate: 'Tốc độ nhận gần nhất',
@@ -136,6 +150,7 @@ const i18n = {
         // Views
         views: {
             overview: { title: 'Tổng quan tín hiệu', kicker: 'LIVE ACTIVITY', chart: 'Motion score & ngưỡng phát hiện' },
+            airdraw: { title: 'Bảng vẽ không khí', kicker: 'SPATIAL TRAJECTORY', chart: 'Quỹ đạo vẽ cử chỉ tay bằng điện thoại' },
             breath: { title: 'Dạng sóng nhịp thở & Phân biệt người', kicker: 'HUMAN DISCRIMINATION', chart: 'Biên độ pha vi chuyển động (rad)' },
             amplitude: { title: 'Biên độ CSI', kicker: 'CHANNEL RESPONSE', chart: 'Biên độ theo tone · raw I/Q' },
             phase: { title: 'Pha CSI', kicker: 'PHASE RESPONSE', chart: 'Pha theo tone · radian' },
@@ -148,6 +163,7 @@ const i18n = {
         brand_sub: 'WIRELESS SENSING',
         nav_workspace: 'WORKSPACE',
         tab_overview: 'Overview',
+        tab_airdraw: 'In-Air Trajectory',
         tab_breath: 'Respiration Wave',
         tab_amplitude: 'CSI Amplitude',
         tab_phase: 'CSI Phase',
@@ -165,6 +181,9 @@ const i18n = {
         status_disrupted: 'Stream disrupted · reconnecting',
         status_calibrating: 'Waiting for new baseline calibration',
         status_packet_wait: 'Waiting for packets (Client asleep or slow beacons)',
+        status_disconnected: 'Phone disconnected from network',
+        chip_disconnected: 'DISCONNECTED',
+        caption_disconnected: 'Phone disconnected · Awaiting signal',
         metric_sc: 'SUBCARRIERS',
         metric_chains: 'ANTENNA CHAINS',
         metric_motion: 'MOTION SCORE',
@@ -176,6 +195,16 @@ const i18n = {
         caption_wave_idle: 'No gesture detected',
         caption_wave_detected: 'Waving gesture in progress',
         caption_wave_waiting: 'Requires 80 MHz CSI stream',
+        metric_draw: 'AIR DRAW (AI STROKE)',
+        draw_idle: 'STATIONARY',
+        draw_active: 'TRACKING...',
+        draw_completed: 'MOTION STOPPED',
+        caption_draw_idle: 'Phone stationary · Cursor locked at anchor',
+        caption_draw_active: 'Tracking continuous motion trajectory live',
+        draw_clear: 'Clear Canvas',
+        draw_center: 'Center Cursor',
+        draw_toggle_map: 'Radio Map',
+        draw_snap: 'Smart Snap',
         metric_framerate: 'FRAME RATE',
         caption_waiting_csi: 'Waiting for CSI data',
         caption_framerate: 'Latest received rate',
@@ -277,6 +306,7 @@ const i18n = {
         // Views
         views: {
             overview: { title: 'Signal Overview', kicker: 'LIVE ACTIVITY', chart: 'Motion score & detection thresholds' },
+            airdraw: { title: 'In-Air Drawing Canvas', kicker: 'SPATIAL TRAJECTORY', chart: 'Handheld Phone Trajectory Tracking' },
             breath: { title: 'Respiration Wave & Discrimination', kicker: 'HUMAN DISCRIMINATION', chart: 'Micro-motion phase residual (rad)' },
             amplitude: { title: 'CSI Amplitude', kicker: 'CHANNEL RESPONSE', chart: 'Tone amplitude · raw I/Q' },
             phase: { title: 'CSI Phase', kicker: 'PHASE RESPONSE', chart: 'Tone phase · radians' },
@@ -345,6 +375,14 @@ const domElements = {
     waveCaption: document.getElementById('wave-caption'),
     waveChip: document.getElementById('wave-confidence-chip'),
     waveCard: document.getElementById('metric-card-wave'),
+    drawValue: document.getElementById('draw-value'),
+    drawCaption: document.getElementById('draw-caption'),
+    drawChip: document.getElementById('draw-shape-chip'),
+    drawCard: document.getElementById('metric-card-draw'),
+    airdrawToolbar: document.getElementById('airdraw-toolbar'),
+    airdrawToggleMapBtn: document.getElementById('airdraw-toggle-map-btn'),
+    airdrawClearBtn: document.getElementById('airdraw-clear-btn'),
+    airdrawCenterBtn: document.getElementById('airdraw-center-btn'),
     frameRate: document.getElementById('frame-rate'),
     chipTsf: document.getElementById('chip-tsf'),
     ppduId: document.getElementById('ppdu-id'),
@@ -357,11 +395,112 @@ let activeView = 'overview';
 let latestFrame = null;
 let motionHistory = [];
 let breathWaveHistory = [];
+let airDrawTrail = [];
+let airDrawActiveColor = '#4be2d0';
+let showRadioMap = true;
+const RADIO_GRID_COLS = 40;
+const RADIO_GRID_ROWS = 28;
+const radioExplorationGrid = new Float32Array(RADIO_GRID_COLS * RADIO_GRID_ROWS);
+let lastRecognizedShape = 'none';
+let shapeToastTime = 0;
 let receiveTimes = [];
 let frameRate = 0;
 let lastFrameAt = 0;
 let renderRequested = false;
 let lastDomUpdateAt = 0;
+const DISCONNECT_TIMEOUT_MS = 2500;
+let isStreamStalled = false;
+
+function resetMetricsOnDisconnect(reason) {
+    // 1. Tốc độ gói về 0
+    frameRate = 0;
+    receiveTimes = [];
+    if (domElements.frameRate) domElements.frameRate.textContent = '0.0';
+
+    // 2. Subcarriers & Antenna chains về 0
+    if (domElements.scCount) domElements.scCount.textContent = '0';
+    if (domElements.scCaption) domElements.scCaption.textContent = currentLang === 'vi' ? '0 tone / chain' : '0 tones / chain';
+    if (domElements.chainCount) domElements.chainCount.textContent = '0';
+    if (domElements.nssCaption) domElements.nssCaption.textContent = 'Spatial streams —';
+    if (chainSelect) chainSelect.replaceChildren();
+
+    // 3. Motion score về 0.0000 & chip NGẮT KẾT NỐI
+    if (domElements.motionValue) domElements.motionValue.textContent = '0.0000';
+    const motionChipEl = document.getElementById('motion-chip');
+    if (motionChipEl) {
+        motionChipEl.className = 'motion-chip motion-disconnected';
+        motionChipEl.textContent = t('chip_disconnected');
+    }
+    const thresHighEl = document.getElementById('thres-high-val');
+    const thresLowEl = document.getElementById('thres-low-val');
+    if (thresHighEl) thresHighEl.textContent = '—';
+    if (thresLowEl) thresLowEl.textContent = '—';
+    if (domElements.motionCaption) {
+        domElements.motionCaption.textContent = t('caption_disconnected');
+    }
+    motionHistory = [];
+
+    // 4. Nhận diện hiện diện về KHÔNG CÓ NGƯỜI
+    if (domElements.presenceValue) {
+        domElements.presenceValue.textContent = t('presence_empty');
+        domElements.presenceValue.style.color = '#77869d';
+    }
+    if (domElements.presenceCaption) {
+        domElements.presenceCaption.textContent = currentLang === 'vi'
+            ? 'Chưa phát hiện · Điện thoại ngắt kết nối'
+            : 'Not detected · Phone disconnected';
+    }
+    breathWaveHistory = [];
+
+    // 5. Cử chỉ vẫy tay về KHÔNG CÓ (idle)
+    if (domElements.waveValue) {
+        domElements.waveValue.textContent = t('wave_idle');
+        domElements.waveValue.style.color = '#8fa3bf';
+    }
+    if (domElements.waveCaption) {
+        domElements.waveCaption.textContent = currentLang === 'vi'
+            ? 'Chưa phát hiện · Thiết bị ngoại tuyến'
+            : 'Idle · Device offline';
+    }
+    if (domElements.waveCard) domElements.waveCard.classList.remove('detected');
+    if (domElements.waveChip) {
+        domElements.waveChip.className = 'wave-confidence-chip';
+        domElements.waveChip.textContent = '0%';
+    }
+
+    // 6. Bảng vẽ không khí về SẴN SÀNG (idle)
+    if (domElements.drawValue) {
+        domElements.drawValue.textContent = t('draw_idle');
+        domElements.drawValue.style.color = '#8fa3bf';
+    }
+    if (domElements.drawCaption) {
+        domElements.drawCaption.textContent = currentLang === 'vi'
+            ? 'Thiết bị ngoại tuyến · Đã dừng vẽ'
+            : 'Device offline · Drawing stopped';
+    }
+    if (domElements.drawCard) domElements.drawCard.classList.remove('drawing-active');
+    if (domElements.drawChip) {
+        domElements.drawChip.className = 'draw-shape-chip';
+        domElements.drawChip.textContent = '—';
+    }
+
+    // 7. Thông tin gói về —
+    if (domElements.chipTsf) domElements.chipTsf.textContent = '—';
+    if (domElements.ppduId) domElements.ppduId.textContent = '—';
+    if (domElements.bandwidth) domElements.bandwidth.textContent = '—';
+    if (domElements.apMac) domElements.apMac.textContent = '—';
+    if (domElements.frameId) domElements.frameId.textContent = 'PPDU —';
+
+    // 8. Reset Chart & Canvas State
+    latestFrame = null;
+    emptyOverlay.hidden = false;
+    setLegend([]);
+    scheduleRender();
+
+    // 9. Cập nhật Status Bar
+    const statusMsg = reason || t('status_disconnected');
+    setStatus('waiting', statusMsg);
+}
 
 function scheduleRender() {
     if (!renderRequested) {
@@ -501,6 +640,58 @@ function updateDomMetrics(frame, isNewFrame, now) {
         }
     }
 
+    if (domElements.drawValue && domElements.drawCaption) {
+        const motionDir = frame.draw_heading_dir || frame.draw_shape || 'none';
+        const conf = Math.round((Number(frame.draw_shape_confidence) || 0) * 100);
+
+        const getMotionLabel = (dir) => {
+            if (dir === 'right') return currentLang === 'vi' ? '➔ PHẢI' : '➔ RIGHT';
+            if (dir === 'left') return currentLang === 'vi' ? '⬅ TRÁI' : '⬅ LEFT';
+            if (dir === 'up') return currentLang === 'vi' ? '⬆ LÊN (TIẾN)' : '⬆ UP (FWD)';
+            if (dir === 'down') return currentLang === 'vi' ? '⬇ XUỐNG (LÙI)' : '⬇ DOWN (BWD)';
+            if (dir === 'up_right') return currentLang === 'vi' ? '↗ LÊN-PHẢI' : '↗ UP-RIGHT';
+            if (dir === 'up_left') return currentLang === 'vi' ? '↖ LÊN-TRÁI' : '↖ UP-LEFT';
+            if (dir === 'down_right') return currentLang === 'vi' ? '↘ XUỐNG-PHẢI' : '↘ DOWN-RIGHT';
+            if (dir === 'down_left') return currentLang === 'vi' ? '↙ XUỐNG-TRÁI' : '↙ DOWN-LEFT';
+            return '';
+        };
+
+        const motionLabel = getMotionLabel(motionDir);
+
+        if (frame.draw_active) {
+            domElements.drawValue.textContent = t('draw_active');
+            domElements.drawValue.style.color = '#4be2d0';
+            domElements.drawCaption.textContent = currentLang === 'vi'
+                ? `Hướng di chuyển: ${motionLabel || 'Đang bám vết'} (${conf}%)`
+                : `Heading: ${motionLabel || 'Tracking'} (${conf}%)`;
+            if (domElements.drawCard) domElements.drawCard.classList.add('drawing-active');
+            if (domElements.drawChip) {
+                domElements.drawChip.className = 'draw-shape-chip draw-chip-active';
+                domElements.drawChip.textContent = motionLabel || (currentLang === 'vi' ? 'DI CHUYỂN' : 'MOVING');
+            }
+        } else if (frame.draw_stroke_completed) {
+            domElements.drawValue.textContent = t('draw_completed');
+            domElements.drawValue.style.color = '#a98cff';
+            domElements.drawCaption.textContent = currentLang === 'vi'
+                ? 'Đã dừng cử động · Quỹ đạo đã lưu'
+                : 'Motion stopped · Trajectory retained';
+            if (domElements.drawCard) domElements.drawCard.classList.remove('drawing-active');
+            if (domElements.drawChip) {
+                domElements.drawChip.className = 'draw-shape-chip draw-chip-success';
+                domElements.drawChip.textContent = currentLang === 'vi' ? 'ĐÃ DỪNG' : 'STOPPED';
+            }
+        } else {
+            domElements.drawValue.textContent = t('draw_idle');
+            domElements.drawValue.style.color = '#8fa3bf';
+            domElements.drawCaption.textContent = t('caption_draw_idle');
+            if (domElements.drawCard) domElements.drawCard.classList.remove('drawing-active');
+            if (domElements.drawChip) {
+                domElements.drawChip.className = 'draw-shape-chip';
+                domElements.drawChip.textContent = currentLang === 'vi' ? 'NEO TẠI TÂM' : 'ANCHORED';
+            }
+        }
+    }
+
     if (domElements.frameRate) domElements.frameRate.textContent = frameRate.toFixed(1);
     if (domElements.chipTsf) domElements.chipTsf.textContent = frame.chip_tsf_us ? `${Number(frame.chip_tsf_us).toLocaleString()} µs` : '—';
     if (domElements.ppduId) domElements.ppduId.textContent = frame.phy_ppdu_id ?? '—';
@@ -534,7 +725,10 @@ function setView(view) {
     document.getElementById('page-title').textContent = viewDict[view].title;
     document.getElementById('chart-kicker').textContent = viewDict[view].kicker;
     document.getElementById('chart-title').textContent = viewDict[view].chart;
-    document.getElementById('chain-control').hidden = view === 'overview' || view === 'chains' || view === 'breath';
+    document.getElementById('chain-control').hidden = view === 'overview' || view === 'chains' || view === 'breath' || view === 'airdraw';
+    if (domElements.airdrawToolbar) {
+        domElements.airdrawToolbar.hidden = (view !== 'airdraw');
+    }
     scheduleRender();
 }
 
@@ -585,10 +779,14 @@ function updateChainOptions(frame) {
 }
 
 function acceptFrame(frame) {
-    if (!frame || !Array.isArray(frame.chains) || frame.chains.length === 0) {
-        setStatus('waiting', t('caption_waiting_csi'));
+    if (!frame || frame.has_data === false || frame.disconnected || !Array.isArray(frame.chains) || frame.chains.length === 0) {
+        if (!isStreamStalled) {
+            isStreamStalled = true;
+            resetMetricsOnDisconnect(t('status_disconnected'));
+        }
         return;
     }
+    isStreamStalled = false;
     const isNewFrame = !latestFrame ||
         frame.timestamp_ns !== latestFrame.timestamp_ns ||
         frame.phy_ppdu_id !== latestFrame.phy_ppdu_id;
@@ -612,6 +810,34 @@ function acceptFrame(frame) {
         }
         breathWaveHistory.push(Number(frame.breath_wave) || 0);
         if (breathWaveHistory.length > 240) breathWaveHistory.shift();
+
+        if (frame.draw_cursor_x !== undefined && frame.draw_cursor_y !== undefined) {
+            const curX = Number(frame.draw_cursor_x) || 0.5;
+            const curY = Number(frame.draw_cursor_y) || 0.5;
+            airDrawTrail.push({
+                x: curX,
+                y: curY,
+                active: Boolean(frame.draw_active),
+                shape: frame.draw_shape || 'none',
+                time: now
+            });
+            if (airDrawTrail.length > 800) {
+                airDrawTrail.shift();
+            }
+            // Tự động tỉa bớt các điểm cũ hơn 6 giây để vệt quỹ đạo luôn tươi mới theo thời gian
+            const cutoffTime = now - 6000;
+            while (airDrawTrail.length > 0 && airDrawTrail[0].time < cutoffTime) {
+                airDrawTrail.shift();
+            }
+
+            // Đánh dấu ô lưới trường sóng mà điện thoại đã quét qua trên bản đồ
+            const col = Math.floor(curX * RADIO_GRID_COLS);
+            const row = Math.floor(curY * RADIO_GRID_ROWS);
+            if (col >= 0 && col < RADIO_GRID_COLS && row >= 0 && row < RADIO_GRID_ROWS) {
+                const idx = row * RADIO_GRID_COLS + col;
+                radioExplorationGrid[idx] = Math.min(radioExplorationGrid[idx] + 0.18, 1.0);
+            }
+        }
     }
 
     if (now - lastDomUpdateAt >= 100 || isNewFrame && !lastDomUpdateAt) {
@@ -641,7 +867,10 @@ function connectStream() {
     };
     source.onerror = () => {
         if (!latestFrame) setStatus('offline', 'Connection error');
-        else setStatus('waiting', t('status_disrupted'));
+        else {
+            isStreamStalled = true;
+            resetMetricsOnDisconnect(t('status_disrupted'));
+        }
     };
 }
 
@@ -740,6 +969,8 @@ function drawCurrent() {
             { name: `${currentLang === 'vi' ? 'Nhịp thở' : 'Respiration'}: ${bpm} BPM`, color: '#ffb86b' },
             { name: `Phase Span: ${span} rad · ${currentLang === 'vi' ? 'Độ đều' : 'Regularity'}: ${reg}%`, color: '#a98cff' }
         ]);
+    } else if (activeView === 'airdraw') {
+        drawAirCanvas(width, height);
     } else if (activeView === 'amplitude' || activeView === 'packet') {
         drawLineChart(chain?.amplitudes || [], colors[chainIndex % colors.length], width, height, 'Amplitude');
         setLegend([{ name: `Chain ${chainIndex} · amplitude`, color: colors[chainIndex % colors.length] }]);
@@ -752,6 +983,388 @@ function drawCurrent() {
     } else if (activeView === 'chains') {
         drawChainsComparison(width, height);
     }
+}
+
+function drawAirCanvas(width, height) {
+    context.save();
+    context.clearRect(0, 0, width, height);
+
+    const midX = width / 2;
+    const midY = height / 2;
+
+    // 1. Nền lưới không gian cơ bản
+    const gridSize = 45;
+    context.strokeStyle = 'rgba(75, 226, 208, 0.04)';
+    context.lineWidth = 1;
+    context.beginPath();
+    for (let x = 0; x < width; x += gridSize) {
+        context.moveTo(x, 0);
+        context.lineTo(x, height);
+    }
+    for (let y = 0; y < height; y += gridSize) {
+        context.moveTo(0, y);
+        context.lineTo(width, y);
+    }
+    context.stroke();
+
+    // 2. LỚP BẢN ĐỒ TÍN HIỆU KHÔNG GIAN TƯƠNG ĐỐI (SPATIAL RADIO MAP)
+    if (showRadioMap) {
+        const R_max = Math.min(width, height) * 0.44;
+        const R_inner = R_max * 0.35;
+        const R_mid = R_max * 0.70;
+
+        // A. Lớp vết quét trường sóng (Exploration Heatmap Grid)
+        const cw = width / RADIO_GRID_COLS;
+        const ch = height / RADIO_GRID_ROWS;
+        for (let r = 0; r < RADIO_GRID_ROWS; ++r) {
+            for (let c = 0; c < RADIO_GRID_COLS; ++c) {
+                const val = radioExplorationGrid[r * RADIO_GRID_COLS + c];
+                if (val > 0.04) {
+                    context.fillStyle = `rgba(75, 226, 208, ${val * 0.16})`;
+                    context.fillRect(c * cw + 1, r * ch + 1, cw - 2, ch - 2);
+                }
+            }
+        }
+
+        // B. Vòng tròn đồng tâm đẳng công suất / đẳng cự ly (Iso-Power / Iso-Distance Rings)
+        context.strokeStyle = 'rgba(75, 226, 208, 0.12)';
+        context.lineWidth = 1;
+        context.setLineDash([3, 5]);
+
+        [R_inner, R_mid, R_max].forEach((r) => {
+            context.beginPath();
+            context.arc(midX, midY, r, 0, Math.PI * 2);
+            context.stroke();
+        });
+        context.setLineDash([]);
+
+        // Nhãn vòng tròn đẳng công suất
+        context.font = '9px "DM Mono", monospace';
+        context.fillStyle = 'rgba(75, 226, 208, 0.45)';
+        context.fillText('+3 dB', midX + 6, midY - R_inner + 11);
+        context.fillText('+6 dB', midX + 6, midY - R_mid + 11);
+        context.fillText('-3 dB', midX + 6, midY + R_inner - 4);
+        context.fillText('-6 dB', midX + 6, midY + R_mid - 4);
+        context.fillText(currentLang === 'vi' ? 'BIÊN SẢI TAY' : 'REACH LIMIT', midX + 6, midY - R_max + 11);
+
+        // C. Các nan quạt góc tới AoA (Azimuth Radials)
+        const aoaAngles = [-45, -30, -15, 0, 15, 30, 45];
+        aoaAngles.forEach((deg) => {
+            const rad = (deg * Math.PI) / 180;
+            const rx = midX + Math.sin(rad) * R_max;
+            const ry = midY - Math.cos(rad) * R_max;
+
+            context.beginPath();
+            context.moveTo(midX, midY);
+            context.lineTo(rx, ry);
+            context.strokeStyle = deg === 0 ? 'rgba(75, 226, 208, 0.28)' : 'rgba(75, 226, 208, 0.09)';
+            context.lineWidth = deg === 0 ? 1.5 : 1;
+            context.stroke();
+
+            // Nhãn góc độ ở đầu nan quạt
+            context.font = '9px "DM Mono", monospace';
+            context.fillStyle = deg === 0 ? '#4be2d0' : 'rgba(143, 163, 191, 0.6)';
+            const labelText = deg === 0 ? '0° (GỐC)' : `${deg > 0 ? '+' : ''}${deg}°`;
+            const lx = midX + Math.sin(rad) * (R_max + 16);
+            const ly = midY - Math.cos(rad) * (R_max + 16);
+            context.textAlign = 'center';
+            context.textBaseline = 'middle';
+            context.fillText(labelText, lx, ly);
+        });
+        context.textAlign = 'left';
+        context.textBaseline = 'alphabetic';
+
+        // D. Mốc Gốc Tham Chiếu O(0, 0)
+        context.strokeStyle = '#4be2d0';
+        context.lineWidth = 1.5;
+        context.beginPath();
+        context.moveTo(midX - 16, midY);
+        context.lineTo(midX + 16, midY);
+        context.moveTo(midX, midY - 16);
+        context.lineTo(midX, midY + 16);
+        context.stroke();
+
+        context.fillStyle = 'rgba(75, 226, 208, 0.25)';
+        context.beginPath();
+        context.arc(midX, midY, 6, 0, Math.PI * 2);
+        context.fill();
+
+        context.fillStyle = '#4be2d0';
+        context.beginPath();
+        context.arc(midX, midY, 2.5, 0, Math.PI * 2);
+        context.fill();
+
+        context.font = 'bold 9px "DM Mono", monospace';
+        context.fillStyle = 'rgba(75, 226, 208, 0.85)';
+        context.textAlign = 'center';
+        context.fillText('⌖ GỐC [0, 0]', midX, midY + 28);
+        context.textAlign = 'left';
+    } else {
+        // Điểm tâm tối giản nếu tắt bản đồ sóng
+        context.strokeStyle = 'rgba(255, 255, 255, 0.12)';
+        context.setLineDash([4, 6]);
+        context.beginPath();
+        context.moveTo(midX - 25, midY);
+        context.lineTo(midX + 25, midY);
+        context.moveTo(midX, midY - 25);
+        context.lineTo(midX, midY + 25);
+        context.stroke();
+        context.setLineDash([]);
+    }
+
+    // 3. Tọa độ con trỏ và Vector dịch chuyển so với Gốc D = (Δθ, ΔP)
+    const curX = (latestFrame.draw_cursor_x !== undefined ? Number(latestFrame.draw_cursor_x) : 0.5) * width;
+    const curY = (latestFrame.draw_cursor_y !== undefined ? Number(latestFrame.draw_cursor_y) : 0.5) * height;
+
+    if (showRadioMap) {
+        const distFromCenter = Math.hypot(curX - midX, curY - midY);
+        if (distFromCenter > 12) {
+            context.strokeStyle = 'rgba(255, 184, 107, 0.45)';
+            context.lineWidth = 1.2;
+            context.setLineDash([3, 4]);
+            context.beginPath();
+            context.moveTo(midX, midY);
+            context.lineTo(curX, curY);
+            context.stroke();
+            context.setLineDash([]);
+
+            // Nhãn hiển thị độ lệch góc và công suất dọc vector
+            const vMidX = (midX + curX) / 2;
+            const vMidY = (midY + curY) / 2;
+            const dTheta = latestFrame.draw_delta_theta !== undefined ? (Number(latestFrame.draw_delta_theta) * 180 / Math.PI).toFixed(1) : '0.0';
+            const dPwr = latestFrame.draw_delta_pwr !== undefined ? Number(latestFrame.draw_delta_pwr).toFixed(1) : '0.0';
+            const vecText = `Δθ: ${dTheta > 0 ? '+' : ''}${dTheta}° · ΔP: ${dPwr > 0 ? '+' : ''}${dPwr}dB`;
+
+            context.font = 'bold 9px "DM Mono", monospace';
+            const vTextW = context.measureText(vecText).width;
+            context.fillStyle = 'rgba(15, 23, 42, 0.85)';
+            context.fillRect(vMidX - vTextW / 2 - 4, vMidY - 7, vTextW + 8, 14);
+            context.fillStyle = '#ffb86b';
+            context.textAlign = 'center';
+            context.fillText(vecText, vMidX, vMidY + 3);
+            context.textAlign = 'left';
+        }
+    }
+
+    // 4. Vẽ nét cọ phát sáng Dual-Pass Zero-Lag (Real-time In-Air Stroke)
+    if (airDrawTrail.length > 1) {
+        context.shadowBlur = 0;
+
+        const strokePath = new Path2D();
+        let inSegment = false;
+        for (let i = 0; i < airDrawTrail.length; ++i) {
+            const pt = airDrawTrail[i];
+            const px = pt.x * width;
+            const py = pt.y * height;
+
+            if (pt.active) {
+                if (!inSegment) {
+                    strokePath.moveTo(px, py);
+                    inSegment = true;
+                } else {
+                    const prev = airDrawTrail[i - 1];
+                    const prevX = prev.x * width;
+                    const prevY = prev.y * height;
+                    const midPx = (prevX + px) * 0.5;
+                    const midPy = (prevY + py) * 0.5;
+                    strokePath.quadraticCurveTo(prevX, prevY, midPx, midPy);
+                }
+            } else {
+                inSegment = false;
+            }
+        }
+
+        // Lượt 1: Viền phát quang Neon mềm mại (Halo Glow Pass - siêu nhẹ)
+        context.lineCap = 'round';
+        context.lineJoin = 'round';
+        context.strokeStyle = 'rgba(75, 226, 208, 0.24)';
+        context.lineWidth = 8.5;
+        context.stroke(strokePath);
+
+        // Lượt 2: Lõi nét cọ sáng rõ (Sharp Core Pass)
+        context.strokeStyle = airDrawActiveColor;
+        context.lineWidth = 3.6;
+        context.stroke(strokePath);
+    }
+
+    // 5. Con trỏ ảo Air Phone Cursor & La bàn hướng di chuyển 8 hướng (Heading Compass)
+    context.shadowBlur = 0;
+    const headingDir = latestFrame.draw_heading_dir || 'none';
+    const headingDeg = Number(latestFrame.draw_heading_deg) || 0;
+
+    const headingSymbols = {
+        'right': '➔',
+        'left': '⬅',
+        'up': '⬆',
+        'down': '⬇',
+        'up_right': '↗',
+        'up_left': '↖',
+        'down_right': '↘',
+        'down_left': '↙'
+    };
+    const headingNamesVi = {
+        'right': 'PHẢI',
+        'left': 'TRÁI',
+        'up': 'LÊN',
+        'down': 'XUỐNG',
+        'up_right': 'CHÉO LÊN-PHẢI',
+        'up_left': 'CHÉO LÊN-TRÁI',
+        'down_right': 'CHÉO XUỐNG-PHẢI',
+        'down_left': 'CHÉO XUỐNG-TRÁI'
+    };
+    const headingNamesEn = {
+        'right': 'RIGHT',
+        'left': 'LEFT',
+        'up': 'UP',
+        'down': 'DOWN',
+        'up_right': 'UP-RIGHT',
+        'up_left': 'UP-LEFT',
+        'down_right': 'DOWN-RIGHT',
+        'down_left': 'DOWN-LEFT'
+    };
+
+    if (latestFrame.draw_active) {
+        const pulse = (Math.sin(performance.now() * 0.008) + 1.0) / 2.0;
+        const outerR = 14 + pulse * 6;
+
+        context.strokeStyle = airDrawActiveColor;
+        context.lineWidth = 2.5;
+        context.beginPath();
+        context.arc(curX, curY, outerR, 0, Math.PI * 2);
+        context.stroke();
+
+        context.fillStyle = '#ffffff';
+        context.shadowColor = airDrawActiveColor;
+        context.shadowBlur = 15;
+        context.beginPath();
+        context.arc(curX, curY, 5.5, 0, Math.PI * 2);
+        context.fill();
+
+        // Mũi tên chỉ hướng di chuyển trực tiếp (Real-time Heading Vector)
+        if (headingDir !== 'none') {
+            const hRad = (headingDeg * Math.PI) / 180;
+            const arrowLen = 30;
+            const ax = curX + Math.cos(hRad) * arrowLen;
+            const ay = curY + Math.sin(hRad) * arrowLen;
+
+            context.shadowBlur = 12;
+            context.shadowColor = '#4be2d0';
+            context.strokeStyle = '#4be2d0';
+            context.lineWidth = 3;
+            context.beginPath();
+            context.moveTo(curX, curY);
+            context.lineTo(ax, ay);
+            context.stroke();
+
+            // Mũi tên nhọn
+            const headAngle = Math.PI / 6;
+            const headLen = 9;
+            context.beginPath();
+            context.moveTo(ax, ay);
+            context.lineTo(ax - headLen * Math.cos(hRad - headAngle), ay - headLen * Math.sin(hRad - headAngle));
+            context.moveTo(ax, ay);
+            context.lineTo(ax - headLen * Math.cos(hRad + headAngle), ay - headLen * Math.sin(hRad + headAngle));
+            context.stroke();
+        }
+
+        context.shadowBlur = 0;
+        context.fillStyle = airDrawActiveColor;
+        context.font = 'bold 11px sans-serif';
+        const hSym = headingSymbols[headingDir] || '';
+        const hLabel = headingDir !== 'none' ? ` [${hSym}]` : '';
+        context.fillText(`● DRAW${hLabel}`, curX + 18, curY + 4);
+    } else {
+        context.strokeStyle = 'rgba(255, 255, 255, 0.45)';
+        context.lineWidth = 1.8;
+        context.beginPath();
+        context.arc(curX, curY, 9, 0, Math.PI * 2);
+        context.stroke();
+
+        context.fillStyle = 'rgba(255, 255, 255, 0.7)';
+        context.beginPath();
+        context.arc(curX, curY, 3, 0, Math.PI * 2);
+        context.fill();
+
+        // Mũi tên dẫn hướng nhẹ khi di chuyển lúc nhả bút
+        if (headingDir !== 'none') {
+            const hRad = (headingDeg * Math.PI) / 180;
+            const arrowLen = 20;
+            const ax = curX + Math.cos(hRad) * arrowLen;
+            const ay = curY + Math.sin(hRad) * arrowLen;
+
+            context.strokeStyle = 'rgba(75, 226, 208, 0.4)';
+            context.lineWidth = 1.8;
+            context.beginPath();
+            context.moveTo(curX, curY);
+            context.lineTo(ax, ay);
+            context.stroke();
+        }
+    }
+
+    // 6. Hiển thị hình nhận diện chuẩn (Overlay Badge)
+    const shape = latestFrame.draw_shape || lastRecognizedShape;
+    const conf = Math.round((Number(latestFrame.draw_shape_confidence) || 0) * 100);
+    if (shape && shape !== 'none' && shape !== 'drawing') {
+        let shapeSymbol = '✎';
+        let shapeName = shape.toUpperCase();
+        if (shape === 'right' || shape === 'swipe_right') { shapeSymbol = '➔'; if (currentLang === 'vi') shapeName = 'NÉT SANG PHẢI'; else shapeName = 'STROKE RIGHT'; }
+        else if (shape === 'left' || shape === 'swipe_left') { shapeSymbol = '⬅'; if (currentLang === 'vi') shapeName = 'NÉT SANG TRÁI'; else shapeName = 'STROKE LEFT'; }
+        else if (shape === 'up' || shape === 'swipe_up') { shapeSymbol = '⬆'; if (currentLang === 'vi') shapeName = 'NÉT TIẾN LÊN'; else shapeName = 'STROKE UP'; }
+        else if (shape === 'down' || shape === 'swipe_down') { shapeSymbol = '⬇'; if (currentLang === 'vi') shapeName = 'NÉT LÙI XUỐNG'; else shapeName = 'STROKE DOWN'; }
+        else if (shape === 'up_right' || shape === 'swipe_up_right') { shapeSymbol = '↗'; if (currentLang === 'vi') shapeName = 'NÉT CHÉO LÊN-PHẢI'; else shapeName = 'STROKE UP-RIGHT'; }
+        else if (shape === 'up_left' || shape === 'swipe_up_left') { shapeSymbol = '↖'; if (currentLang === 'vi') shapeName = 'NÉT CHÉO LÊN-TRÁI'; else shapeName = 'STROKE UP-LEFT'; }
+        else if (shape === 'down_right' || shape === 'swipe_down_right') { shapeSymbol = '↘'; if (currentLang === 'vi') shapeName = 'NÉT CHÉO XUỐNG-PHẢI'; else shapeName = 'STROKE DOWN-RIGHT'; }
+        else if (shape === 'down_left' || shape === 'swipe_down_left') { shapeSymbol = '↙'; if (currentLang === 'vi') shapeName = 'NÉT CHÉO XUỐNG-TRÁI'; else shapeName = 'STROKE DOWN-LEFT'; }
+        else if (shape === 'arc_cw' || shape === 'circle') { shapeSymbol = '↻'; if (currentLang === 'vi') shapeName = 'VÒNG THUẬN (CW)'; else shapeName = 'ARC CLOCKWISE'; }
+        else if (shape === 'arc_ccw') { shapeSymbol = '↺'; if (currentLang === 'vi') shapeName = 'VÒNG NGƯỢC (CCW)'; else shapeName = 'ARC COUNTER-CW'; }
+        else if (shape === 'triangle') { shapeSymbol = '△'; if (currentLang === 'vi') shapeName = 'TAM GIÁC'; }
+        else if (shape === 'square') { shapeSymbol = '▢'; if (currentLang === 'vi') shapeName = 'HÌNH VUÔNG'; }
+        else if (shape === 'swipe_down_left') { shapeSymbol = '↙'; if (currentLang === 'vi') shapeName = 'VUỐT CHÉO XUỐNG TRÁI'; }
+        else if (shape === 'freehand') { shapeSymbol = '✎'; if (currentLang === 'vi') shapeName = 'NÉT TỰ DO'; }
+
+        const badgeText = `${shapeSymbol} ${shapeName} (${conf}%)`;
+        context.font = 'bold 14px sans-serif';
+        const textWidth = context.measureText(badgeText).width;
+
+        const bx = width - textWidth - 36;
+        const by = 24;
+        context.fillStyle = 'rgba(15, 23, 42, 0.85)';
+        context.strokeStyle = '#a98cff';
+        context.lineWidth = 1.5;
+        context.shadowColor = '#a98cff';
+        context.shadowBlur = 10;
+        context.beginPath();
+        context.roundRect(bx - 12, by - 16, textWidth + 24, 32, 8);
+        context.fill();
+        context.stroke();
+
+        context.shadowBlur = 0;
+        context.fillStyle = '#ffffff';
+        context.fillText(badgeText, bx, by + 5);
+    }
+
+    context.restore();
+
+    // 7. Cập nhật Legend
+    const statusStr = latestFrame.draw_active
+        ? (currentLang === 'vi' ? 'Đang vẽ' : 'Drawing')
+        : (currentLang === 'vi' ? 'Sẵn sàng' : 'Ready');
+    const posX = Math.round(curX / width * 100);
+    const posY = Math.round(curY / height * 100);
+    const dThetaStr = latestFrame.draw_delta_theta !== undefined ? (Number(latestFrame.draw_delta_theta) * 180 / Math.PI).toFixed(1) : '0.0';
+    const dPwrStr = latestFrame.draw_delta_pwr !== undefined ? Number(latestFrame.draw_delta_pwr).toFixed(1) : '0.0';
+
+    const headingText = headingDir !== 'none'
+        ? `${headingSymbols[headingDir] || ''} ${(currentLang === 'vi' ? headingNamesVi[headingDir] : headingNamesEn[headingDir]) || headingDir} (${headingDeg > 0 ? '+' : ''}${Math.round(headingDeg)}°)`
+        : (currentLang === 'vi' ? 'Đứng yên' : 'Static');
+
+    setLegend([
+        { name: `${currentLang === 'vi' ? 'Bút' : 'Pen'}: ${statusStr}`, color: latestFrame.draw_active ? '#4be2d0' : '#8fa0b7' },
+        { name: `${currentLang === 'vi' ? 'Hướng' : 'Heading'}: ${headingText}`, color: headingDir !== 'none' ? '#4be2d0' : '#8fa0b7' },
+        { name: `Δθ: ${dThetaStr > 0 ? '+' : ''}${dThetaStr}° · ΔP: ${dPwrStr > 0 ? '+' : ''}${dPwrStr}dB`, color: '#ffb86b' },
+        { name: `Tọa độ: X=${posX}% · Y=${posY}%`, color: '#8fa0b7' },
+        { name: `${currentLang === 'vi' ? 'Hình nhận diện' : 'Shape'}: ${(shape && shape !== 'none' ? shape.toUpperCase() : '—')}`, color: '#a98cff' }
+    ]);
 }
 
 function drawChainsComparison(width, height) {
@@ -1174,13 +1787,8 @@ async function fetchCfrStatus() {
 
         if (prevRunning !== cfrState.running) {
             if (!cfrState.running) {
-                latestFrame = null;
-                frameRate = 0;
-                receiveTimes = [];
-                motionHistory = [];
-                breathWaveHistory = [];
-                setStatus('waiting', cfrState.last_error || t('caption_waiting_csi'));
-                scheduleRender();
+                isStreamStalled = true;
+                resetMetricsOnDisconnect(cfrState.last_error || t('status_disconnected'));
             }
             if (currentProberConfig.cards) {
                 renderCardsTables(currentProberConfig.cards, currentProberConfig.clients, currentProberConfig.mode, currentProberConfig.target_ip);
@@ -2016,6 +2624,41 @@ if (proberElements.refreshBtn) {
     });
 }
 
+if (domElements.airdrawToggleMapBtn) {
+    domElements.airdrawToggleMapBtn.addEventListener('click', () => {
+        showRadioMap = !showRadioMap;
+        domElements.airdrawToggleMapBtn.classList.toggle('active', showRadioMap);
+        scheduleRender();
+    });
+}
+
+if (domElements.airdrawClearBtn) {
+    domElements.airdrawClearBtn.addEventListener('click', async () => {
+        airDrawTrail = [];
+        radioExplorationGrid.fill(0);
+        lastRecognizedShape = 'none';
+        try {
+            await fetch('/api/airdraw/clear', { method: 'POST' });
+        } catch (e) {
+            console.error(e);
+        }
+        scheduleRender();
+    });
+}
+
+if (domElements.airdrawCenterBtn) {
+    domElements.airdrawCenterBtn.addEventListener('click', async () => {
+        airDrawTrail = [];
+        radioExplorationGrid.fill(0);
+        try {
+            await fetch('/api/airdraw/clear', { method: 'POST' });
+        } catch (e) {
+            console.error(e);
+        }
+        scheduleRender();
+    });
+}
+
 applyLanguage(currentLang);
 resizeCanvas();
 connectStream();
@@ -2043,7 +2686,11 @@ window.setInterval(() => {
 }, 1500);
 
 window.setInterval(() => {
-    if (lastFrameAt && performance.now() - lastFrameAt > 6000) {
-        setStatus('waiting', t('status_packet_wait'));
+    const now = performance.now();
+    if (lastFrameAt > 0 && (now - lastFrameAt) > DISCONNECT_TIMEOUT_MS) {
+        if (!isStreamStalled) {
+            isStreamStalled = true;
+            resetMetricsOnDisconnect(t('status_disconnected'));
+        }
     }
-}, 1000);
+}, 500);
