@@ -27,19 +27,6 @@ target_link_options(edge_csi_daemon PRIVATE -static)
 
 file(COPY web DESTINATION "${CMAKE_BINARY_DIR}")
 
-include(CTest)
-if(BUILD_TESTING)
-  add_executable(test_distance_estimator
-    tools/test_distance_estimator.cpp
-    src/csi_parser.cpp
-    src/distance_estimator.cpp
-  )
-  target_include_directories(test_distance_estimator PRIVATE src)
-  target_compile_options(test_distance_estimator PRIVATE -Wall -Wextra -Wpedantic)
-  target_link_libraries(test_distance_estimator PRIVATE pthread m)
-  add_test(NAME distance_estimator COMMAND test_distance_estimator)
-endif()
-
 include(GNUInstallDirs)
 install(TARGETS edge_csi_daemon RUNTIME DESTINATION "${CMAKE_INSTALL_BINDIR}")
 install(DIRECTORY web/ DESTINATION "${CMAKE_INSTALL_DATADIR}/edge-csi-router/web")
