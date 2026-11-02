@@ -16,6 +16,7 @@ add_executable(edge_csi_daemon
   src/cfr_controller.cpp
   src/web_server.cpp
   src/wave_detector.cpp
+  src/distance_estimator.cpp
   src/csi_rf_model1.c
 )
 
@@ -25,6 +26,14 @@ target_link_libraries(edge_csi_daemon PRIVATE pthread m)
 target_link_options(edge_csi_daemon PRIVATE -static)
 
 file(COPY web DESTINATION "${CMAKE_BINARY_DIR}")
+
+add_executable(test_distance_estimator
+  src/csi_parser.cpp
+  src/distance_estimator.cpp
+)
+target_include_directories(test_distance_estimator PRIVATE src)
+target_compile_options(test_distance_estimator PRIVATE -Wall -Wextra -Wpedantic)
+target_link_libraries(test_distance_estimator PRIVATE pthread m)
 
 include(GNUInstallDirs)
 install(TARGETS edge_csi_daemon RUNTIME DESTINATION "${CMAKE_INSTALL_BINDIR}")

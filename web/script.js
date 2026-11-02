@@ -2118,19 +2118,10 @@ connectStream();
 loadProberStatus(false);
 fetchCfrStatus();
 
-// Định kỳ tự động cập nhật danh sách thiết bị kết nối & trạng thái
+// Định kỳ tự động cập nhật danh sách thiết bị kết nối & trạng thái an toàn (giãn cách 15s)
 window.setInterval(() => {
-    // Khi đang thu CFR: thăm dò giãn cách 8s để tối ưu CPU router; khi rảnh: thăm dò mỗi 4s
-    if (!cfrState.running) {
-        loadProberStatus(false);
-    }
-}, 4000);
-
-window.setInterval(() => {
-    if (cfrState.running) {
-        loadProberStatus(false);
-    }
-}, 8000);
+    loadProberStatus(false);
+}, 15000);
 
 window.setInterval(() => {
     if (cfrState.running) {

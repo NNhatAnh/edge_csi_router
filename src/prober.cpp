@@ -5,6 +5,7 @@
 #include <cstring>
 #include <filesystem>
 #include <fstream>
+#include <iomanip>
 #include <iostream>
 #include <map>
 #include <memory>
@@ -80,7 +81,7 @@ bool isValidIpv4(const std::string &ip) {
     return dots == 3 && ip != "0.0.0.0";
 }
 
-std::string trim(std::string s) {
+[[maybe_unused]] std::string trim(std::string s) {
     while (!s.empty() && (s.front() == ' ' || s.front() == '\t' || s.front() == '\r' || s.front() == '\n'))
         s.erase(s.begin());
     while (!s.empty() && (s.back() == ' ' || s.back() == '\t' || s.back() == '\r' || s.back() == '\n'))
@@ -146,7 +147,7 @@ ProberStatus ActiveProber::getStatus(bool scan_network) {
     if (!scan_network) {
         std::lock_guard<std::mutex> lock(scan_cache_mutex_);
         if (!cached_cards_.empty() &&
-            std::chrono::duration_cast<std::chrono::milliseconds>(now - last_scan_time_).count() < 3500) {
+            std::chrono::duration_cast<std::chrono::milliseconds>(now - last_scan_time_).count() < 15000) {
             status.cards = cached_cards_;
             status.clients = cached_clients_;
             return status;
@@ -218,59 +219,88 @@ void ActiveProber::scanNetwork(std::vector<WifiCardInfo> &cards,
         }
     }
 
-    // 3. Quét các Card Wi-Fi và Station kết nối (Quét iw dev trước để lấy avg ack signal chuẩn ath12k, kết hợp iwinfo)
+    // 3. Quét các Card Wi-Fi và Station kết nối qua hostapd ubus (Userspace AP daemon)
+    // An toàn tuyệt đối: Không truy vấn Netlink nl80211 vào driver ath12k, không chạm vào debugfs dentry
     std::string cmd =
-        "for dev in $(iw dev 2>/dev/null | awk '$1==\"Interface\"{print $2}'); do "
-        "  ssid=\"\"; "
-        "  if which iwinfo >/dev/null 2>&1; then "
-        "    ssid=$(iwinfo \"$dev\" info 2>/dev/null | grep -oE 'ESSID: \"[^\"]+\"' | cut -d'\"' -f2); "
-        "  fi; "
-        "  [ -z \"$ssid\" ] && ssid=\"Wi-Fi Network\"; "
-        "  echo \"===CARD:$dev:$ssid===\"; "
-        "  iw dev \"$dev\" station dump 2>/dev/null; "
-        "  if which iwinfo >/dev/null 2>&1; then iwinfo \"$dev\" assoclist 2>/dev/null; fi; "
+        "for iface in $(ubus list 'hostapd.*' 2>/dev/null); do "
+        "  echo \"===HOSTAPD:$iface===\"; "
+        "  ubus call \"$iface\" get_status 2>/dev/null; "
+        "  echo \"===CLIENTS===\"; "
+        "  ubus call \"$iface\" get_clients 2>/dev/null; "
         "done";
 
     FILE *pipe = popen(cmd.c_str(), "r");
     if (pipe) {
         char buffer[1024];
+        std::string cur_hostapd_iface;
         std::string cur_card;
-        std::string cur_ssid;
-        std::string cur_band;
-        size_t last_client_idx = static_cast<size_t>(-1);
-        bool in_iw_dev_station = false;
-        ClientInfo iw_dev_client;
+        std::string cur_ssid = "Wi-Fi Network";
+        std::string cur_band = "5GHz";
+        int cur_max_bw = 2; // 80 MHz mặc định cho 5GHz
+        std::string cur_width_str = "80 MHz";
+        std::vector<int> cur_supp_bw = {0, 1, 2};
+        bool in_clients_section = false;
+        ClientInfo cur_client;
 
-        auto flushIwDevStation = [&]() {
-            if (in_iw_dev_station && !iw_dev_client.mac.empty()) {
-                std::string upper_mac = normalizeMacUpper(iw_dev_client.mac);
+        auto flushCurrentClient = [&]() {
+            if (!cur_client.mac.empty()) {
+                std::string upper_mac = normalizeMacUpper(cur_client.mac);
                 if (seen_macs.find(upper_mac) == seen_macs.end()) {
+                    cur_client.mac = upper_mac;
+                    cur_client.iface = cur_card;
+                    cur_client.ssid = cur_ssid;
+                    cur_client.band = cur_band;
+                    cur_client.is_wireless = true;
+
+                    // Ghép nối IP & Hostname từ bảng DHCP / ARP
                     std::string lower_mac = normalizeMacLower(upper_mac);
                     if (dhcp_map.find(lower_mac) != dhcp_map.end()) {
-                        iw_dev_client.ip = dhcp_map[lower_mac].first;
-                        iw_dev_client.hostname = dhcp_map[lower_mac].second;
+                        cur_client.ip = dhcp_map[lower_mac].first;
+                        cur_client.hostname = dhcp_map[lower_mac].second;
                     } else {
-                        iw_dev_client.ip = "";
-                        iw_dev_client.hostname = "Wi-Fi Station";
+                        cur_client.ip = "";
+                        cur_client.hostname = "Wi-Fi Station";
                     }
-                    iw_dev_client.mac = upper_mac;
-                    iw_dev_client.iface = cur_card;
-                    iw_dev_client.ssid = cur_ssid;
-                    iw_dev_client.band = cur_band;
-                    iw_dev_client.is_wireless = true;
+
+                    if (cur_client.signal_dbm.empty()) {
+                        cur_client.signal_dbm = "Online";
+                    }
+                    if (cur_client.snr.empty()) {
+                        cur_client.snr = "Online";
+                    }
+                    if (cur_client.bitrate.empty()) {
+                        cur_client.bitrate = "Active";
+                    }
+                    if (cur_client.inactive_ms.empty()) {
+                        cur_client.inactive_ms = "Active";
+                    }
 
                     seen_macs.insert(upper_mac);
-                    if (!iw_dev_client.ip.empty()) {
-                        seen_ips.insert(iw_dev_client.ip);
+                    if (!cur_client.ip.empty()) {
+                        seen_ips.insert(cur_client.ip);
                     }
-                    clients.push_back(iw_dev_client);
-                    if (!cards.empty()) {
-                        cards.back().station_count++;
-                    }
+                    clients.push_back(cur_client);
                 }
             }
-            iw_dev_client = ClientInfo{};
-            in_iw_dev_station = false;
+            cur_client = ClientInfo{};
+        };
+
+        auto flushCurrentCard = [&]() {
+            flushCurrentClient();
+            if (!cur_card.empty()) {
+                WifiCardInfo card;
+                card.iface = cur_card;
+                card.ssid = cur_ssid;
+                card.band = cur_band;
+                card.max_bandwidth = cur_max_bw;
+                card.width_str = cur_width_str;
+                card.supported_bandwidths = cur_supp_bw;
+                card.station_count = 0;
+                for (const auto &c : clients) {
+                    if (c.iface == cur_card) card.station_count++;
+                }
+                cards.push_back(card);
+            }
         };
 
         while (std::fgets(buffer, sizeof(buffer), pipe) != nullptr) {
@@ -278,164 +308,102 @@ void ActiveProber::scanNetwork(std::vector<WifiCardInfo> &cards,
             while (!line.empty() && (line.back() == '\n' || line.back() == '\r'))
                 line.pop_back();
 
-            if (line.compare(0, 8, "===CARD:") == 0) {
-                flushIwDevStation();
-                last_client_idx = static_cast<size_t>(-1);
-                // Parse dev và ssid: "===CARD:phy00.0-0:10. VNPT Wifi 8 5GHz==="
+            if (line.compare(0, 11, "===HOSTAPD:") == 0) {
+                flushCurrentCard();
+                in_clients_section = false;
                 size_t end = line.rfind("===");
-                if (end != std::string::npos && end > 8) {
-                    std::string middle = line.substr(8, end - 8);
-                    size_t colon = middle.find(':');
-                    if (colon != std::string::npos) {
-                        cur_card = middle.substr(0, colon);
-                        cur_ssid = middle.substr(colon + 1);
-                    } else {
-                        cur_card = middle;
-                        cur_ssid = "Wi-Fi Network";
-                    }
+                if (end != std::string::npos && end > 11) {
+                    cur_hostapd_iface = line.substr(11, end - 11);
+                    size_t dot = cur_hostapd_iface.find('.');
+                    cur_card = (dot != std::string::npos) ? cur_hostapd_iface.substr(dot + 1) : cur_hostapd_iface;
+                } else {
+                    cur_card = "phy00";
                 }
-                // Xác định băng tần 5GHz hoặc 2.4GHz
-                if (cur_card.find(".0-") != std::string::npos || cur_ssid.find("5G") != std::string::npos || cur_card.find("5g") != std::string::npos) {
+                cur_ssid = "Wi-Fi Network";
+                if (cur_card.find(".0-") != std::string::npos || cur_card.find("5g") != std::string::npos) {
                     cur_band = "5GHz";
-                } else if (cur_card.find(".1-") != std::string::npos || cur_ssid.find("2.4G") != std::string::npos || cur_card.find("2g") != std::string::npos) {
+                    cur_max_bw = 2; // 80 MHz
+                    cur_width_str = "80 MHz";
+                    cur_supp_bw = {0, 1, 2};
+                } else {
                     cur_band = "2.4GHz";
-                } else {
-                    cur_band = "Wi-Fi";
+                    cur_max_bw = 0; // 20 MHz
+                    cur_width_str = "20 MHz";
+                    cur_supp_bw = {0};
                 }
-
-                WifiCardInfo card;
-                card.iface = cur_card;
-                card.ssid = cur_ssid;
-                card.band = cur_band;
-                card.station_count = 0;
-                cards.push_back(card);
-            }
-            // Format iwinfo assoclist: B6:07:33:18:8E:E2  unknown / -99 dBm (SNR 99)  60 ms ago
-            else if (line.size() >= 17 && line[2] == ':' && line[5] == ':' && line[8] == ':' && line[11] == ':' && line[14] == ':') {
-                flushIwDevStation();
-                std::string raw_mac = line.substr(0, 17);
-                std::string upper_mac = normalizeMacUpper(raw_mac);
-                if (seen_macs.find(upper_mac) != seen_macs.end()) {
-                    // Trùng MAC -> tuyệt đối không lặp lại
-                    continue;
-                }
-
-                ClientInfo c;
-                c.mac = upper_mac;
-                c.iface = cur_card;
-                c.ssid = cur_ssid;
-                c.band = cur_band;
-                c.is_wireless = true;
-
-                // Ghép nối DHCP lease / ARP
-                std::string lower_mac = normalizeMacLower(upper_mac);
-                if (dhcp_map.find(lower_mac) != dhcp_map.end()) {
-                    c.ip = dhcp_map[lower_mac].first;
-                    c.hostname = dhcp_map[lower_mac].second;
-                } else {
-                    c.ip = "";
-                    c.hostname = "Wi-Fi Station";
-                }
-
-                // Trích xuất SNR: (SNR 99)
-                size_t snr_pos = line.find("(SNR ");
-                if (snr_pos != std::string::npos) {
-                    size_t snr_end = line.find(')', snr_pos + 5);
-                    if (snr_end != std::string::npos) {
-                        c.snr = line.substr(snr_pos + 5, snr_end - (snr_pos + 5));
+            } else if (line == "===CLIENTS===") {
+                in_clients_section = true;
+            } else if (!in_clients_section) {
+                size_t ssid_pos = line.find("\"ssid\": \"");
+                if (ssid_pos != std::string::npos) {
+                    size_t start = ssid_pos + 9;
+                    size_t end = line.find('\"', start);
+                    if (end != std::string::npos) {
+                        cur_ssid = line.substr(start, end - start);
                     }
                 }
-
-                // Trích xuất Signal dBm
-                size_t dbm_pos = line.find("dBm");
-                if (dbm_pos != std::string::npos) {
-                    size_t end_num = line.find_last_not_of(" \t", dbm_pos - 1);
-                    if (end_num != std::string::npos) {
-                        size_t start_num = line.find_last_of(" \t/", end_num);
-                        if (start_num != std::string::npos) {
-                            c.signal_dbm = trim(line.substr(start_num + 1, end_num - start_num)) + " dBm";
+                size_t freq_pos = line.find("\"freq\": ");
+                if (freq_pos != std::string::npos) {
+                    try {
+                        int freq = std::stoi(line.substr(freq_pos + 8));
+                        if (freq > 4000) {
+                            cur_band = "5GHz";
+                            cur_max_bw = 2;
+                            cur_width_str = "80 MHz";
+                            cur_supp_bw = {0, 1, 2};
                         } else {
-                            c.signal_dbm = trim(line.substr(0, end_num + 1)) + " dBm";
+                            cur_band = "2.4GHz";
+                            cur_max_bw = 0;
+                            cur_width_str = "20 MHz";
+                            cur_supp_bw = {0};
                         }
-                    } else {
-                        c.signal_dbm = "—";
+                    } catch (...) {}
+                }
+            } else {
+                size_t quote1 = line.find('\"');
+                if (quote1 != std::string::npos && line.size() >= quote1 + 19) {
+                    std::string potential_mac = line.substr(quote1 + 1, 17);
+                    if (isValidMac(potential_mac) && line.find('{', quote1 + 18) != std::string::npos) {
+                        flushCurrentClient();
+                        cur_client.mac = potential_mac;
+                        cur_client.max_bandwidth = cur_max_bw;
+                        cur_client.width_str = cur_width_str;
+                        cur_client.supported_bandwidths = cur_supp_bw;
+                        continue;
                     }
-                } else if (!c.snr.empty()) {
-                    c.signal_dbm = "SNR " + c.snr;
-                } else {
-                    c.signal_dbm = "—";
                 }
 
-                // Trích xuất Inactive: vd 60 ms ago
-                size_t ago_pos = line.find(" ago");
-                if (ago_pos != std::string::npos) {
-                    size_t start = line.rfind(')', ago_pos);
-                    if (start == std::string::npos) {
-                        start = line.rfind("dBm", ago_pos);
-                        if (start != std::string::npos) start += 3;
+                if (!cur_client.mac.empty()) {
+                    if (line.find("\"he\": true") != std::string::npos) {
+                        cur_client.max_bandwidth = cur_max_bw;
+                        cur_client.width_str = cur_width_str;
+                        cur_client.supported_bandwidths = cur_supp_bw;
+                    } else if (line.find("\"vht\": true") != std::string::npos && cur_max_bw >= 2) {
+                        cur_client.max_bandwidth = 2;
+                        cur_client.width_str = "80 MHz";
+                        cur_client.supported_bandwidths = {0, 1, 2};
+                    } else if (line.find("\"ht\": true") != std::string::npos && cur_client.max_bandwidth == 0) {
+                        cur_client.max_bandwidth = (cur_band == "5GHz") ? 1 : 0;
+                        cur_client.width_str = (cur_band == "5GHz") ? "40 MHz" : "20 MHz";
+                        cur_client.supported_bandwidths = (cur_band == "5GHz") ? std::vector<int>{0, 1} : std::vector<int>{0};
                     }
-                    if (start != std::string::npos && start < ago_pos) {
-                        c.inactive_ms = trim(line.substr(start + 1, ago_pos - (start + 1)));
-                    }
-                }
-                if (c.inactive_ms.empty()) {
-                    c.inactive_ms = "Active";
-                }
 
-                seen_macs.insert(upper_mac);
-                if (!c.ip.empty()) {
-                    seen_ips.insert(c.ip);
-                }
-                clients.push_back(c);
-                last_client_idx = clients.size() - 1;
-                if (!cards.empty()) {
-                    cards.back().station_count++;
-                }
-            }
-            // Trích xuất iwinfo TX bitrate: TX: 648.5 MBit/s, ...
-            else if (last_client_idx < clients.size() && (line.find("TX:") != std::string::npos || line.find("\tTX:") != std::string::npos)) {
-                size_t tx_pos = line.find("TX:");
-                if (tx_pos != std::string::npos) {
-                    size_t comma = line.find(',', tx_pos + 3);
-                    if (comma != std::string::npos) {
-                        clients[last_client_idx].bitrate = trim(line.substr(tx_pos + 3, comma - (tx_pos + 3)));
-                    } else {
-                        clients[last_client_idx].bitrate = trim(line.substr(tx_pos + 3));
+                    if (line.find("\"tx\": ") != std::string::npos && cur_client.bitrate.empty()) {
+                        size_t pos = line.find("\"tx\": ");
+                        try {
+                            uint64_t rate_bps = std::stoull(line.substr(pos + 6));
+                            if (rate_bps > 0) {
+                                float mbps = static_cast<float>(rate_bps) / 1000000.0f;
+                                std::ostringstream oss;
+                                oss << std::fixed << std::setprecision(1) << mbps << " MBit/s";
+                                cur_client.bitrate = oss.str();
+                            }
+                        } catch (...) {}
                     }
-                }
-            }
-            // Fallback iw dev station dump: Station XX:XX:XX...
-            else if (line.compare(0, 8, "Station ") == 0) {
-                flushIwDevStation();
-                std::istringstream iss(line);
-                std::string tag, mac;
-                if (iss >> tag >> mac && isValidMac(mac)) {
-                    in_iw_dev_station = true;
-                    iw_dev_client.mac = mac;
-                }
-            } else if (in_iw_dev_station) {
-                if (line.find("avg ack signal:") != std::string::npos) {
-                    iw_dev_client.signal_dbm = trim(line.substr(line.find("avg ack signal:") + 15));
-                } else if (line.find("last ack signal:") != std::string::npos && iw_dev_client.signal_dbm.empty()) {
-                    iw_dev_client.signal_dbm = trim(line.substr(line.find("last ack signal:") + 16));
-                } else if (line.find("signal avg:") != std::string::npos && iw_dev_client.signal_dbm.empty()) {
-                    std::string s = trim(line.substr(line.find("signal avg:") + 11));
-                    if (s.find("-101") == std::string::npos && s.find("-100") == std::string::npos) {
-                        iw_dev_client.signal_dbm = s;
-                    }
-                } else if (line.find("signal:") != std::string::npos && iw_dev_client.signal_dbm.empty()) {
-                    std::string s = trim(line.substr(line.find("signal:") + 7));
-                    if (s != "0 dBm") {
-                        iw_dev_client.signal_dbm = s;
-                    }
-                } else if (line.find("tx bitrate:") != std::string::npos) {
-                    iw_dev_client.bitrate = trim(line.substr(line.find("tx bitrate:") + 11));
-                } else if (line.find("inactive time:") != std::string::npos) {
-                    iw_dev_client.inactive_ms = trim(line.substr(line.find("inactive time:") + 14));
                 }
             }
         }
-        flushIwDevStation();
+        flushCurrentCard();
         pclose(pipe);
     }
 
@@ -445,6 +413,9 @@ void ActiveProber::scanNetwork(std::vector<WifiCardInfo> &cards,
         test_card.iface = "br-lan";
         test_card.ssid = "LAN / WLAN Devices";
         test_card.band = "LAN";
+        test_card.max_bandwidth = 0;
+        test_card.width_str = "20 MHz";
+        test_card.supported_bandwidths = {0};
         test_card.station_count = 0;
 
         for (const auto &pair : dhcp_map) {
@@ -457,11 +428,14 @@ void ActiveProber::scanNetwork(std::vector<WifiCardInfo> &cards,
                 info.iface = "br-lan";
                 info.ssid = "LAN / WLAN Devices";
                 info.band = "LAN";
-                info.signal_dbm = "—";
-                info.snr = "—";
-                info.bitrate = "—";
+                info.signal_dbm = "Online";
+                info.snr = "Online";
+                info.bitrate = "Active";
                 info.inactive_ms = "LAN";
                 info.is_wireless = false;
+                info.max_bandwidth = 0;
+                info.width_str = "20 MHz";
+                info.supported_bandwidths = {0};
 
                 seen_macs.insert(upper_mac);
                 seen_ips.insert(info.ip);
@@ -470,100 +444,6 @@ void ActiveProber::scanNetwork(std::vector<WifiCardInfo> &cards,
             }
         }
         cards.push_back(test_card);
-    }
-
-    // 4. Xác định băng thông hoạt động thực tế (Width) cho từng Card Wi-Fi
-    for (auto &card : cards) {
-        int max_bw = (card.band == "5GHz") ? 2 : 0;
-        std::string w_str = (card.band == "5GHz") ? "80 MHz" : "20 MHz";
-        std::vector<int> supp = (card.band == "5GHz") ? std::vector<int>{0, 1, 2} : std::vector<int>{0};
-
-        std::string iw_cmd = "iw dev " + card.iface + " info 2>/dev/null";
-        FILE *iw_p = popen(iw_cmd.c_str(), "r");
-        if (iw_p) {
-            char iw_buf[256];
-            while (fgets(iw_buf, sizeof(iw_buf), iw_p)) {
-                std::string iw_line(iw_buf);
-                size_t w_pos = iw_line.find("width:");
-                if (w_pos != std::string::npos) {
-                    if (iw_line.find("320 MHz", w_pos) != std::string::npos) {
-                        max_bw = 4; w_str = "320 MHz"; supp = {0, 1, 2, 3, 4};
-                    } else if (iw_line.find("160 MHz", w_pos) != std::string::npos) {
-                        max_bw = 3; w_str = "160 MHz"; supp = {0, 1, 2, 3};
-                    } else if (iw_line.find("80 MHz", w_pos) != std::string::npos) {
-                        max_bw = 2; w_str = "80 MHz"; supp = {0, 1, 2};
-                    } else if (iw_line.find("40 MHz", w_pos) != std::string::npos) {
-                        max_bw = 1; w_str = "40 MHz"; supp = {0, 1};
-                    } else if (iw_line.find("20 MHz", w_pos) != std::string::npos) {
-                        max_bw = 0; w_str = "20 MHz"; supp = {0};
-                    }
-                    break;
-                }
-            }
-            pclose(iw_p);
-        }
-        card.max_bandwidth = max_bw;
-        card.width_str = w_str;
-        card.supported_bandwidths = supp;
-    }
-
-    // 5. Xác định băng thông khả dụng cho từng thiết bị Client dựa trên năng lực card & station
-    for (auto &client : clients) {
-        int card_max = 0;
-        for (const auto &card : cards) {
-            if (card.iface == client.iface) {
-                card_max = card.max_bandwidth;
-                break;
-            }
-        }
-        if (card_max == 0 && client.band == "5GHz")
-            card_max = 2;
-
-        int client_max = card_max;
-        if (!client.mac.empty()) {
-            std::string mac_lower = normalizeMacLower(client.mac);
-            std::string phy = client.iface.substr(0, client.iface.find('.'));
-            if (phy.empty()) phy = "phy00";
-            std::string base = "/sys/kernel/debug/ieee80211/" + phy + "/netdev:" + client.iface + "/stations/" + mac_lower + "/link-0/";
-            namespace fs = std::filesystem;
-            std::error_code ec;
-            if (!fs::is_directory(base, ec)) {
-                base = "/sys/kernel/debug/ieee80211/" + phy + "/netdev:" + client.iface + "/stations/" + mac_lower + "/";
-            }
-
-            if (fs::is_directory(base, ec)) {
-                auto readCap = [&](const std::string &fname) -> std::string {
-                    std::ifstream f(base + fname);
-                    if (!f) return "";
-                    std::string s((std::istreambuf_iterator<char>(f)), std::istreambuf_iterator<char>());
-                    return s;
-                };
-
-                std::string eht = readCap("eht_capa");
-                std::string he = readCap("he_capa");
-                std::string vht = readCap("vht_capa");
-                std::string ht = readCap("ht_capa");
-
-                int sta_cap = 0;
-                if (!eht.empty() && eht.find("not supported") == std::string::npos) {
-                    sta_cap = (eht.find("320") != std::string::npos) ? 4 : 3;
-                } else if (!he.empty() && he.find("not supported") == std::string::npos) {
-                    sta_cap = (he.find("160") != std::string::npos) ? 3 : 2;
-                } else if (!vht.empty() && vht.find("not supported") == std::string::npos) {
-                    sta_cap = (vht.find("160") != std::string::npos) ? 3 : 2;
-                } else if (!ht.empty()) {
-                    sta_cap = (ht.find("HT40") != std::string::npos && ht.find("No DSSS/CCK HT40") == std::string::npos) ? 1 : 0;
-                }
-                client_max = std::min(card_max, sta_cap);
-            }
-        }
-        client.max_bandwidth = client_max;
-        const char *bw_names[] = {"20 MHz", "40 MHz", "80 MHz", "160 MHz", "320 MHz"};
-        client.width_str = (client_max >= 0 && client_max <= 4) ? bw_names[client_max] : "20 MHz";
-        client.supported_bandwidths.clear();
-        for (int b = 0; b <= client_max; ++b) {
-            client.supported_bandwidths.push_back(b);
-        }
     }
 }
 

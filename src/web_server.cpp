@@ -184,8 +184,7 @@ void WebServer::publish(const CSIData &frame) {
     breath_detector_.update(latest_frame_);
     wave_detector_.update(latest_frame_);
 
-    // Tự động nhận diện băng tần (2.4 GHz vs 5.2 GHz) và fallback RSSI từ router prober
-    int fallback_rssi = 0;
+    // Tự động nhận diện băng tần (2.4 GHz vs 5.2 GHz)
     if (cfr_controller_) {
         const CFRCaptureStatus cstat = cfr_controller_->getStatus();
         if (!cstat.iface.empty()) {
@@ -199,24 +198,8 @@ void WebServer::publish(const CSIData &frame) {
         }
     }
 
-    if (latest_frame_.rssi_comb_db == 0 && prober_) {
-        const ProberStatus pstat = prober_->getStatus(false);
-        const std::string &target_mac = (cfr_controller_ ? cfr_controller_->getStatus().target_mac : "");
-        const std::string &target_ip = pstat.target_ip;
-        for (const auto &client : pstat.clients) {
-            bool match = false;
-            if (!target_mac.empty() && client.mac == target_mac) match = true;
-            if (!match && !target_ip.empty() && target_ip != "auto" && client.ip == target_ip) match = true;
-            if (match && !client.signal_dbm.empty() && client.signal_dbm != "—") {
-                try {
-                    fallback_rssi = std::stoi(client.signal_dbm);
-                } catch (...) {}
-                break;
-            }
-        }
-    }
-
-    distance_estimator_.process(latest_frame_, fallback_rssi);
+    // Khoảng cách và mức RSSI được tính toán trực tiếp từ biên độ CSI và AGC phần cứng của frame
+    distance_estimator_.process(latest_frame_, 0);
 
     // Quyết định hiện diện hợp nhất 3 trạng thái cốt lõi:
     // 1. Chuyển động vĩ mô (người đi lại / cử động) - đồng bộ cờ presence_detected đã qua bộ lọc Hysteresis & Deadband từ motion_detector_
