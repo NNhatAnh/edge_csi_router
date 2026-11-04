@@ -38,7 +38,7 @@ Relay nhị phân
     └── KHÔNG CÓ NGƯỜI (empty_room)   : Phòng trống tĩnh
                      │
                      ▼
-    Web Dashboard (web/): REST API :8080 & SSE /events
+    Web Dashboard (web/): REST API :5243 & SSE /events
     Canvas 7 tab trực quan, thuần JS/CSS, hiển thị đúng 3 nhãn chuẩn
 ```
 
@@ -231,7 +231,7 @@ echo $!
 ```
 
 Trên BusyBox `ash` của router, chạy nền bằng `&` và redirect như trên; firmware này
-không cài `nohup`. Daemon mặc định dùng HTTP/SSE cổng `8080`, TCP ingest cổng `10000`,
+không cài `nohup`. Daemon mặc định dùng HTTP/SSE cổng `5243`, TCP ingest cổng `10000`,
 phục vụ asset từ `./web` và theo dõi `/tmp/cfr_dump_phy00_*.bin`. Để đổi tham số, xem
 `./edge_csi_daemon --help`.
 
@@ -241,12 +241,12 @@ Chạy trên router:
 
 ```sh
 pidof edge_csi_daemon
-netstat -lntp | grep -E ':(8080|10000) '
-wget -qO- http://127.0.0.1:8080/health.json
-wget -qO- http://127.0.0.1:8080/latest_csi.json
+netstat -lntp | grep -E ':(5243|10000) '
+wget -qO- http://127.0.0.1:5243/health.json
+wget -qO- http://127.0.0.1:5243/latest_csi.json
 ```
 
-Mở `http://192.168.10.1:8080/` trong trình duyệt. Để xác nhận **stream đang LIVE**,
+Mở `http://192.168.10.1:5243/` trong trình duyệt. Để xác nhận **stream đang LIVE**,
 không chỉ xác nhận backend chạy: bảo đảm `cfr_test_app`/capture workflow đang tạo relay
 record, kết nối `/events` hoặc đọc `/latest_csi.json` nhiều lần và kiểm tra
 `chip_tsf_us`/`phy_ppdu_id` thay đổi. Nếu capture producer chưa chạy, HTTP có thể vẫn
@@ -271,7 +271,7 @@ Giá trị mặc định:
 Các tham số có thể cấu hình:
 
 ```text
---web-port PORT       HTTP và SSE (mặc định 8080)
+--web-port PORT       HTTP và SSE (mặc định 5243)
 --ingest-port PORT    TCP relay ingest (mặc định 10000)
 --web-root PATH       Thư mục chứa index.html, style.css và script.js (mặc định ./web)
 --watch-dir PATH      Thư mục relay file (mặc định /tmp)

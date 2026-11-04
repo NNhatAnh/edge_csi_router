@@ -22,7 +22,7 @@ volatile std::sig_atomic_t stop_requested = 0;
 void handleSignal(int) { stop_requested = 1; }
 
 struct Options {
-    int web_port = 8080;
+    int web_port = 5243;
     int ingest_port = 10000;
     std::string web_root = "web";
     std::string watch_directory = "/tmp";
@@ -37,7 +37,7 @@ struct Options {
 void printUsage(const char *program) {
     std::cout
         << "Usage: " << program << " [options]\n"
-        << "  --web-port PORT       HTTP and SSE port (default: 8080)\n"
+        << "  --web-port PORT       HTTP and SSE port (default: 5243)\n"
         << "  --ingest-port PORT    TCP relay ingest port (default: 10000)\n"
         << "  --web-root PATH       Directory containing index.html, style.css "
            "and script.js\n"

@@ -447,7 +447,7 @@ def format_stat_line(name: str, val_str: str, unit: str, target: str, status: st
 def main():
     parser = argparse.ArgumentParser(description="Unified 100% Real Performance Evaluation Script for Edge CSI Router")
     parser.add_argument("--router-ip", default="192.168.10.1", help="Router IP address (default: 192.168.10.1)")
-    parser.add_argument("--web-port", type=int, default=8080, help="Web server port (default: 8080)")
+    parser.add_argument("--web-port", type=int, default=5243, help="Web server port (default: 5243)")
     parser.add_argument("--duration", type=int, default=30, help="Test duration in seconds (default: 30)")
     parser.add_argument("--router-user", default="root", help="Router SSH user (default: root)")
     parser.add_argument("--skip-ssh", action="store_true", help="Skip SSH hardware telemetry")

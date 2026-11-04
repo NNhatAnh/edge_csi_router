@@ -298,7 +298,7 @@ code {
       <strong>Đo đạc từ Router qua SSH chỉ đọc:</strong> Định kỳ mỗi giây đọc trực tiếp trạng thái tiến trình từ tệp ảo <code>/proc/[pid]/stat</code> và <code>/proc/[pid]/status</code> trên router OpenWrt để ghi nhận chính xác phần trăm CPU và dung lượng RAM thực.
     </li>
     <li>
-      <strong>Đo đạc đường ống truyền thông:</strong> Lắng nghe cổng sự kiện <code>http://192.168.10.1:8080/events</code>, ghi nhận thời gian đến của từng gói tin bằng đồng hồ nano-giây có độ chính xác cao (<code>time.perf_counter()</code>) để tính toán tần số và độ giật thực tế.
+      <strong>Đo đạc đường ống truyền thông:</strong> Lắng nghe cổng sự kiện <code>http://192.168.10.1:5243/events</code>, ghi nhận thời gian đến của từng gói tin bằng đồng hồ nano-giây có độ chính xác cao (<code>time.perf_counter()</code>) để tính toán tần số và độ giật thực tế.
     </li>
     <li>
       <strong>Đo đạc vi độ trễ thuật toán:</strong> Biên dịch và chạy bộ thử nghiệm micro-benchmark C++ thuần túy (<code>tools/bench_algorithms.cpp</code>) với đồng hồ <code>std::chrono::high_resolution_clock</code> lặp lại 2,000 lần tính trung bình cho từng hàm xử lý.
