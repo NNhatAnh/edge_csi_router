@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Báo Cáo Phân Tích Kỹ Thuật &amp; Kiến Trúc Hệ Thống: Wi-Fi Sensing Thương Mại</title>
+  <title>Báo Cáo Phân Tích Kỹ Thuật: Cơ Chế Vận Hành &amp; Kiến Trúc Hệ Thống Wi-Fi Sensing</title>
   <link rel="stylesheet" href="style.css">
   <style>
     .metric-grid {
@@ -165,11 +165,11 @@
   <!-- Header -->
   <div class="header">
     <div style="font-size: 11px; font-weight: 700; color: var(--primary); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px;">
-      Báo Cáo Phân Tích Kỹ Thuật &amp; Kiến Trúc Hệ Thống (System Architecture &amp; Technical Evaluation)
+      Báo Cáo Phân Tích Kỹ Thuật &amp; Khảo Sát Hệ Thống (Technical System Evaluation)
     </div>
-    <h1>BÁO CÁO PHÂN TÍCH KỸ THUẬT &amp; KIẾN TRÚC HỆ THỐNG: CÔNG NGHỆ WI-FI SENSING THƯƠNG MẠI</h1>
+    <h1>BÁO CÁO PHÂN TÍCH KỸ THUẬT: CƠ CHẾ VẬN HÀNH &amp; KIẾN TRÚC HỆ THỐNG WI-FI SENSING THƯƠNG MẠI</h1>
     <div class="meta-box">
-      <div class="meta-item"><strong>Chuyên đề:</strong> Khảo sát &amp; Đánh giá Cơ chế Triển khai Thực tế của các Hệ thống Wi-Fi Sensing Thương mại</div>
+      <div class="meta-item"><strong>Chuyên đề:</strong> Khảo sát &amp; Đánh giá Cơ chế Triển khai Thực tế của Công nghệ Wi-Fi Sensing</div>
       <div class="meta-item"><strong>Thời điểm cập nhật:</strong> Tháng 11/2026</div>
       <div class="meta-item"><strong>Đối tượng tài liệu:</strong> Kỹ sư Hệ thống Vô tuyến, Kiến trúc sư IoT, Kỹ sư Phát triển Sản phẩm Mạng</div>
     </div>
@@ -180,22 +180,22 @@
     <div class="metric-card">
       <div class="metric-val">10 &ndash; 30 Hz</div>
       <div class="metric-title">Tần Số Active Probing</div>
-      <div class="metric-sub">Bắt nhịp bước chân người (1.5–3 Hz)</div>
+      <div class="metric-sub">Cân bằng giữa phổ Doppler &amp; tài nguyên kênh</div>
     </div>
     <div class="metric-card">
-      <div class="metric-val">100% Edge</div>
-      <div class="metric-title">Xử Lý Tại Biên Router/Node</div>
-      <div class="metric-sub">Xử lý dưới 200ms &amp; bảo vệ riêng tư</div>
+      <div class="metric-val">TRL 8 &ndash; 9</div>
+      <div class="metric-title">Chuyển Động Lớn (Macro)</div>
+      <div class="metric-sub">Thương mại hóa đại trà (Đèn, An ninh vắng nhà)</div>
     </div>
     <div class="metric-card">
-      <div class="metric-val">IEEE 802.11bf</div>
-      <div class="metric-title">Chuẩn Khung SENS PPDU</div>
-      <div class="metric-sub">Phá vỡ rào cản độc quyền chip</div>
+      <div class="metric-val">TRL 3 &ndash; 4</div>
+      <div class="metric-title">Vi Chuyển Động &amp; Té Ngã</div>
+      <div class="metric-sub">Môi trường lab/nghiên cứu; cần Radar mmWave</div>
     </div>
     <div class="metric-card">
-      <div class="metric-val">63.1% &rarr; 8.4%</div>
-      <div class="metric-title">Báo Động Giả Do Thú Cưng</div>
-      <div class="metric-sub">Số liệu thực nghiệm 2.4M mẫu (Origin)</div>
+      <div class="metric-val">3 Lớp</div>
+      <div class="metric-title">Kiến Trúc An Ninh Phối Hợp</div>
+      <div class="metric-sub">Ngoại vi &bull; Tiếp xúc cửa &bull; Điểm mù Wi-Fi</div>
     </div>
   </div>
 
@@ -203,24 +203,23 @@
   <div class="nav-toc">
     <strong>MỤC LỤC TỔNG QUAN</strong>
     <ol>
-      <li><a href="#sec-1">Tổng Quan Kỹ Thuật Hệ Thống Wi-Fi Sensing Thương Mại</a></li>
-      <li><a href="#sec-2">Kiến Trúc Phần Cứng &amp; Cơ Chế Thu Thập Tín Hiệu Sóng</a></li>
-      <li><a href="#sec-3">Phân Tích Chi Tiết Kiến Trúc Hệ Thống Của Các Giải Pháp Thương Mại</a></li>
-      <li><a href="#sec-4">Kiến Trúc Phối Hợp Đa Cảm Biến Trong Hệ Thống Thực Tế</a></li>
-      <li><a href="#sec-5">Đánh Giá Thực Nghiệm: Thách Thức Kỹ Thuật &amp; Tỷ Lệ Lỗi Hiện Trường</a></li>
-      <li><a href="#sec-6">Tiến Trình Phát Triển Phần Cứng &amp; Chuẩn Hóa Hạ Tầng</a></li>
+      <li><a href="#sec-1">Tổng Quan Kỹ Thuật Về Wi-Fi Sensing</a></li>
+      <li><a href="#sec-2">Nguyên Lý Thu Thập &amp; Đặc Tính Tín Hiệu Sóng</a></li>
+      <li><a href="#sec-3">Khảo Sát Một Số Mô Hình Triển Khai Thực Tế</a></li>
+      <li><a href="#sec-4">Mô Hình Phối Hợp Đa Cảm Biến Trong Hệ Thống An Ninh</a></li>
+      <li><a href="#sec-5">Đánh Giá Mức Độ Sẵn Sàng Công Nghệ (TRL) Theo Chức Năng</a></li>
     </ol>
   </div>
 
   <!-- SECTION 1 -->
-  <h2 id="sec-1">1. TỔNG QUAN KỸ THUẬT HỆ THỐNG WI-FI SENSING THƯƠNG MẠI</h2>
-  
-  <h3>1.1 Khái niệm &amp; Bản chất hoạt động dưới góc độ hệ thống vô tuyến</h3>
+  <h2 id="sec-1">1. TỔNG QUAN KỸ THUẬT VỀ WI-FI SENSING</h2>
+
+  <h3>1.1 Khái niệm &amp; Cơ chế tương tác giữa cơ thể người với sóng vô tuyến</h3>
   <p>
-    <strong>Wi-Fi Sensing</strong> (Cảm biến nhận thức qua sóng vô tuyến Wi-Fi) trong môi trường thương mại là một hệ thống phần mềm nhúng, tận dụng chính các trạm phát sóng Wi-Fi (Access Point / Router Gateway) và các thiết bị thu nhận sẵn có trong nhà để phát hiện sự thay đổi của môi trường truyền sóng xung quanh.
+    <strong>Wi-Fi Sensing</strong> (Cảm biến nhận thức qua sóng Wi-Fi) là công nghệ phần mềm khai thác sự biến đổi của trường sóng vô tuyến giữa các trạm phát (Access Point / Router) và các thiết bị thu nhận trong mạng Wi-Fi sẵn có để nhận biết chuyển động hoặc hiện diện trong không gian.
   </p>
   <p>
-    Về bản chất vật lý, tín hiệu sóng Wi-Fi tần số 2.4 GHz, 5 GHz hoặc 6 GHz khi lan truyền trong không gian kín của căn hộ không chỉ đi theo một đường thẳng trực tiếp (Line-of-Sight - LoS) từ bộ phát sang bộ thu. Sóng liên tục va đập, phản xạ, tán xạ và khúc xạ qua các bức tường, sàn nhà, trần nhà và các đồ vật nội thất, tạo nên một trường sóng giao thoa đa đường (Multipath Field) đan xen dày đặc.
+    Trong không gian kín của căn hộ hay văn phòng, sóng vô tuyến tần số 2.4 GHz và 5 GHz lan truyền theo nhiều ngả đường khác nhau (Multipath Propagation): bao gồm tia truyền thẳng trực tiếp (Line-of-Sight - LoS) và hàng loạt tia phản xạ, tán xạ, nhiễu xạ từ tường, sàn, trần và các bề mặt đồ vật. Tập hợp các tia này giao thoa với nhau, tạo thành một trường sóng phức tạp tại ăng-ten đầu thu.
   </p>
 
   <div class="diagram-box">
@@ -232,71 +231,61 @@
                                  ▼               ▼
 ┌──────────────────┐         ┌───────────────────────┐         ┌──────────────────┐
 │  BỘ PHÁT (Tx)    ├────────►│   CƠ THỂ CON NGƯỜI    ├────────►│   BỘ THU (Rx)    │
-│  (Router/Gateway)│ LoS     │ (Hấp thụ &amp; Làm lệch   │         │ (Router/Node/    │
-│                  │ Trực    │  pha trường sóng)     │         │  Bóng đèn IoT)   │
+│  (Router/Gateway)│ LoS     │ - Mô sinh học hấp thụ │         │ (Router/Node/    │
+│                  │ Trực    │   &amp; làm lệch pha sóng │         │  Thiết bị IoT)   │
 └──────────────────┘ tiếp    └───────────────────────┘         └────────┬─────────┘
                                                                         │
-                                   Ma trận kênh CSI trích xuất tầng PHY │
+                                       Trích xuất CSI từ tầng PHY của Rx│
                                                                         ▼
                                                        ┌────────────────┴─────────┐
-                                                       │  BỘ XỬ LÝ BIÊN (EDGE AI) │
-                                                       │  - Lọc trôi pha (CFO/SFO)│
-                                                       │  - Trích xuất Doppler    │
-                                                       │  - Phân loại chuyển động │
+                                                       │    BỘ XỬ LÝ TÍN HIỆU     │
+                                                       │  - Lọc trôi pha CFO/SFO  │
+                                                       │  - Phân tích Doppler     │
+                                                       │  - Nhận diện chuyển động │
                                                        └──────────────────────────┘
     </pre>
-    <div class="diagram-caption">Hình 1: Mô hình lan truyền đa đường (Multipath) và chuỗi khối xử lý tín hiệu Wi-Fi Sensing.</div>
+    <div class="diagram-caption">Hình 1: Mô hình lan truyền đa đường (Multipath) và tương tác của mô sinh học với sóng vô tuyến.</div>
   </div>
 
-  <p>Một hệ thống Wi-Fi Sensing thương mại hoàn chỉnh gồm 5 khối chức năng cốt lõi:</p>
-  <ol>
-    <li><strong>Khối nguồn phát tín hiệu (Transmitter Node - Tx):</strong> Router hoặc thiết bị phụ trợ gửi các gói tin vô tuyến định kỳ qua không gian.</li>
-    <li><strong>Kênh truyền dẫn không gian (Propagation Medium):</strong> Toàn bộ thể tích không gian trong phòng nơi sóng đa đường lan truyền. Khi một người bước vào, cơ thể chứa hơn 70% nước sẽ hấp thụ một phần năng lượng vô tuyến và làm thay đổi góc pha cũng như thời gian trễ của các tia sóng phản xạ.</li>
-    <li><strong>Khối trích xuất thông tin kênh (CSI Extractor - Rx):</strong> Chipset Wi-Fi ở đầu thu trích xuất ma trận thông tin trạng thái kênh (Channel State Information - CSI) trên từng sóng mang con (subcarrier) tại tầng vật lý (PHY layer).</li>
-    <li><strong>Khối tiền xử lý và lọc nhiễu (Signal Processing Engine):</strong> Loại bỏ các sai số phần cứng như trôi tần số sóng mang (Carrier Frequency Offset - CFO), trôi tần số lấy mẫu (Sampling Frequency Offset - SFO), và bù trừ bước nhảy pha ngẫu nhiên.</li>
-    <li><strong>Khối nhận diện và ra quyết định (Inference &amp; Coordination Engine):</strong> Mô hình thuật toán (ngưỡng động hoặc học máy nhẹ) phân tích biến thiên năng lượng và dịch chuyển Doppler để xác định trạng thái chuyển động, sau đó phối hợp cùng hệ sinh thái thiết bị để đưa ra hành động (bật đèn, báo động, hoặc gửi sự kiện).</li>
-  </ol>
-
-  <h3>1.2 Hai ranh giới kỹ thuật cốt lõi định hình thiết kế hệ thống</h3>
-
-  <p><strong>Ranh giới 1: Phòng thí nghiệm lý tưởng đối lập hoàn toàn với Căn hộ thực tế</strong></p>
-  <p>
-    Nhiều nghiên cứu học thuật công bố độ chính xác nhận diện đạt từ 95% đến 99%. Tuy nhiên, các kết quả này gần như luôn được đo đạc trong các điều kiện lý tưởng hóa: phòng trống diện tích nhỏ, cự ly trực diện 2–3 mét không vật cản, chỉ một người duy nhất di chuyển theo kịch bản vạch sẵn, kênh sóng hoàn toàn sạch không bị can nhiễu, và thiết bị client được cắm nguồn liên tục phát gói tin 100 Hz.
-  </p>
-  <p>
-    Khi đưa ra căn hộ thực tế, môi trường vận hành lập tức đối mặt với hàng loạt thách thức:
-  </p>
+  <p><strong>Cơ chế tương tác vật lý:</strong></p>
   <ul>
-    <li><strong>Suy hao vật lý lớn:</strong> Tường bê tông cốt thép dày 15–20 cm gây suy hao từ 20 đến 30 dB, tạo ra các vùng bóng râm vô tuyến (Fresnel shadows).</li>
-    <li><strong>Can nhiễu đa mạng:</strong> Căn hộ chung cư thường xuyên bị chồng lấn bởi 10–20 mạng Wi-Fi của các căn hộ lân cận trên cùng dải tần, làm sai lệch các thông số đo đạc pha của sóng.</li>
-    <li><strong>Vật thể chuyển động ký sinh:</strong> Quạt trần quay liên tục, rèm cửa đung đưa trước gió điều hòa, hoặc robot hút bụi tự hành tạo ra các biến thiên tuần hoàn dễ gây nhiễu thuật toán.</li>
-    <li><strong>Cơ chế tiết kiệm pin của thiết bị đầu cuối:</strong> Điện thoại di động khi tắt màn hình lập tức kích hoạt chế độ ngủ sâu (Deep Sleep), ngắt việc trao đổi gói tin định kỳ và làm gãy luồng dữ liệu sóng liên tục.</li>
+    <li><strong>Đặc tính điện môi của mô sinh học:</strong> Cơ thể con người là một vật thể có hằng số điện môi cao do chứa hàm lượng lớn nước và các chất điện giải. Ở các băng tần Wi-Fi (2.4 GHz và 5 GHz), các mô sinh học gây ra hiện tượng suy hao hấp thụ (dielectric absorption) và làm tán xạ năng lượng sóng vô tuyến.</li>
+    <li><strong>Biến dạng trường giao thoa:</strong> Khi một người bước đi hoặc di chuyển các chi trong phòng, người đó cắt ngang hoặc làm thay đổi đường đi của các tia phản xạ (vùng Fresnel). Sự thay đổi này làm lệch pha (phase shift), thay đổi biên độ (amplitude attenuation) và tạo ra hiệu ứng dịch chuyển Doppler (Doppler shift) trên các thành phần sóng mang nhận được tại đầu thu.</li>
   </ul>
 
-  <p><strong>Ranh giới 2: Wi-Fi Sensing thuần túy là Lớp cảm biến hỗ trợ phụ trợ (Auxiliary Layer)</strong></p>
+  <p>Chuỗi khối chức năng xử lý tín hiệu thông thường bao gồm: Nguồn phát tín hiệu (Tx) &rarr; Môi trường truyền sóng &rarr; Khối trích xuất kênh truyền (Rx) &rarr; Khối lọc nhiễu &amp; Chuẩn hóa (CFO, SFO, trôi pha) &rarr; Khối phân tích đặc trưng (biến thiên năng lượng, Doppler).</p>
+
+  <h3>1.2 Hai ranh giới kỹ thuật: Môi trường phòng lab vs Môi trường thực tế</h3>
+
+  <p><strong>Ranh giới 1: Khoảng cách giữa phòng thí nghiệm và hiện trường căn hộ thực tế</strong></p>
+  <ul>
+    <li><strong>Suy hao truyền qua vật cản phụ thuộc điều kiện thực tế:</strong> Mức độ suy hao sóng khi đi qua tường phụ thuộc chặt chẽ vào vật liệu (bê tông đặc, gạch rỗng, thạch cao), độ dày kết cấu và tần số sóng (sóng 5 GHz suy hao qua tường lớn hơn đáng kể so với 2.4 GHz). Khi đi qua nhiều bức tường dày, tín hiệu bị suy giảm mạnh khiến SNR giảm sâu, làm méo mó các thành phần thông tin kênh.</li>
+    <li><strong>Can nhiễu đa mạng:</strong> Trong các khu chung cư hay văn phòng, hàng chục mạng Wi-Fi lân cận hoạt động đồng kênh hoặc kênh kế cận, gây xung đột khung truyền và làm tăng nhiễu nền vô tuyến.</li>
+    <li><strong>Vật thể chuyển động trong môi trường:</strong> Chuyển động của vật nuôi, rèm cửa đung đưa do gió điều hòa, quạt trần quay hoặc robot hút bụi tự hành đều tạo ra các biến động trường sóng, dễ gây ra hiện tượng kích hoạt sai (False Positives).</li>
+    <li><strong>Cơ chế quản lý năng lượng của thiết bị di động:</strong> Hệ điều hành trên smartphone (iOS, Android) tự động điều tiết kết nối khi khóa màn hình, làm chuỗi gói tin nhận được bị ngắt quãng, không đảm bảo tần số lấy mẫu đều đặn.</li>
+  </ul>
+
+  <p><strong>Ranh giới 2: Wi-Fi Sensing là Lớp cảm biến hỗ trợ phụ trợ (Auxiliary Layer)</strong></p>
   <p>
-    Do các rào cản vật lý nói trên, không có bất kỳ hệ sinh thái thương mại nào trên thế giới định vị Wi-Fi Sensing như một giải pháp an ninh độc lập thay thế camera. Giá trị thực tế đã được kiểm chứng của công nghệ này tập trung vào hai năng lực bổ trợ then chốt:
+    Với đặc thù vật lý của sóng vô tuyến và các nguồn nhiễu thực tế, Wi-Fi Sensing trong các hệ thống thương mại không được thiết kế để thay thế hoàn toàn camera giám sát hay cảm biến chuyên dụng. Công nghệ này phát huy hiệu quả ở vai trò <strong>lớp cảm biến phụ trợ bổ sung</strong>:
   </p>
-  <ol>
-    <li><strong>Bảo vệ điểm mù camera tại các khu vực nhạy cảm:</strong> Làm lớp cảnh giới phụ tại các không gian cấm lắp camera vì lý do quyền riêng tư (như phòng ngủ, phòng tắm, phòng thay đồ) nhằm xác nhận có kẻ xâm nhập bước vào sâu trong nhà.</li>
-    <li><strong>Phát hiện chuyển động lớn (Macro-Motion) khi nhà vắng:</strong> Phát hiện bước chân người đi lại hoặc mở cửa lớn khi toàn bộ gia đình đã ra ngoài (chế độ Away), từ đó kích hoạt hệ thống báo động hoặc bật hệ thống chiếu sáng tự động.</li>
-  </ol>
-  <div class="note-box">
-    <strong>Lưu ý thiết kế hệ thống:</strong> Tất cả các giải pháp thương mại thành công (Comcast, Verisure, ADT, WiZ) đều tích hợp Wi-Fi Sensing vào một chuỗi phối hợp nhiều cảm biến, tuyệt đối không trao quyền quyết định báo động duy nhất cho sóng Wi-Fi.
-  </div>
+  <ul>
+    <li><em>Hỗ trợ điểm mù camera:</em> Giám sát chuyển động tại các khu vực nhạy cảm cần bảo đảm quyền riêng tư cá nhân (như phòng ngủ, phòng tắm, phòng thay đồ) – những nơi không được phép lắp đặt camera giám sát.</li>
+    <li><em>Hỗ trợ phát hiện chuyển động lớn khi nhà vắng:</em> Xác định có bước chân người đi lại hoặc mở cửa lớn trong nhà khi toàn bộ người dùng đã rời đi (chế độ Vắng nhà), đóng vai trò kích hoạt lớp xác minh an ninh ban đầu hoặc điều khiển tự động hóa.</li>
+  </ul>
 
   <!-- SECTION 2 -->
-  <h2 id="sec-2">2. KIẾN TRÚC PHẦN CỨNG &amp; CƠ CHẾ THU THẬP TÍN HIỆU SÓNG</h2>
+  <h2 id="sec-2">2. NGUYÊN LÝ THU THẬP &amp; ĐẶC TÍNH TÍN HIỆU SÓNG</h2>
 
-  <h3>2.1 Mô hình cặp liên kết vô tuyến (Tx - Rx Links) và các thành phần trong hệ thống</h3>
+  <h3>2.1 Mô hình liên kết vô tuyến (Tx - Rx Links)</h3>
   <p>
-    Một hệ thống Wi-Fi Sensing không thể hoạt động đơn lẻ với một ăng-ten độc lập mà vận hành dựa trên các <strong>cặp liên kết vô tuyến (Radio Links)</strong>. Trong mỗi cặp, một thiết bị đóng vai trò phát (Tx) và thiết bị kia đóng vai trò thu (Rx).
+    Hệ thống Wi-Fi Sensing vận hành dựa trên các <strong>cặp liên kết vô tuyến (Radio Links)</strong> giữa thiết bị phát (Tx) và thiết bị thu (Rx):
   </p>
 
   <div class="diagram-box">
     <pre class="code-diagram">
                       ┌────────────────────────┐
-                      │ ROUTER GATEWAY (AP)    │
+                      │  ROUTER GATEWAY (AP)   │
                       │ Đóng vai trò Bộ thu Rx │
                       └───────────┬────────────┘
                                   │
@@ -304,7 +293,7 @@
          │ Link 1                 │ Link 2                 │ Link 3
          ▼                        ▼                        ▼
 ┌─────────────────┐      ┌─────────────────┐      ┌─────────────────┐
-│ Smart TV        │      │ Loa thông minh  │      │ Ổ cắm / Đèn     │
+│ Smart TV        │      │ Loa thông minh  │      │ Ổ cắm thông minh│
 │ (Node phát Tx1) │      │ (Node phát Tx2) │      │ (Node phát Tx3) │
 │ [Cố định 220V]  │      │ [Cố định 220V]  │      │ [Cố định 220V]  │
 └─────────────────┘      └─────────────────┘      └─────────────────┘
@@ -312,435 +301,278 @@
     <div class="diagram-caption">Hình 2: Cấu trúc liên kết vô tuyến tập trung giữa Gateway và các thiết bị IoT cắm điện cố định.</div>
   </div>
 
-  <p>Các thành phần phần cứng điển hình trong một cấu hình triển khai gia đình:</p>
   <ul>
-    <li><strong>Thiết bị tập trung (Central Gateway / Access Point):</strong> Thường là modem router chính của nhà mạng (như Comcast XB7/XB8) hoặc bộ điều khiển trung tâm (Alarm Hub). Thiết bị này sở hữu năng lực xử lý mạnh (SoC lõi kép hoặc lõi tứ, bộ nhớ RAM từ 512MB đến 1GB), đóng vai trò bộ thu (Rx) để trích xuất CSI và chạy thuật toán phân loại chuyển động.</li>
-    <li><strong>Các thiết bị vệ tinh Mesh (Mesh Pods / Extenders):</strong> Đóng vai trò vừa là bộ thu vừa là bộ phát, tạo ra các đường truyền liên kết không dây phân tán (Backhaul Sensing Links) giữa các phòng.</li>
-    <li><strong>Các thiết bị đầu cuối cố định (Fixed IoT Clients):</strong> Smart TV, loa thông minh (Amazon Echo, Google Nest Audio), ổ cắm thông minh, hoặc công tắc thông minh gắn tường. Đây là các đối tượng được cấp nguồn liên tục từ điện lưới 220V, vị trí đặt cố định trong không gian, đóng vai trò trạm phát tín hiệu phản hồi ổn định cho Gateway.</li>
+    <li><strong>Router Gateway (AP):</strong> Thường đóng vai trò thiết bị thu thập chính (Rx). Do sở hữu tài nguyên CPU và bộ nhớ lớn hơn các thiết bị IoT đầu cuối, Router đảm nhận việc trích xuất thông tin kênh và thực thi các thuật toán xử lý tín hiệu.</li>
+    <li><strong>Các thiết bị đầu cuối cố định (Fixed Clients):</strong> Smart TV, loa thông minh, ổ cắm thông minh cắm điện lưới liên tục. Những thiết bị này có vị trí cố định, tạo ra các đường liên kết không gian ổn định làm mốc đo đạc trường sóng.</li>
   </ul>
 
-  <h3>2.2 So sánh tín hiệu: RSSI (công suất gộp) vs. CSI (ma trận trạng thái kênh chi tiết)</h3>
+  <h3>2.2 So sánh tín hiệu: RSSI vs. CSI (Làm rõ cấu trúc sóng mang con và số điểm đo)</h3>
 
   <table style="width:100%; border-collapse: collapse; margin-top: 14px;">
     <thead>
       <tr style="background:#f1f3f4; border-bottom:2px solid var(--border-color);">
         <th style="padding:10px 14px; text-align:left; font-size:13px;">Tiêu chí kỹ thuật</th>
-        <th style="padding:10px 14px; text-align:left; font-size:13px;">RSSI (Received Signal Strength)</th>
+        <th style="padding:10px 14px; text-align:left; font-size:13px;">RSSI (Received Signal Strength Indicator)</th>
         <th style="padding:10px 14px; text-align:left; font-size:13px;">CSI (Channel State Information)</th>
       </tr>
     </thead>
     <tbody>
       <tr style="border-bottom:1px solid #eee;">
         <td style="padding:10px 14px; font-weight:600; font-size:13px;">Bản chất đo đạc</td>
-        <td style="padding:10px 14px; font-size:13px;">Giá trị vô hướng (scalar), biểu thị tổng công suất tín hiệu nhận được trên toàn bộ kênh tần số (dBm).</td>
-        <td style="padding:10px 14px; font-size:13px;">Ma trận số phức (complex matrix), biểu thị biên độ (amplitude) và góc pha (phase) chi tiết trên từng sóng mang con riêng biệt.</td>
+        <td style="padding:10px 14px; font-size:13px;">Giá trị vô hướng (scalar), thể hiện tổng công suất tín hiệu nhận được trên toàn bộ kênh tần số (đơn vị dBm).</td>
+        <td style="padding:10px 14px; font-size:13px;">Ma trận số phức (complex matrix), thể hiện đáp ứng tần số kênh truyền (biên độ và pha) trên từng sóng mang con riêng biệt.</td>
       </tr>
       <tr style="border-bottom:1px solid #eee;">
-        <td style="padding:10px 14px; font-weight:600; font-size:13px;">Độ phân giải không gian</td>
-        <td style="padding:10px 14px; font-size:13px;">Rất thấp: Chỉ là 1 giá trị duy nhất cho mỗi gói tin. Không phân biệt được các đường phản xạ khác nhau.</td>
-        <td style="padding:10px 14px; font-size:13px;">Rất cao: Cung cấp từ 52 (Wi-Fi 4 - 20MHz) đến gần 1000 điểm đo (Wi-Fi 7 - 320MHz) trên mỗi gói tin.</td>
+        <td style="padding:10px 14px; font-weight:600; font-size:13px;">Độ phân giải thông tin</td>
+        <td style="padding:10px 14px; font-size:13px;">Rất thấp: Chỉ là 1 giá trị công suất gộp cho mỗi khung truyền nhận được.</td>
+        <td style="padding:10px 14px; font-size:13px;">Cao: Cung cấp thông tin chi tiết đa chiều theo từng cặp ăng-ten thu-phát ($N_{tx} \times N_{rx}$) và theo từng sóng mang con.</td>
       </tr>
       <tr style="border-bottom:1px solid #eee;">
-        <td style="padding:10px 14px; font-weight:600; font-size:13px;">Độ nhạy chuyển động</td>
-        <td style="padding:10px 14px; font-size:13px;">Kém: Khi người di chuyển, công suất tổng có thể bù trừ giữa các tia, khiến RSSI gần như đứng yên hoặc biến thiên ngẫu nhiên.</td>
-        <td style="padding:10px 14px; font-size:13px;">Rất nhạy: Chỉ cần một bước chân lệch nhẹ, pha và biên độ của các sóng mang con tương ứng lập tức biến đổi rõ rệt.</td>
+        <td style="padding:10px 14px; font-weight:600; font-size:13px;">Độ nhạy với chuyển động</td>
+        <td style="padding:10px 14px; font-size:13px;">Kém: Khi người di chuyển, sự giao thoa giữa các tia phản xạ có thể triệt tiêu hoặc cộng hưởng ngẫu nhiên, khiến RSSI ít biến đổi hoặc bị chìm trong nhiễu.</td>
+        <td style="padding:10px 14px; font-size:13px;">Rất nhạy: Chỉ cần một bước chân lệch vị trí, biên độ và góc pha của các sóng mang con tương ứng lập tức biến đổi rõ rệt.</td>
       </tr>
       <tr style="border-bottom:1px solid #eee;">
-        <td style="padding:10px 14px; font-weight:600; font-size:13px;">Năng lực phân loại đối tượng</td>
-        <td style="padding:10px 14px; font-size:13px;">Không có: Không thể phân biệt được người đi lại với việc có người đóng cửa phòng hoặc nhiễu sóng ngẫu nhiên.</td>
-        <td style="padding:10px 14px; font-size:13px;">Có: Thuật toán có thể phân tích phổ Doppler trên từng sóng mang con để bóc tách nhịp bước chân người với vật nuôi hoặc quạt trần.</td>
+        <td style="padding:10px 14px; font-weight:600; font-size:13px;">Cấu trúc tần số &amp; Điểm đo</td>
+        <td style="padding:10px 14px; font-size:13px;">Không phân tách tần số.</td>
+        <td style="padding:10px 14px; font-size:13px;">
+          Phân tách theo sóng mang con (OFDM subcarriers).<br>
+          <em>Lưu ý:</em> Cần phân biệt giữa cấu trúc chuẩn (ví dụ chuẩn 802.11n 20 MHz có 64 FFT tones: gồm 52 data tones, 4 pilot tones, 1 DC và các guard tones) với <strong>số lượng điểm CSI thực tế mà driver/chipset trích xuất</strong> (ví dụ: công cụ Intel 5300 trích xuất 30 nhóm tone, Atheros trích xuất 56 tone). Số điểm CSI thực tế phụ thuộc trực tiếp vào firmware và driver của từng nhà sản xuất chip.
+        </td>
       </tr>
       <tr>
-        <td style="padding:10px 14px; font-weight:600; font-size:13px;">Yêu cầu phần cứng &amp; Firmware</td>
-        <td style="padding:10px 14px; font-size:13px;">Mọi chip Wi-Fi tiêu chuẩn đều hỗ trợ đọc qua tập lệnh thông thường.</td>
-        <td style="padding:10px 14px; font-size:13px;">Đòi hỏi firmware của chip Wi-Fi mở cổng trích xuất bộ đệm PHY (Qualcomm Ath11k/Ath12k, Broadcom BCM43xx, MaxLinear AnyWAN).</td>
+        <td style="padding:10px 14px; font-weight:600; font-size:13px;">Yêu cầu hỗ trợ phần cứng</td>
+        <td style="padding:10px 14px; font-size:13px;">Có sẵn trên hầu hết mọi thiết bị Wi-Fi tiêu chuẩn qua tập lệnh API thông thường.</td>
+        <td style="padding:10px 14px; font-size:13px;">Yêu cầu firmware và driver của chip Wi-Fi hỗ trợ mở quyền trích xuất dữ liệu tầng PHY (Qualcomm, Broadcom, Intel, MaxLinear...).</td>
       </tr>
     </tbody>
   </table>
 
+  <h3>2.3 Cơ chế thăm dò tích cực &amp; Thách thức từ quản lý năng lượng của thiết bị di động</h3>
+  <p>
+    Khi người trong nhà không sử dụng Internet, mạng Wi-Fi sẽ ở trạng thái rảnh rỗi. Khi không có gói tin truyền nhận, đầu thu Rx không thể cập nhật thông tin trạng thái kênh để theo dõi chuyển động. Để duy trì việc giám sát, hệ thống triển khai cơ chế <strong>Active Probing</strong>:
+  </p>
+  <ul>
+    <li>Router chủ động gửi định kỳ các khung truyền thăm dò (như khung rỗng <em>Null Data Packet</em>, khung điều khiển <em>QoS Null</em>, hoặc bản tin <em>ARP Ping</em>) đến các thiết bị trong mạng.</li>
+    <li>Thiết bị nhận phản hồi bằng khung ACK hoặc gói tin trả lời, qua đó đầu thu trích xuất được ma trận CSI tại thời điểm đó.</li>
+  </ul>
+
   <div class="note-box">
-    <strong>Lưu ý kỹ thuật:</strong> Các giải pháp cảm biến chuyển động thế hệ đầu (giai đoạn 2017–2019) dựa thuần túy trên RSSI đều đã bị đào thải vì tỷ lệ báo động giả vượt quá mức chịu đựng của người dùng. Mọi hệ thống thương mại đáng tin cậy hiện nay đều bắt buộc phải xây dựng trên nền tảng dữ liệu CSI.
+    <strong>Lưu ý về tần số lấy mẫu (Sampling Rate):</strong><br>
+    Tần số thăm dò thường được cấu hình trong khoảng <strong>10 Hz đến 30 Hz</strong> (10–30 gói/giây). Tuy nhiên, việc nhận diện bước chân người trong thực tế <strong>không thể chỉ kết luận đơn giản dựa trên định lý lấy mẫu Nyquist đối với tần số bước chân</strong> (nhịp chân đi khoảng 1.5–2 Hz). Khi một người di chuyển, cử động vung tay và vung chân tạo ra các dịch chuyển Doppler phức tạp có phổ tần số trải rộng đến hàng chục Hz. Đồng thời, việc xử lý còn phụ thuộc vào độ trễ bộ đệm, SNR của từng sóng mang con và thuật toán trích xuất đặc trưng thời gian - tần số. Tần số thăm dò cần được cân bằng giữa độ mịn của phổ Doppler và mức chiếm dụng tài nguyên kênh truyền.
   </div>
 
-  <h3>2.3 Cơ chế phát gói tin thăm dò tích cực (Active Probing) và giải pháp khắc phục Client Deep Sleep</h3>
-  <p>
-    Một bài toán kỹ thuật lớn đặt ra: Nếu người dùng trong nhà đang ngủ hoặc không ai sử dụng mạng, đường truyền Wi-Fi sẽ hoàn toàn tĩnh lặng. Nếu không có gói tin nào được truyền qua lại, đầu thu Rx sẽ không có dữ liệu để tính toán CSI.
-  </p>
-  <p>
-    Để giải quyết bài toán này, các hệ thống thương mại triển khai cơ chế <strong>Active Probing</strong>:
-  </p>
+  <p><strong>Thách thức từ cơ chế quản lý năng lượng của điện thoại thông minh:</strong></p>
   <ul>
-    <li>Gateway định kỳ tạo ra các khung truyền thăm dò tích cực (chẳng hạn như gói tin rỗng không tải <em>Null Data Packet - NDP</em>, khung điều khiển <em>QoS Null Frames</em>, hoặc bản tin <em>ARP Ping</em> tầng mạng).</li>
-    <li>Các gói tin này được gửi định kỳ với tần số kiểm tra cố định: từ <strong>10 Hz đến 30 Hz</strong> (10–30 gói/giây). Tần số này đủ dày để bắt trọn nhịp bước chân của người di chuyển (bước chân người có tần số vận động từ 1.5 Hz đến 3 Hz, theo định lý Nyquist cần tần số lấy mẫu tối thiểu từ 6 Hz trở lên), đồng thời không gây nghẽn băng thông mạng dữ liệu thông thường.</li>
+    <li><strong>Cơ chế quản lý năng lượng (Power Management / Doze Mode):</strong> Smartphone không phải lúc nào cũng ngắt hoàn toàn kết nối Wi-Fi khi tắt màn hình, nhưng các hệ điều hành di động (iOS, Android) tự động kích hoạt các chính sách tiết kiệm pin: giãn chu kỳ thức dậy nhận gói (DTIM), tạm dừng các tiến trình chạy ngầm, và chỉ kích hoạt truyền gói tin định kỳ không liên tục. Điều này khiến chuỗi lấy mẫu CSI bị đứt đoạn, khoảng cách giữa các gói tin không đều đặn, gây khó khăn lớn cho việc tính toán biến thiên trường sóng liên tục.</li>
+    <li><strong>Giải pháp trong thực tế:</strong> Các hệ thống thương mại ưu tiên lựa chọn <strong>các thiết bị cắm nguồn điện cố định (Mains-powered static devices)</strong> như Smart TV, loa thông minh, ổ cắm thông minh. Các thiết bị này không bị giới hạn bởi chế độ ngủ sâu tiết kiệm pin và có vị trí không gian cố định, đảm bảo chuỗi đo đạc ổn định.</li>
   </ul>
 
-  <div class="diagram-box">
-    <pre class="code-diagram">
-Router Gateway (Rx)                                         Thiết bị IoT Cố định (Tx)
-        │                                                              │
-        │── Khung QoS Null Frame (Tần số 20 Hz, chu kỳ 50ms) ─────────►│
-        │◄─ Khung ACK / Phản hồi lớp PHY ──────────────────────────────│
-        │                                                              │
-[Trích xuất CSI từ Header PHY của gói ACK]                             │
-[Đưa ma trận CSI vào bộ đệm tính toán]                                 │
-        │                                                              │
-        │── Khung QoS Null Frame tiếp theo ───────────────────────────►│
-        │◄─ Khung ACK / Phản hồi lớp PHY ──────────────────────────────│
-    </pre>
-    <div class="diagram-caption">Hình 3: Chu kỳ trao đổi khung truyền thăm dò tích cực (Active Probing) giữa Gateway và Client cố định.</div>
-  </div>
-
-  <p><strong>Giải pháp kỹ thuật vượt qua rào cản "Client Deep Sleep"</strong></p>
-  <p>
-    Trên lý thuyết, nhiều người kỳ vọng chiếc điện thoại smartphone trong túi người dùng có thể làm đối tác thu phát sóng. Tuy nhiên trong thực tế triển khai, điều này hoàn toàn bất khả thi:
-  </p>
-  <ul>
-    <li>Hệ điều hành iOS (Apple) và Android có cơ chế quản lý năng lượng cực kỳ nghiêm ngặt. Khi màn hình tắt sau vài chục giây, điện thoại lập tức chuyển sang chế độ ngủ sâu (Deep Sleep / Doze Mode). Chip Wi-Fi trên điện thoại ngắt liên lạc định kỳ, chỉ thức dậy sau vài phút để nhận bản tin DTIM beacon, làm đứt gãy hoàn toàn chuỗi đo đạc CSI.</li>
-    <li>Hơn nữa, điện thoại liên tục kích hoạt tính năng MAC Randomization (ngẫu nhiên hóa địa chỉ MAC) khi quét mạng, khiến router khó duy trì định danh cảm biến ổn định.</li>
-  </ul>
-  <p>
-    <em>Cách giải quyết trong kiến trúc thương mại:</em> Các hệ thống như Comcast Xfinity, Origin AI, hay Plume <strong>hoàn toàn không dựa vào điện thoại di động để làm mốc cảm biến</strong>. Thay vào đó, hệ thống tự động quét mạng nội bộ và lựa chọn các <strong>thiết bị IoT cắm điện cố định (Mains-powered static clients)</strong>: Smart TV, loa thông minh cắm ổ điện, ổ cắm thông minh, hoặc giữa các nút Mesh Pods với nhau. Các thiết bị này không bao giờ rơi vào Deep Sleep ngắt Wi-Fi, vị trí vật lý hoàn toàn cố định trong phòng, tạo nên các đường liên kết vô tuyến chuẩn mực có độ ổn định hình học cao.
-  </p>
-
-  <h3>2.4 Ranh giới năng lực xử lý: Chuyển động lớn (Macro-Motion) vs. Chuyển động nhỏ (Micro-Motion)</h3>
+  <h3>2.4 Ranh giới năng lực kỹ thuật: Chuyển động lớn (Macro) vs. Chuyển động nhỏ (Micro)</h3>
   <div class="diagram-box">
     <pre class="code-diagram">
 Năng lượng biến thiên CSI
       ▲
       │       ┌────────────────────────────────────────────────────────┐
  Cao  │       │ NHÓM CHUYỂN ĐỘNG LỚN (MACRO-MOTION)                    │
-      │       │ - Người bước đi, chạy nhảy, mở tung cửa phòng          │
-      │       │ - Tín hiệu vượt trội hoàn toàn sàn nhiễu (SNR cao)     │
-      │       │ - ĐÃ THƯƠNG MẠI HÓA ỔN ĐỊNH VÀ BÁN ĐẠI TRÀ            │
+      │       │ - Người bước đi, chạy nhảy, mở/đóng cửa lớn            │
+      │       │ - Tín hiệu vượt trội so với sàn nhiễu môi trường       │
+      │       │ - ĐÃ TRIỂN KHAI THƯƠNG MẠI ỔN ĐỊNH                     │
       │       └────────────────────────────────────────────────────────┘
       │
-      │ - - - - - Ngưỡng phân định độ tin cậy thương mại - - - - - - - -
+      │ - - - - - Ngưỡng phân định năng lực thực tế - - - - - - - - - -
       │
       │       ┌────────────────────────────────────────────────────────┐
       │       │ NHÓM CHUYỂN ĐỘNG NHỎ (MICRO-MOTION)                    │
-      │       │ - Lồng ngực thở khi nằm ngủ, nhịp đập mạch máu         │
-      │       │ - Ngón tay cử động nhẹ, người ngồi im đọc sách         │
-      │       │ - Tín hiệu cực yếu, dễ bị chìm trong rung động nhà thờ │
- Thấp │       │ - CHƯA THỂ THƯƠNG MẠI HÓA TRÊN WI-FI GIA DỤNG TIÊU CHUẨN│
+      │       │ - Cử động lồng ngực khi thở tĩnh, nhịp tim             │
+      │       │ - Ngón tay gõ nhẹ, người ngồi im đọc sách              │
+      │       │ - Tín hiệu biên độ rất nhỏ, dễ chìm trong nhiễu        │
+      │       │ - RẤT KHÓ TRIỂN KHAI ỔN ĐỊNH TRÊN WI-FI GIA DỤNG       │
       │       └────────────────────────────────────────────────────────┘
       └────────────────────────────────────────────────────────────────► Thời gian
     </pre>
-    <div class="diagram-caption">Hình 4: Phổ năng lượng biến thiên CSI phân định năng lực Macro-Motion và Micro-Motion.</div>
+    <div class="diagram-caption">Hình 3: Phổ năng lượng biến thiên CSI phân định năng lực Macro-Motion và Micro-Motion.</div>
   </div>
 
   <ul>
-    <li><strong>Nhóm chuyển động lớn (Macro-Motion) &mdash; Đã làm chủ trong thương mại:</strong>
-      Bước chân người lớn đi lại trong phòng, người chạy, vung tay, mở cửa phòng lớn. Cơ thể người cắt ngang các chùm tia Fresnel chính, tạo nên sự dịch chuyển pha đột ngột trên hàng loạt sóng mang con cùng lúc. Tỷ số tín hiệu trên nhiễu (SNR) rất cao, dễ dàng nhận diện bằng thuật toán phương sai biên độ kết hợp biến đổi sóng con (Wavelet Transform).
+    <li><strong>Nhóm chuyển động lớn (Macro-Motion) &mdash; Năng lực đã được kiểm chứng:</strong>
+      Bước chân người lớn đi lại trong phòng, mở/đóng cửa phòng, ngồi xuống hoặc đứng dậy. Cơ thể người lớn chắn ngang và làm lệch hướng một tỷ lệ đáng kể các tia sóng trong vùng phản xạ, tạo ra biến thiên biên độ và pha rõ rệt vượt qua sàn nhiễu nền. Nhóm chuyển động này có thể nhận diện tin cậy bằng các thuật toán phân tích năng lượng và biến đổi sóng con.
     </li>
     <li><strong>Nhóm chuyển động nhỏ (Micro-Motion) &mdash; Thách thức lớn ngoài phòng lab:</strong>
-      Lồng ngực phập phồng theo nhịp thở (dịch chuyển chỉ từ vài mm đến 1 cm), rung động nhịp tim, cử động ngón tay, người nằm im ngủ trên giường. Biến thiên pha cực nhỏ, dễ dàng bị nhấn chìm bởi rung lắc của quạt trần, máy giặt đang vắt, hoặc người đi lại ở tầng trên. Nếu người dùng bước vào phòng bật đèn WiZ rồi ngồi yên đọc sách, đèn vẫn sẽ tắt sau vài phút. Các thiết bị y tế chuyên dụng theo dõi người già (như Aloe Care Health Smart Hub) hiện nay đều phải tích hợp chip <strong>Radar sóng milimet (mmWave 60GHz)</strong> chứ không thể dựa vào sóng Wi-Fi gia dụng thông thường.
+      Cử động phập phồng lồng ngực theo nhịp thở khi nằm ngủ tĩnh, rung động mạch đập, cử động ngón tay, hoặc người ngồi im làm việc. Độ dịch chuyển bề mặt cơ thể chỉ tính bằng milimét, tạo ra biến thiên pha cực nhỏ. Tín hiệu này rất dễ bị chìm lấp hoặc gây sai lệch bởi các rung động cơ học trong tòa nhà (quạt máy, rung từ đường giao thông, điều hòa). Hiện nay, việc theo dõi các vi chuyển động sinh học đòi hỏi môi trường cực kỳ yên tĩnh hoặc phải sử dụng các phần cứng chuyên dụng (như Radar mmWave tần số cao với chùm sóng hẹp) thay vì sóng Wi-Fi gia dụng thông thường.
     </li>
   </ul>
 
   <!-- SECTION 3 -->
-  <h2 id="sec-3">3. PHÂN TÍCH CHI TIẾT KIẾN TRÚC HỆ THỐNG CỦA CÁC GIẢI PHÁP THƯƠNG MẠI</h2>
+  <h2 id="sec-3">3. KHẢO SÁT MỘT SỐ MÔ HÌNH TRIỂN KHAI THỰC TẾ</h2>
 
-  <!-- 3.1 Comcast -->
+  <!-- Case 1: Comcast -->
   <div class="case-card">
     <div class="case-title">
-      <span>3.1 Comcast Xfinity WiFi Motion</span>
-      <span class="badge" style="background:#e8f0fe; color:#1a73e8;">GATEWAY AP + IOT CỐ ĐỊNH</span>
+      <span>3.1 Tích hợp trên gateway mạng gia đình: Trường hợp Comcast Xfinity WiFi Motion</span>
+      <span class="badge" style="background:#e8f0fe; color:#1a73e8;">GATEWAY TÍCH HỢP</span>
     </div>
     <p>
-      Hệ thống Xfinity WiFi Motion của Comcast là minh chứng điển hình cho mô hình khai thác trực tiếp trên router gia đình của nhà mạng viễn thông:
+      Comcast là ví dụ tiêu biểu cho mô hình tích hợp tính năng cảm biến chuyển động trực tiếp lên thiết bị mạng gia đình (modem gateway):
     </p>
     <ul>
-      <li><strong>Cấu trúc phần cứng:</strong> Gateway trung tâm XB7/XB8 (SoC Broadcom BCM4908 / MaxLinear AnyWAN với chip Wi-Fi 6/6E) phối hợp cùng xFi Pods và các thiết bị IoT cắm điện cố định (Smart TV, loa Echo, loa Apple HomePod, thiết bị streaming Roku).</li>
-      <li><strong>Cơ chế liên kết vô tuyến:</strong> Khi người dùng kích hoạt trạng thái "Vắng nhà" (Away Mode), Gateway tự động chọn ra từ 3 đến 5 thiết bị Wi-Fi cố định có chỉ số liên kết sóng (RSSI/SNR) ổn định nhất để thiết lập mạng lưới cảm biến. Gateway gửi gói tin thăm dò Active Probe tới các thiết bị này ở tần số 10–20 Hz để trích xuất CSI liên tục.</li>
-      <li><strong>Cơ chế phối hợp an ninh:</strong> Gateway phối hợp chặt chẽ với camera chuông cửa Xfinity Video Doorbell và các cảm biến cửa xFi Door Sensors. Nếu cảm biến cửa mở mà chuông cửa ngoài sảnh không nhận diện được người nhà, hệ thống lập tức theo dõi luồng CSI trên Gateway để phát hiện hướng di chuyển của đối tượng trong nhà.</li>
+      <li><strong>Định vị tính năng:</strong> Comcast triển khai tính năng WiFi Motion như một phần của dịch vụ an ninh gia đình, tập trung vào ca sử dụng: <strong>phát hiện chuyển động lớn khi kích hoạt chế độ "Vắng nhà" (Away Mode)</strong>.</li>
+      <li><strong>Cơ chế hoạt động:</strong> Khi chủ nhà bật chế độ Away, Gateway chính phối hợp với các thiết bị mạng mở rộng (xFi Pods) và các thiết bị IoT gia đình được kết nối ổn định để theo dõi biến động trường sóng. Khi phát hiện có chuyển động bất thường trong nhà, hệ thống phát cảnh báo đến ứng dụng của người dùng để phối hợp kiểm tra cùng camera chuông cửa (Xfinity Video Doorbell).</li>
+      <li><strong>Phạm vi kỹ thuật:</strong> Hệ thống định vị rõ mục tiêu vào phát hiện chuyển động lớn (bước chân người đi lại) và không cam kết nhận diện vi chuyển động tĩnh hay theo dõi sinh học khi có người đang sinh hoạt trong nhà.</li>
     </ul>
   </div>
 
-  <!-- 3.2 Verisure -->
+  <!-- Case 2: WiZ -->
   <div class="case-card">
     <div class="case-title">
-      <span>3.2 Verisure Beyond Sight (Hợp tác Origin AI &amp; Arlo)</span>
-      <span class="badge" style="background:#e6f4ea; color:#137333;">BÁO ĐỘNG TRUNG TÂM + ĐIỂM MÙ RIÊNG TƯ</span>
+      <span>3.2 Phát hiện chuyển động điều khiển chiếu sáng: Trường hợp WiZ SpaceSense (Signify)</span>
+      <span class="badge" style="background:#e6f4ea; color:#137333;">CHIẾU SÁNG TỰ ĐỘNG</span>
     </div>
     <p>
-      Verisure (tập đoàn an ninh vận hành tại 18 quốc gia Châu Âu) xây dựng hệ thống an ninh đa tầng phối hợp công nghệ Wi-Fi Vision:
+      Sản phẩm đèn thông minh WiZ của Tập đoàn Signify là giải pháp ứng dụng sóng Wi-Fi vào bài toán tự động hóa chiếu sáng mà không cần lắp đặt thêm cảm biến hồng ngoại (PIR):
     </p>
     <ul>
-      <li><strong>Cấu trúc phần cứng:</strong> Bộ điều khiển trung tâm (Alarm Hub - VBox) tích hợp kết nối Wi-Fi, sóng Sub-GHz chuyên dụng cho cảm biến và module SIM 4G LTE kết nối về trung tâm phản ứng báo động ARC; kết hợp camera Arlo Pro ngoài trời.</li>
-      <li><strong>Cơ chế Wi-Fi Vision:</strong> Tại phòng ngủ và phòng tắm của gia chủ, Verisure cam kết không lắp bất kỳ camera ghi hình nào. Thay vào đó, Hub trung tâm và các node phụ thiết lập trường sóng Wi-Fi phủ kín không gian phòng ngủ.</li>
-      <li><strong>Cơ chế kích hoạt kép (Dual-Factor Verification):</strong> Khi cảm biến từ gắn cửa sổ phòng ngủ báo rung hoặc mở lúc nửa đêm, còi chưa vội hú. Hub lập tức kích hoạt Wi-Fi Vision quét trường sóng phòng ngủ với tần suất cao trong 5 giây. Nếu dữ liệu CSI ghi nhận biến dạng khớp với thể tích và bước chân người lớn, hệ thống lập tức nâng cấp cảnh báo lên mức "Xâm nhập đã xác thực" (Verified Intrusion), truyền tín hiệu qua mạng 4G về trung tâm ARC để nhân viên an ninh gọi cảnh sát khẩn cấp.</li>
+      <li><strong>Nguyên lý hoạt động đã công bố:</strong> Hệ thống yêu cầu <strong>tối thiểu 2 bóng đèn WiZ lắp đặt trong cùng một phòng</strong>, đặt cách nhau trong khoảng cách khuyến nghị từ 2 mét đến 6 mét. Khi hai bóng đèn hoạt động và giao tiếp qua sóng Wi-Fi, sự xuất hiện và di chuyển của người trong phòng làm xáo trộn trường sóng giữa các bóng đèn. Khi phát hiện sự xáo trộn vượt ngưỡng cài đặt, hệ thống tự động kích hoạt bật sáng đèn; khi người dùng rời đi và không còn chuyển động, đèn tự động tắt sau khoảng thời gian đếm lùi đã thiết lập.</li>
+      <li><strong>Giới hạn thực tế trong vận hành:</strong> Tính năng SpaceSense được thiết kế để phát hiện <strong>bước chân người di chuyển vào phòng</strong>. Nếu người dùng bước vào phòng rồi ngồi yên đọc sách hoặc làm việc mà không có cử động lớn, hệ thống sẽ coi là không có chuyển động và đèn vẫn có thể tự tắt sau khoảng thời gian timeout, đòi hỏi người dùng phải cử động để đèn bật lại.</li>
     </ul>
   </div>
 
-  <!-- 3.3 ADT -->
-  <div class="case-card">
-    <div class="case-title">
-      <span>3.3 ADT+ &amp; Origin TruShield</span>
-      <span class="badge" style="background:#e8f0fe; color:#1a73e8;">EDGE-AI PHÂN LOẠI DÁNG ĐI + GOOGLE NEST</span>
-    </div>
-    <p>
-      Sau thương vụ mua lại Origin AI vào tháng 02/2026, ADT (tập đoàn an ninh lớn nhất nước Mỹ) đã tích hợp sâu nền tảng TruShield vào hệ sinh thái an ninh ADT+:
-    </p>
-    <ul>
-      <li><strong>Cấu trúc phần cứng:</strong> Bộ điều khiển ADT Smart Home Base kết nối với camera Google Nest Cams (ngoài sân, sảnh chính, hành lang chung) và tận dụng các thiết bị Wi-Fi gia đình hiện hữu.</li>
-      <li><strong>Cơ chế phân loại dáng đi (Gait Classification via ML):</strong> Ứng dụng mô hình học máy (SVM / Random Forest tối ưu cho vi điều khiển) để phân tích các sóng mang con. Khi có chuyển động, thuật toán phân tích năng lượng Doppler và độ trễ pha để bóc tách giữa bước chân người lớn và chuyển động của chó mèo lớn (10–20 kg).</li>
-      <li><strong>Phối hợp hệ thống:</strong> Khi phát hiện chuyển động con người tại các góc khuất, hệ thống ADT+ lập tức kích hoạt camera Google Nest gần đó quay quét về hướng hành lang để sẵn sàng ghi hình nếu kẻ xâm nhập di chuyển ra khu vực chung.</li>
-    </ul>
-  </div>
-
-  <!-- 3.4 WiZ SpaceSense -->
-  <div class="case-card">
-    <div class="case-title">
-      <span>3.4 WiZ SpaceSense (Signify)</span>
-      <span class="badge" style="background:#e6f4ea; color:#137333;">LOCAL MESH 2 BÓNG ĐÈN &bull; 100% ON-DEVICE</span>
-    </div>
-    <p>
-      Hệ thống SpaceSense của thương hiệu đèn thông minh WiZ (Tập đoàn Signify / Philips) là mô hình triển khai độc đáo, tối giản và tự vận hành hoàn toàn cục bộ:
-    </p>
-    <ul>
-      <li><strong>Không cần Gateway hay Hub:</strong> Chỉ cần tối thiểu 2 bóng đèn WiZ lắp trong cùng một phòng, cách nhau từ 2 mét đến 6 mét.</li>
-      <li><strong>Cơ chế liên kết và đo đạc:</strong> Trong phòng, 2 bóng đèn tự động thiết lập một cặp liên kết vô tuyến cục bộ qua cơ chế phát quảng bá nội bộ (Local Wi-Fi Mesh Broadcast). Một bóng phát xung tín hiệu (Tx), bóng còn lại thu nhận (Rx). Tín hiệu trao đổi trực tiếp giữa 2 bóng đèn, không đi qua router gia đình và không gửi dữ liệu ra ngoài Internet.</li>
-      <li><strong>Xử lý 100% tại biên (Local Edge Processing):</strong> Vi điều khiển trên bóng đèn thu (Rx) tự phân tích độ xáo trộn trường sóng. Khi có người bước vào giữa 2 bóng đèn, rơ-le hoặc mạch điều khiển LED bật sáng trong thời gian <strong>dưới 200 mili-giây</strong>. Khi người ra khỏi phòng và không còn bước chân, bộ đếm thời gian (timeout từ 3–10 phút) sẽ tự kích hoạt lệnh tắt đèn.</li>
-    </ul>
-  </div>
-
-  <!-- 3.5 Plume Motion -->
-  <div class="case-card">
-    <div class="case-title">
-      <span>3.5 Plume Motion (Nền tảng OpenSync)</span>
-      <span class="badge" style="background:#f1f3f4; color:#3c4043;">MESH PHÂN TÁN &bull; ĐỊNH VỊ PHÂN VÙNG</span>
-    </div>
-    <p>
-      Plume cung cấp nền tảng phần mềm dựa trên kiến trúc nguồn mở OpenSync, được triển khai trên hơn 100 nhà mạng băng rộng toàn cầu:
-    </p>
-    <ul>
-      <li><strong>Cấu trúc phần cứng:</strong> Cụm 2 đến 4 nút Plume SuperPod cắm trực tiếp vào ổ cắm tường tại các phòng khác nhau.</li>
-      <li><strong>Đo lường liên kết Mesh (Backhaul Link Sensing):</strong> Đo lường đồng thời ma trận CSI trên toàn bộ các đường truyền kết nối chéo giữa các nút SuperPod trên cả hai dải tần 2.4 GHz và 5 GHz.</li>
-      <li><strong>Phân vùng không gian (Spatial Multi-Zone):</strong> Nhờ nhiều cặp liên kết chéo nhau, thuật toán của Plume định vị tương đối vùng chuyển động: phân biệt rõ chuyển động đang diễn ra tại phòng khách, phòng bếp hay tầng 2.</li>
-    </ul>
-  </div>
-
-  <!-- 3.6 Linksys Aware -->
+  <!-- Case 3: Linksys -->
   <div class="case-card failed">
     <div class="case-title">
-      <span>3.6 Linksys Aware (2019 &mdash; 2024): Phân tích nguyên nhân thất bại kỹ thuật</span>
-      <span class="badge" style="background:#fce8e6; color:#c5221f;">ĐÃ ĐÓNG CỬA HOÀN TOÀN NĂM 2024</span>
+      <span>3.3 Bài học kỹ thuật từ thử nghiệm trước đây: Trường hợp Linksys Aware (2019 &mdash; 2024)</span>
+      <span class="badge" style="background:#fce8e6; color:#c5221f;">DỪNG DỊCH VỤ NĂM 2024</span>
     </div>
     <p>
-      Ra mắt vào cuối năm 2019 trên dòng router Mesh Linksys Velop, Linksys Aware là sản phẩm Wi-Fi Sensing tiêu dùng đầu tiên trên thế giới nhưng đã chính thức bị đóng cửa và khai tử hoàn toàn vào năm 2024 vì 3 nguyên nhân kỹ thuật cốt lõi:
+      Linksys Aware là một trong những sản phẩm thương mại tiêu dùng đầu tiên triển khai tính năng cảm biến chuyển động qua mạng Wi-Fi Mesh (dòng Linksys Velop), ra mắt năm 2019 và chính thức dừng cung cấp dịch vụ vào năm 2024. Phân tích dưới góc độ hệ thống kỹ thuật cho thấy những bài học quan trọng:
     </p>
     <ol>
-      <li><strong>Kiến trúc thuật toán thời kỳ đầu thiếu bộ lọc nhiễu:</strong> Chưa có mô hình phân loại dáng đi hiệu quả. Khi thú cưng chạy qua phòng hoặc quạt máy quay, hệ thống liên tục gửi thông báo cảnh báo đẩy lên điện thoại người dùng, gây ra hiện tượng mỏi mệt vì cảnh báo giả (Notification Fatigue).</li>
-      <li><strong>Độ trễ do phụ thuộc vào xử lý đám mây (Cloud Dependency):</strong> Gửi các đặc trưng biến động sóng lên máy chủ đám mây để phân tích rồi mới trả kết quả về điện thoại. Khi mạng Internet chập chờn, cảnh báo bị trễ từ vài giây đến nửa phút.</li>
-      <li><strong>Mô hình triển khai cô lập (Silo System):</strong> Hoạt động như một tính năng độc lập trên router, không thể kết nối hay kích hoạt camera an ninh sẵn có trong nhà, không có còi hú tại chỗ, người dùng chỉ nhận được dòng thông báo chữ thô sơ "Có chuyển động" rồi tắt tính năng sau thời gian ngắn.</li>
+      <li><strong>Thách thức về tỷ lệ báo động giả:</strong> Các phiên bản thuật toán đời đầu dựa nhiều vào biến thiên năng lượng tổng thể, dẫn đến việc chuyển động của vật nuôi hoặc các nhiễu động môi trường dễ kích hoạt thông báo sai, gây cảm giác phiền hà cho người dùng.</li>
+      <li><strong>Sự phụ thuộc vào xử lý phân tán và độ trễ:</strong> Việc gửi dữ liệu phân tích về máy chủ đám mây có thể gây ra độ trễ cảnh báo trong những thời điểm đường truyền mạng không ổn định.</li>
+      <li><strong>Mô hình tính năng độc lập thiếu phối hợp:</strong> Khi cung cấp dưới dạng một tính năng cảnh báo độc lập không gắn liền với chuỗi thiết bị hành động cụ thể (như không có còi hú tại chỗ hay không tự động phối hợp với camera an ninh để kiểm chứng), thông báo "có chuyển động" thuần túy chưa đem lại giá trị sử dụng trọn vẹn cho khách hàng an ninh.</li>
     </ol>
   </div>
 
   <!-- SECTION 4 -->
-  <h2 id="sec-4">4. KIẾN TRÚC PHỐI HỢP ĐA CẢM BIẾN TRONG HỆ THỐNG THỰC TẾ</h2>
+  <h2 id="sec-4">4. MÔ HÌNH PHỐI HỢP ĐA CẢM BIẾN TRONG HỆ THỐNG AN NINH</h2>
 
-  <h3>4.1 Mô hình an ninh đa lớp: Camera ngoại vi + Cảm biến tiếp xúc cửa + Wi-Fi Sensing điểm mù</h3>
+  <h3>4.1 Kiến trúc an ninh đa tầng tổng quát (Ngoại vi - Lối vào - Điểm mù riêng tư)</h3>
   <div class="diagram-box">
     <pre class="code-diagram">
 ┌────────────────────────────────────────────────────────────────────────┐
-│ VÒNG 1: NGOẠI VI &amp; LỐI VÀO (Perimeter &amp; Access Points)                 │
-│ Thiết bị: Camera ngoài trời, Chuông cửa có hình (Arlo, Google Nest,    │
-│           Xfinity Video Doorbell).                                     │
-│ Năng lực: Ghi hình khuôn mặt, nhận diện biển số, phát hiện tiếp cận    │
-│           ngoài sân bằng thuật toán thị giác máy tính (Computer Vision)│
+│ LỚP 1: NGOẠI VI &amp; KHÔNG GIAN CÔNG CỘNG (Perimeter)                     │
+│ Thiết bị: Camera ngoài trời, Chuông cửa có hình                        │
+│ Chức năng: Nhận diện tiếp cận, ghi hình khuôn mặt, cảnh báo từ xa     │
 └───────────────────────────────────┬────────────────────────────────────┘
-                                    │ Kẻ đột nhập vượt rào, cạy cửa
+                                    │ Kẻ đột nhập tiếp cận cửa
 ┌───────────────────────────────────▼────────────────────────────────────┐
-│ VÒNG 2: TIẾP GIÁP CỬA RA VÀO (Boundary Verification)                  │
-│ Thiết bị: Cảm biến tiếp xúc từ tính (Door/Window Magnetic Contacts)    │
-│ Năng lực: Bắt biến cố mở cửa hoặc phá khóa tức thời (độ trễ &lt; 10ms)    │
+│ LỚP 2: BIÊN GIỚI TIẾP XÚC CỬA (Entryway Boundary)                      │
+│ Thiết bị: Cảm biến từ gắn cửa (Door/Window Magnetic Contacts)          │
+│ Chức năng: Phát hiện trạng thái đóng/mở vật lý tức thời của cửa         │
 └───────────────────────────────────┬────────────────────────────────────┘
-                                    │ Cửa mở: Cần xác minh đột nhập thật
+                                    │ Cửa mở: Cần xác thực có người vào?
 ┌───────────────────────────────────▼────────────────────────────────────┐
-│ VÒNG 3: KHÔNG GIAN RIÊNG TƯ &amp; ĐIỂM MÙ CAMERA (Private Interior / Blinds)│
-│ Thiết bị: LƯỚI SÓNG WI-FI SENSING (Tích hợp trên Router/IoT)           │
-│ Vị trí:   Phòng ngủ chính, phòng trẻ em, phòng tắm, hành lang khuất    │
-│ Năng lực: QUÉT KHÔNG GIAN KHÔNG CẦN HÌNH ẢNH:                          │
-│           - Có vật thể mang thể tích người di chuyển vào sâu trong nhà?│
-│           - Xác thực đột nhập vòng hai trước khi kích hoạt còi hú/     │
-│             gọi cảnh sát. Bảo vệ quyền riêng tư tuyệt đối cho gia chủ. │
+│ LỚP 3: KHÔNG GIAN RIÊNG TƯ &amp; ĐIỂM MÙ CAMERA (Private Core / Blind Spot)│
+│ Thiết bị: LƯỚI SÓNG WI-FI SENSING                                      │
+│ Vị trí:   Phòng ngủ, phòng tắm, phòng thay đồ, hành lang khuất         │
+│ Chức năng: Xác thực chuyển động người bên trong mà không xâm phạm      │
+│           quyền riêng tư cá nhân (không dùng ống kính ghi hình).       │
 └────────────────────────────────────────────────────────────────────────┘
     </pre>
-    <div class="diagram-caption">Hình 5: Kiến trúc an ninh 3 vòng phối hợp Camera - Cảm biến từ - Wi-Fi Sensing điểm mù.</div>
+    <div class="diagram-caption">Hình 4: Kiến trúc an ninh 3 lớp phối hợp Camera - Cảm biến từ - Wi-Fi Sensing điểm mù.</div>
   </div>
 
-  <h3>4.2 Sơ đồ luồng ra quyết định (Decision Flow Logic) và cơ chế kích hoạt kép (Dual-Trigger)</h3>
+  <ul>
+    <li><em>Camera giám sát:</em> Cung cấp hình ảnh trực quan nhưng bị giới hạn về góc nhìn và <strong>tuyệt đối không thể lắp đặt trong các không gian riêng tư</strong> như phòng ngủ hay phòng tắm.</li>
+    <li><em>Cảm biến từ gắn cửa:</em> Nhận diện trạng thái mở cửa tức thì nhưng dễ gặp tình huống kích hoạt sai do gió giật mạnh làm rung khung cửa hoặc người nhà vô tình khép cửa chưa chặt.</li>
+    <li><em>Wi-Fi Sensing:</em> Đóng vai trò lớp cảm biến lấp đầy điểm mù, kiểm tra xem có chuyển động cơ thể người thực sự bên trong các khu vực riêng tư hay không mà không cần thu thập hình ảnh thị giác.</li>
+  </ul>
+
+  <h3>4.2 Cơ chế xác thực kích hoạt kép (Dual-Trigger Logic)</h3>
   <div class="diagram-box">
     <div class="flow-step">
       <div class="flow-badge">1</div>
       <div class="flow-content">
-        <strong>Giám sát nhàn rỗi (Low-Power Monitoring):</strong> Khi hệ thống ở chế độ kích hoạt an ninh (Armed: Away / Night), module Wi-Fi Sensing chỉ chạy ở tần số thăm dò nền rất thấp (1–2 Hz) để tiết kiệm tài nguyên tính toán của router.
+        <strong>Trạng thái giám sát nền:</strong> Khi hệ thống ở chế độ kích hoạt an ninh (Armed), hệ thống duy trì việc thăm dò ở mức độ cơ bản để tiết kiệm năng lượng tính toán.
       </div>
     </div>
     <div class="flow-step">
       <div class="flow-badge">2</div>
       <div class="flow-content">
-        <strong>Đánh thức theo sự kiện (Event Wake-up):</strong> Ngay khi cảm biến tiếp xúc cửa/cửa sổ báo trạng thái hở mạch (cạy cửa lúc nửa đêm), bộ điều khiển trung tâm gửi lệnh nội bộ kích hoạt module Wi-Fi Sensing, nâng tần suất thăm dò Active Probing lên cực đại (30 Hz).
+        <strong>Kích hoạt sự kiện biên:</strong> Khi cảm biến từ gắn cửa ghi nhận biến cố mở cửa, bộ điều khiển trung tâm gửi tín hiệu đánh thức module Wi-Fi Sensing tăng tốc độ lấy mẫu.
       </div>
     </div>
     <div class="flow-step">
       <div class="flow-badge">3</div>
       <div class="flow-content">
-        <strong>Cửa sổ thẩm định 5 giây (5-Second Evaluation Window):</strong> Module Wi-Fi Sensing trích xuất ma trận CSI liên tục trong 5 giây ngay sau khi cửa mở. Thuật toán kiểm tra sự xuất hiện của các dải tần số Doppler tương ứng với bước chân người lớn di chuyển.
+        <strong>Cửa sổ thẩm định ngắn (ví dụ: 5 giây):</strong> Module Wi-Fi Sensing theo dõi biến động trường sóng trong một khoảng thời gian ngắn ngay sau khi cửa mở để phân tích xem có bước chân di chuyển vào bên trong hay không.
       </div>
     </div>
     <div class="flow-step">
       <div class="flow-badge">4</div>
       <div class="flow-content">
         <strong>Phân luồng quyết định kép:</strong>
-        <br>&bull; <em>Nếu trường sóng tĩnh lặng (Gió giật rung cửa):</em> Hạ cấp cảnh báo, ghi log lỗi rung cửa, gửi thông báo nhẹ (Low-Priority) về ứng dụng di động; <strong>KHÔNG BẬT CÒI HÚ, KHÔNG GỌI CẢNH SÁT</strong>.
-        <br>&bull; <em>Nếu phát hiện bước chân người di chuyển vào sâu:</em> <strong>XÁC NHẬN ĐỘT NHẬP CẤP ĐỘ 1 (VERIFIED INTRUSION)</strong>. Kích hoạt còi hú tại chỗ, bật toàn bộ đèn cảnh báo và truyền bản tin khẩn cấp qua kênh LTE về trung tâm phản ứng báo động / cảnh sát.
+        <br>&bull; <em>Nếu không phát hiện bước chân người (Gió giật / Cửa rung lắc):</em> Hạ cấp cảnh báo, ghi nhận sự kiện rung cửa ngoài ý muốn, gửi thông báo mức độ thấp lên ứng dụng; <strong>KHÔNG KÍCH HOẠT CÒI BÁO ĐỘNG</strong>.
+        <br>&bull; <em>Nếu ghi nhận chuyển động cơ thể người di chuyển vào trong:</em> <strong>XÁC NHẬN SỰ CỐ ĐỘT NHẬP (VERIFIED EVENT)</strong>. Lập tức kích hoạt còi hú tại chỗ, bật đèn chiếu sáng và gửi cảnh báo khẩn cấp.
       </div>
     </div>
   </div>
 
   <!-- SECTION 5 -->
-  <h2 id="sec-5">5. ĐÁNH GIÁ THỰC NGHIỆM: THÁCH THỨC KỸ THUẬT &amp; TỶ LỆ LỖI HIỆN TRƯỜNG</h2>
+  <h2 id="sec-5">5. ĐÁNH GIÁ MỨC ĐỘ SẴN SÀNG CÔNG NGHỆ (TRL) THEO CHỨC NĂNG</h2>
 
-  <h3>5.1 Bảng tổng hợp so sánh kiến trúc và thông số kỹ thuật các hệ thống thương mại</h3>
+  <h3>5.1 Phân loại TRL theo từng nhóm chức năng kỹ thuật</h3>
   <table style="width:100%; border-collapse: collapse; margin-top: 14px;">
     <thead>
       <tr style="background:#f1f3f4; border-bottom:2px solid var(--border-color);">
-        <th style="padding:10px 14px; text-align:left; font-size:13px;">Hệ thống</th>
-        <th style="padding:10px 14px; text-align:left; font-size:13px;">Cấu trúc phần cứng</th>
-        <th style="padding:10px 14px; text-align:left; font-size:13px;">Vị trí xử lý</th>
-        <th style="padding:10px 14px; text-align:left; font-size:13px;">Phân loại người/vật</th>
-        <th style="padding:10px 14px; text-align:left; font-size:13px;">Vai trò kỹ thuật</th>
+        <th style="padding:10px 14px; text-align:left; font-size:13px;">Nhóm Chức Năng Kỹ Thuật</th>
+        <th style="padding:10px 14px; text-align:center; font-size:13px; width:120px;">Mức Độ TRL</th>
+        <th style="padding:10px 14px; text-align:left; font-size:13px;">Thực Trạng Đánh Giá Kỹ Thuật</th>
       </tr>
     </thead>
     <tbody>
       <tr style="border-bottom:1px solid #eee;">
-        <td style="padding:10px 14px; font-weight:600; font-size:13px;">Xfinity WiFi Motion</td>
-        <td style="padding:10px 14px; font-size:13px;">Gateway XB7/XB8 + xFi Pods + IoT Clients</td>
-        <td style="padding:10px 14px; font-size:13px;">Firmware Gateway (Edge)</td>
-        <td style="padding:10px 14px; font-size:13px;">Lọc thú cưng nhỏ (&lt;10 kg)</td>
-        <td style="padding:10px 14px; font-size:13px;">Phát hiện chuyển động lớn khi kích hoạt chế độ Away</td>
+        <td style="padding:10px 14px; font-weight:600; font-size:13px;">Phát hiện chuyển động lớn (Macro-Motion) / Hiện diện cơ bản</td>
+        <td style="padding:10px 14px; text-align:center; font-size:13px;"><span class="badge" style="background:#e6f4ea; color:#137333;">TRL 8 &ndash; 9</span></td>
+        <td style="padding:10px 14px; font-size:13px;"><strong>Khả thi cao:</strong> Nhận diện bước chân người đi lại trong phòng, mở/đóng cửa lớn. Đã được tích hợp ổn định trong các sản phẩm chiếu sáng tự động (WiZ SpaceSense) và an ninh nhà vắng (Comcast Xfinity).</td>
       </tr>
       <tr style="border-bottom:1px solid #eee;">
-        <td style="padding:10px 14px; font-weight:600; font-size:13px;">Beyond Sight (Verisure)</td>
-        <td style="padding:10px 14px; font-size:13px;">VBox Alarm Hub + Cảm biến Sub-GHz + Camera Arlo</td>
-        <td style="padding:10px 14px; font-size:13px;">Hub trung tâm (Edge)</td>
-        <td style="padding:10px 14px; font-size:13px;">Nhận diện thể tích người</td>
-        <td style="padding:10px 14px; font-size:13px;">Lớp xác minh đột nhập vòng hai tại điểm mù camera phòng ngủ</td>
+        <td style="padding:10px 14px; font-weight:600; font-size:13px;">Phân vùng không gian (Zone Localization) trong mạng Mesh</td>
+        <td style="padding:10px 14px; text-align:center; font-size:13px;"><span class="badge" style="background:#fef7e0; color:#b06000;">TRL 5 &ndash; 6</span></td>
+        <td style="padding:10px 14px; font-size:13px;"><strong>Khả thi có điều kiện:</strong> Xác định tương đối chuyển động đang diễn ra tại phòng nào dựa trên cặp liên kết giữa các nút Mesh. Độ chính xác phụ thuộc chặt chẽ vào mật độ node, khoảng cách giữa các node và cấu trúc vật liệu ngăn cách giữa các phòng.</td>
       </tr>
       <tr style="border-bottom:1px solid #eee;">
-        <td style="padding:10px 14px; font-weight:600; font-size:13px;">TruShield (ADT)</td>
-        <td style="padding:10px 14px; font-size:13px;">ADT Smart Base + Google Nest Cams + Wi-Fi Hub</td>
-        <td style="padding:10px 14px; font-size:13px;">Cục bộ kết hợp Cloud</td>
-        <td style="padding:10px 14px; font-size:13px;">Có (Học máy dáng đi người vs. vật nuôi)</td>
-        <td style="padding:10px 14px; font-size:13px;">Lớp cảnh giới vô hình lấp điểm mù cho chuỗi camera</td>
+        <td style="padding:10px 14px; font-weight:600; font-size:13px;">Phân loại đối tượng (Người lớn vs. Thú cưng / Quạt máy)</td>
+        <td style="padding:10px 14px; text-align:center; font-size:13px;"><span class="badge" style="background:#fef7e0; color:#b06000;">TRL 5 &ndash; 6</span></td>
+        <td style="padding:10px 14px; font-size:13px;"><strong>Đang phát triển:</strong> Các thuật toán phân tích đặc trưng Doppler bước chân giúp giảm bớt báo động sai, nhưng vẫn tồn tại tỷ lệ nhầm lẫn khi gặp vật nuôi kích thước lớn hoặc đồ vật chuyển động nhanh.</td>
       </tr>
       <tr style="border-bottom:1px solid #eee;">
-        <td style="padding:10px 14px; font-weight:600; font-size:13px;">SpaceSense (WiZ)</td>
-        <td style="padding:10px 14px; font-size:13px;">Tối thiểu 2 bóng đèn WiZ trong 1 phòng</td>
-        <td style="padding:10px 14px; font-size:13px;">Vi điều khiển bóng đèn (100% On-Device)</td>
-        <td style="padding:10px 14px; font-size:13px;">Không phân biệt (Mọi chuyển động lớn)</td>
-        <td style="padding:10px 14px; font-size:13px;">Tự động kích hoạt mạch đóng ngắt chiếu sáng (&lt;200ms)</td>
-      </tr>
-      <tr style="border-bottom:1px solid #eee;">
-        <td style="padding:10px 14px; font-weight:600; font-size:13px;">Plume Motion</td>
-        <td style="padding:10px 14px; font-size:13px;">Cụm nút SuperPod Mesh cắm tường</td>
-        <td style="padding:10px 14px; font-size:13px;">Phân tán tại Pod và Cloud</td>
-        <td style="padding:10px 14px; font-size:13px;">Cơ bản (Lọc rung động)</td>
-        <td style="padding:10px 14px; font-size:13px;">Giám sát mức độ hoạt động và phân vùng chuyển động</td>
+        <td style="padding:10px 14px; font-weight:600; font-size:13px;">Giám sát nhịp thở tĩnh &amp; nhịp tim (Respiration / Vital Signs)</td>
+        <td style="padding:10px 14px; text-align:center; font-size:13px;"><span class="badge" style="background:#fce8e6; color:#c5221f;">TRL 3 &ndash; 4</span></td>
+        <td style="padding:10px 14px; font-size:13px;"><strong>Chưa ổn định trên thiết bị gia dụng:</strong> Cử động lồng ngực milimét tạo biến thiên pha cực nhỏ, rất dễ bị chìm lấp hoặc sai lệch khi có quạt gió, điều hòa hay rung động cơ học của tòa nhà.</td>
       </tr>
       <tr>
-        <td style="padding:10px 14px; font-weight:600; font-size:13px;">Linksys Aware <em>(Dừng 2024)</em></td>
-        <td style="padding:10px 14px; font-size:13px;">Router Mesh Velop</td>
-        <td style="padding:10px 14px; font-size:13px;">Cloud Server (Độ trễ cao)</td>
-        <td style="padding:10px 14px; font-size:13px;">Kém (Thường xuyên báo sai)</td>
-        <td style="padding:10px 14px; font-size:13px;">Cảnh báo chuyển động thô độc lập qua ứng dụng di động</td>
+        <td style="padding:10px 14px; font-weight:600; font-size:13px;">Phát hiện té ngã người già (Fall Detection)</td>
+        <td style="padding:10px 14px; text-align:center; font-size:13px;"><span class="badge" style="background:#fce8e6; color:#c5221f;">TRL 3 &ndash; 4</span></td>
+        <td style="padding:10px 14px; font-size:13px;"><strong>Rủi ro trách nhiệm cao:</strong> Yêu cầu độ tin cậy tuyệt đối (gần như 0% sai sót). Tín hiệu Wi-Fi dễ nhầm lẫn giữa việc người dùng cúi người nhặt đồ, nằm xuống giường nhanh với việc ngã thật. Các thiết bị an toàn y tế chuyên dụng hiện bắt buộc phải sử dụng cảm biến Radar mmWave chuyên biệt.</td>
       </tr>
     </tbody>
   </table>
 
-  <h3>5.2 Phân định mức độ sẵn sàng công nghệ (TRL) theo tính năng thực tế</h3>
-  <ul>
-    <li><strong>Nhóm 1: Mức TRL 9 &mdash; Đã triển khai thương mại hàng loạt, vận hành ổn định:</strong>
-      Phát hiện bước chân người lớn đi lại trong nhà vắng (Comcast, Plume, Verisure); tự động bật/tắt thiết bị chiếu sáng theo bước chân (WiZ SpaceSense); nhận biết người mở/đóng cửa qua biến đổi trường sóng đa đường mạnh.
-    </li>
-    <li><strong>Nhóm 2: Mức TRL 6–7 &mdash; Thương mại hóa có điều kiện, chỉ làm lớp hỗ trợ phụ trợ:</strong>
-      Xác thực chuyển động vòng hai hỗ trợ điểm mù camera (Verisure Beyond Sight); phân loại bước chân người với chó mèo lớn trên 15 kg (Origin TruShield); nhận diện phân vùng không gian giữa các phòng (Multi-zone sensing trong mạng Mesh).
-    </li>
-    <li><strong>Nhóm 3: Mức TRL 3–4 &mdash; Vẫn dừng lại ở mức bài báo khoa học hoặc bản thử nghiệm phòng Lab:</strong>
-      Theo dõi nhịp thở tĩnh và nhịp tim người ngủ xuyên tường qua router Wi-Fi thông thường; phát hiện chính xác người già té ngã trên thiết bị Wi-Fi gia đình (các thiết bị y tế hiện bắt buộc dùng Radar mmWave chuyên dụng); định vị tọa độ chính xác từng xentimét trong nhà.
-    </li>
-  </ul>
-
-  <h3>5.3 Thử nghiệm thực địa 2.4 triệu mẫu: Thách thức báo động giả từ thú cưng và quạt trần</h3>
+  <h3>5.2 Các yếu tố kỹ thuật gây báo động giả trong môi trường triển khai thực tế</h3>
   <p>
-    Minh chứng kỹ thuật rõ ràng nhất cho thấy sự khác biệt giữa phòng lab và môi trường thực tế đến từ số liệu thử nghiệm thực địa do nhóm nghiên cứu của <strong>Origin Research</strong> thực hiện:
+    Trong môi trường căn hộ thực tế, tỷ lệ báo động giả (False Alarm Rate) là thách thức kỹ thuật lớn nhất đối với bất kỳ hệ thống Wi-Fi Sensing nào nếu chỉ dựa vào ngưỡng biến thiên năng lượng đơn thuần:
   </p>
-  <ul>
-    <li><strong>Quy mô thử nghiệm:</strong> Thu thập và phân tích <strong>2.4 triệu mẫu dữ liệu CSI liên tục trong 84 ngày tại 7 căn hộ thực tế</strong> có môi trường sinh hoạt điển hình: 5 con chó, 4 con mèo, hệ thống quạt trần hoạt động thường xuyên và robot hút bụi tự hành.</li>
-    <li><strong>Kết quả đo lường độ chính xác:</strong>
-      <br>&bull; Khi sử dụng thuật toán phát hiện chuyển động dựa trên ngưỡng biến thiên năng lượng CSI thông thường: <strong>Tỷ lệ báo động giả (False Alarm Rate) lên tới 63.1%</strong>. Nghĩa là trong 10 lần hệ thống ghi nhận chuyển động, có hơn 6 lần nguyên nhân là do chó mèo chạy giỡn hoặc quạt trần quay.
-      <br>&bull; Khi áp dụng mô hình máy học phân loại dáng đi (Gait Classifier) của Origin: Tỷ lệ báo động giả giảm xuống còn <strong>8.4%</strong>.
-    </li>
-  </ul>
-  <div class="note-box">
-    <strong>Hàm ý kỹ thuật đối với kiến trúc hệ thống:</strong> Con số 8.4% là một bước tiến vượt bậc của thuật toán học máy. Tuy nhiên, dưới góc độ hệ thống an ninh chuyên nghiệp, <strong>tỷ lệ lỗi 8.4% vẫn là quá cao nếu để hệ thống tự động gọi điện cho cảnh sát hoặc kích hoạt còi hú lúc nửa đêm</strong>. Đó chính là nguyên nhân giải thích vì sao trong thiết kế hệ thống thực tế của Verisure và ADT, sóng Wi-Fi không bao giờ được cấp quyền ra quyết định độc lập mà bắt buộc phải kết hợp cùng cảm biến tiếp xúc cửa và camera ở lớp ngoài cùng.
-  </div>
-
-  <!-- SECTION 6 -->
-  <h2 id="sec-6">6. TIẾN TRÌNH PHÁT TRIỂN PHẦN CỨNG &amp; CHUẨN HÓA HẠ TẦNG</h2>
-
-  <h3>6.1 Chuẩn IEEE 802.11bf: Chuẩn hóa khuôn dạng gói tin cảm biến và giao thức bắt tay</h3>
-  <p>
-    Chuẩn <strong>IEEE 802.11bf (WLAN Sensing)</strong> chính thức hoàn tất mang lại các bước ngoặt kỹ thuật:
-  </p>
-  <ul>
-    <li><strong>Định nghĩa khuôn dạng gói tin cảm biến chuẩn hóa (SENS PPDU):</strong> Quy định cấu trúc khung truyền tín hiệu dành riêng cho mục đích cảm biến, cho phép các thiết bị trích xuất thông tin trạng thái kênh mà không cần giải mã toàn bộ khối dữ liệu payload.</li>
-    <li><strong>Chuẩn hóa giao thức bắt tay giữa các vai trò:</strong> <em>Sensing Initiator</em> (thường là Router Gateway) và <em>Sensing Responder</em> (các thiết bị IoT trong nhà).</li>
-    <li><strong>Phá vỡ thế độc quyền chipset (Anti-Vendor Lock-in):</strong> Cho phép một router sử dụng chip Qualcomm có thể bắt cặp đo đạc CSI chuẩn xác với một bóng đèn thông minh dùng vi điều khiển ESP32 hoặc chip vô tuyến của bất kỳ bên thứ ba nào.</li>
-  </ul>
-
-  <h3>6.2 Wi-Fi 7 và NPU trên Router: Băng thông 320 MHz, Multi-Link Operation và xử lý tại biên (Edge)</h3>
-  <ul>
-    <li><strong>Băng thông kênh cực đại 320 MHz và độ nét đa đường:</strong> Nâng băng thông từ 80 MHz (Wi-Fi 6) lên 320 MHz (Wi-Fi 7) giúp số lượng sóng mang con tăng vọt, cho phép hệ thống tách bạch các tia phản xạ có độ chênh lệch thời gian trễ dưới 3 nano-giây. Router có thể phân biệt chính xác chuyển động trong phòng khách với bước chân của người đi lại ngoài hành lang chung cư.</li>
-    <li><strong>Cơ chế hoạt động đa liên kết (Multi-Link Operation - MLO):</strong> Wi-Fi 7 cho phép thiết bị truyền và nhận đồng thời trên nhiều băng tần (2.4 GHz, 5 GHz và 6 GHz). Hệ thống có thể dành riêng một băng tần phụ rảnh để gửi các gói tin thăm dò cảm biến Active Probing liên tục mà hoàn toàn không làm gián đoạn hay giảm tốc độ truyền tải dữ liệu của các luồng xem phim hay chơi game trên dải tần khác.</li>
-    <li><strong>Bộ xử lý thần kinh NPU tích hợp trên chip Router (Edge AI):</strong> Các dòng vi xử lý router thế hệ mới tích hợp trực tiếp nhân xử lý AI chuyên dụng (NPU). Mô hình mạng nơ-ron phân loại chuyển động được thực thi trực tiếp trên router trong vài mili-giây. Toàn bộ dữ liệu sóng thô được xử lý cục bộ tại thiết bị biên và bị xóa ngay lập tức, <strong>tuyệt đối không gửi dữ liệu hoạt động trong nhà lên đám mây</strong>, giải quyết triệt để bài toán bảo mật và quyền riêng tư cá nhân.</li>
-  </ul>
-
-  <h3>6.3 Đồng bộ hóa cục bộ qua chuẩn Matter: Tự động hóa không chạm trong mạng nội bộ</h3>
-  <div class="diagram-box">
-    <pre class="code-diagram">
-┌────────────────────────────────────────────────────────────────────────┐
-│                      MẠNG NỘI BỘ GIA ĐÌNH (LAN)                        │
-│                                                                        │
-│ ┌──────────────────────────┐             ┌───────────────────────────┐ │
-│ │ ROUTER GATEWAY           │  Matter IP  │ THIẾT BỊ ĐIỀU HÒA / RÈM   │ │
-│ │ - Module Wi-Fi Sensing   ├────────────►│ (Bật chế độ tiết kiệm     │ │
-│ │ - Module Matter Bridge   │  Broadcast  │  khi không có người)      │ │
-│ └────────────┬─────────────┘             └───────────────────────────┘ │
-│              │                                                         │
-│              │ Bản tin sự kiện cục bộ:                                 │
-│              │ "Presence Detected: Living Room"                        │
-│              ▼                                                         │
-│ ┌──────────────────────────┐                                           │
-│ │ HỆ THỐNG CHIẾU SÁNG      │                                           │
-│ │ (Tự động bật sáng đèn khi│                                           │
-│ │  có bước chân ban đêm)   │                                           │
-│ └──────────────────────────┘                                           │
-│                                                                        │
-│ [HOẠT ĐỘNG HOÀN TOÀN CỤC BỘ QUA GIAO THỨC MATTER - KHÔNG PHỤ THUỘC INTERNET] │
-└────────────────────────────────────────────────────────────────────────┘
-    </pre>
-    <div class="diagram-caption">Hình 6: Mô hình tự động hóa cục bộ qua chuẩn Matter điều khiển thiết bị không qua Internet.</div>
-  </div>
-
-  <p>
-    Chuẩn Matter hoạt động trên nền giao thức IPv6 thông qua Wi-Fi và Thread. Khi router Wi-Fi Sensing phát hiện có người bước vào phòng khách, nó phát trực tiếp bản tin sự kiện Matter tiêu chuẩn (<code>OccupancySensing Cluster</code>) tới các bóng đèn và điều hòa trong cùng mạng LAN. Ngay cả khi đường truyền Internet cáp quang bên ngoài bị đứt, chuỗi liên kết tự động hóa giữa cảm biến sóng Wi-Fi và các thiết bị gia dụng trong nhà vẫn vận hành bình thường với độ trễ phản hồi dưới 50 mili-giây.
-  </p>
+  <ol>
+    <li><strong>Chuyển động của vật nuôi (Pets):</strong> Chó, mèo chạy nhảy trong phòng tạo ra diện tích cản sóng đáng kể, làm lệch hướng các tia phản xạ tương tự như một phần cơ thể người. Nếu thuật toán không bóc tách được tần số bước chân và biên độ Doppler đặc trưng, hệ thống sẽ liên tục kích hoạt báo động nhầm.</li>
+    <li><strong>Rung động cơ học tuần hoàn:</strong> Quạt trần quay, rèm cửa đung đưa trước luồng gió điều hòa nhiệt độ, hoặc máy giặt đang trong chu trình vắt tạo ra các dao động cơ học có tính chu kỳ, làm xuất hiện các sóng hài giả trong phổ tín hiệu CSI.</li>
+    <li><strong>Can nhiễu đồng kênh và nghẽn mạng (Co-Channel Interference):</strong> Sự xuất hiện bất ngờ của các luồng truyền dữ liệu nặng từ các mạng Wi-Fi lân cận có thể gây trễ khung truyền hoặc làm thay đổi đột ngột tầng nhiễu nền vô tuyến (Noise Floor).</li>
+    <li><strong>Hàm ý thiết kế hệ thống:</strong> Chính vì những nguồn gây nhiễu vật lý trên, trong mọi hệ thống triển khai thực tế, Wi-Fi Sensing luôn cần kết hợp với các bộ lọc thông dải thích ứng (Bandpass Filtering), thuật toán phân tích miền thời gian - tần số, và quan trọng nhất là <strong>cơ chế phối hợp kiểm chứng đa lớp với các cảm biến vật lý khác</strong>.</li>
+  </ol>
 
   <!-- Footer -->
   <div style="margin-top:30px; padding-top:16px; border-top:1px solid var(--border-color); font-size:12px; color:var(--text-muted); text-align:center;">
-    Báo Cáo Phân Tích Kỹ Thuật &amp; Kiến Trúc Hệ Thống Wi-Fi Sensing Thương Mại &bull; Biên soạn cho mục đích Đánh giá Kỹ thuật &amp; Khảo sát Hệ thống &bull; Lưu hành nội bộ
+    Báo Cáo Phân Tích Kỹ Thuật Hệ Thống Wi-Fi Sensing &bull; Đánh Giá Cơ Chế Vận Hành &amp; Thang Đo TRL Theo Chức Năng &bull; Lưu hành nội bộ
   </div>
 
 </div>
