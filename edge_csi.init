@@ -1,0 +1,61 @@
+#!/bin/sh /etc/rc.common
+# ==============================================================================
+# VNPT Edge CSI Daemon Init Script for OpenWrt (procd)
+# Tự động khởi chạy VNPT Edge CSI Daemon & Model V6 Native cùng Router
+# ==============================================================================
+
+START=99
+STOP=10
+
+USE_PROCD=1
+PROG_DIR="/root/build_demo"
+START_SCRIPT="$PROG_DIR/start_all.sh"
+STOP_SCRIPT="$PROG_DIR/stop_all.sh"
+
+start_service() {
+    if [ ! -d "$PROG_DIR" ]; then
+        echo "[edge_csi] Thu muc $PROG_DIR khong ton tai!" >&2
+        return 1
+    fi
+
+    if [ ! -f "$START_SCRIPT" ]; then
+        echo "[edge_csi] Khong tim thay $START_SCRIPT!" >&2
+        return 1
+    fi
+
+    # Phan quyen thuc thi cho cac script va binary
+    chmod +x "$START_SCRIPT" "$STOP_SCRIPT" "$PROG_DIR/edge_csi_daemon" 2>/dev/null || true
+
+    procd_open_instance
+    # Khoi chay thong qua start_all.sh de tu dong don dep tai nguyen va cd dung thu muc lam viec
+    procd_set_param command /bin/sh "$START_SCRIPT"
+
+    # Tu dong hoi sinh (respawn) neu daemon bi crash hoac kill dot ngot (thu lai sau 5s)
+    procd_set_param respawn 3600 5 0
+
+    # Chuyen tiep stdout va stderr truc tiep vao OpenWrt syslog (doc bang lenh logread)
+    procd_set_param stdout 1
+    procd_set_param stderr 1
+
+    # Theo doi file binary chinh de tu dong nhan dien khi cap nhat
+    procd_set_param file "$PROG_DIR/edge_csi_daemon"
+
+    procd_close_instance
+}
+
+stop_service() {
+    export EDGE_CSI_STOPPING=1
+    if [ -x "$STOP_SCRIPT" ]; then
+        "$STOP_SCRIPT"
+    else
+        killall -9 edge_csi_daemon wake_native cfr_test_app 2>/dev/null || true
+        echo 0 > /sys/kernel/debug/ieee80211/phy00/ath12k_hw0/enable_cfr 2>/dev/null || true
+        rm -f /tmp/cfr_spool.lock /tmp/wake_ready_* /tmp/edge_csi_dump.bin 2>/dev/null || true
+    fi
+}
+
+restart() {
+    stop
+    sleep 1
+    start
+}

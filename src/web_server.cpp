@@ -1208,6 +1208,17 @@ void WebServer::handleDistanceApi(int client_fd, const std::string &method,
                 }
             }
 
+            float custom_n = 0.0f;
+            size_t npos = body.find("\"n\"");
+            if (npos != std::string::npos) {
+                size_t colon = body.find(':', npos);
+                if (colon != std::string::npos) {
+                    try {
+                        custom_n = std::stof(body.substr(colon + 1));
+                    } catch (...) {}
+                }
+            }
+
             std::string mac;
             size_t mpos = body.find("\"mac\"");
             if (mpos != std::string::npos) {
@@ -1235,7 +1246,7 @@ void WebServer::handleDistanceApi(int client_fd, const std::string &method,
                 mac = "DEFAULT";
             }
 
-            bool ok = distance_estimator_.calibrate(mac, distance_m);
+            bool ok = distance_estimator_.calibrate(mac, distance_m, custom_n);
             if (ok) {
                 std::ostringstream resp;
                 resp << "{\"status\":\"ok\",\"mac\":\"" << mac
@@ -1243,12 +1254,51 @@ void WebServer::handleDistanceApi(int client_fd, const std::string &method,
                      << ",\"band\":\"" << distance_estimator_.getBandName() << "\""
                      << ",\"applied_a_1m\":" << distance_estimator_.getEffectiveA1m()
                      << ",\"applied_n\":" << distance_estimator_.getPathLossExponent()
+                     << ",\"applied_env\":\"" << distance_estimator_.getEnvModeString() << "\""
                      << "}";
                 sendAll(client_fd, httpResponse("200 OK", "application/json; charset=utf-8", resp.str()));
             } else {
                 sendAll(client_fd, httpResponse("400 Bad Request", "application/json; charset=utf-8",
                                                 "{\"error\":\"Failed to calibrate. Ensure target MAC and valid distance (>0.2m)\"}"));
             }
+            return;
+        } else if (path == "/api/distance/set_env") {
+            std::string env = "los";
+            size_t epos = body.find("\"env\"");
+            if (epos != std::string::npos) {
+                size_t q1 = body.find('\"', epos + 5);
+                if (q1 != std::string::npos) {
+                    size_t q2 = body.find('\"', q1 + 1);
+                    if (q2 != std::string::npos) env = body.substr(q1 + 1, q2 - q1 - 1);
+                }
+            }
+            float custom_n = 0.0f;
+            size_t npos = body.find("\"n\"");
+            if (npos != std::string::npos) {
+                size_t colon = body.find(':', npos);
+                if (colon != std::string::npos) {
+                    try { custom_n = std::stof(body.substr(colon + 1)); } catch (...) {}
+                }
+            }
+            distance_estimator_.setEnvModeString(env, custom_n);
+            std::ostringstream resp;
+            resp << "{\"status\":\"ok\",\"env\":\"" << distance_estimator_.getEnvModeString()
+                 << "\",\"applied_n\":" << distance_estimator_.getPathLossExponent() << "}";
+            sendAll(client_fd, httpResponse("200 OK", "application/json; charset=utf-8", resp.str()));
+            return;
+        } else if (path == "/api/distance/set_n") {
+            float custom_n = 1.75f;
+            size_t npos = body.find("\"n\"");
+            if (npos != std::string::npos) {
+                size_t colon = body.find(':', npos);
+                if (colon != std::string::npos) {
+                    try { custom_n = std::stof(body.substr(colon + 1)); } catch (...) {}
+                }
+            }
+            distance_estimator_.setPathLossExponent(custom_n);
+            std::ostringstream resp;
+            resp << "{\"status\":\"ok\",\"applied_n\":" << distance_estimator_.getPathLossExponent() << "}";
+            sendAll(client_fd, httpResponse("200 OK", "application/json; charset=utf-8", resp.str()));
             return;
         } else if (path == "/api/distance/reset_cal") {
             std::string mac;

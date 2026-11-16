@@ -14,6 +14,12 @@ enum class WifiBand {
     Band6GHz   // 6 GHz (5925 - 7125 MHz - Wi-Fi 6E / 7 / 8)
 };
 
+enum class DistanceEnvMode {
+    LoS,      // Truyền thẳng, phòng thoáng, ít vật cản (n ~ 1.75)
+    Standard, // Phòng tiêu chuẩn, có bàn ghế đồ đạc (n ~ 2.15)
+    NLoS      // Nhiều vật cản, góc khuất, vách ngăn (n ~ 3.00)
+};
+
 struct BandDefaultParams {
     float a_1m;           // Mức RSSI thực nghiệm tại 1m (dBm)
     float path_loss_n;    // Hệ số suy hao môi trường trong nhà
@@ -25,8 +31,9 @@ struct DeviceCalibration {
     std::string mac;
     std::string band;
     float a_1m = -40.0f;
-    float n = 2.15f;
+    float n = 1.75f;
     float calibrated_at_dist_m = 1.0f;
+    std::string env_mode = "los";
     int64_t timestamp_sec = 0;
 };
 
@@ -44,6 +51,13 @@ class DistanceEstimator {
     void setTxPowerDbm(float tx_power_dbm);
     void setPathLossExponent(float n);
 
+    // Cấu hình môi trường (3 Tab Môi Trường: LoS / Standard / NLoS)
+    void setEnvMode(DistanceEnvMode mode, float custom_n = 0.0f);
+    void setEnvModeString(const std::string &env, float custom_n = 0.0f);
+    DistanceEnvMode getEnvMode() const { return env_mode_; }
+    std::string getEnvModeString() const;
+    static float getDefaultNForEnv(DistanceEnvMode mode, WifiBand band);
+
     WifiBand getBand() const { return band_; }
     std::string getBandName() const;
     float getFrequencyMHz() const { return freq_mhz_; }
@@ -52,6 +66,7 @@ class DistanceEstimator {
     float getEffectiveA1m() const;
     float getTxPowerDbm() const { return tx_power_dbm_; }
     float getPathLossExponent() const { return path_loss_n_; }
+    float getErrorMarginM() const { return last_error_margin_m_; }
 
     // Quản lý thiết bị mục tiêu & profile
     void setTargetDevice(const std::string &mac, const std::string &hostname);
@@ -59,8 +74,8 @@ class DistanceEstimator {
     std::string getActiveProfileName() const { return active_profile_name_; }
     std::string getCalibrationSource() const { return is_custom_calibrated_ ? "custom" : "default"; }
 
-    // Hiệu chuẩn 1 chạm (One-click Calibration)
-    bool calibrate(const std::string &mac, float actual_distance_m);
+    // Hiệu chuẩn 1 chạm (One-click Calibration kèm n tùy chọn)
+    bool calibrate(const std::string &mac, float actual_distance_m, float custom_n = 0.0f);
     bool resetCalibration(const std::string &mac = "");
     std::vector<DeviceCalibration> getAllCalibrations() const;
 
@@ -91,10 +106,12 @@ class DistanceEstimator {
 
     // Tham số băng tần và tần số
     WifiBand band_ = WifiBand::Band5GHz;
+    DistanceEnvMode env_mode_ = DistanceEnvMode::LoS;
     float freq_mhz_ = 5210.0f;
     int capture_bw_code_ = 2; // Mặc định 80MHz cho 5GHz
-    float path_loss_n_ = 2.15f;
+    float path_loss_n_ = 1.75f;
     float tx_power_dbm_ = 18.0f;
+    float last_error_margin_m_ = 0.15f;
 
     // Bộ lọc làm mượt EMA cho RSSI
     float smoothed_rssi_dbm_ = -44.0f;

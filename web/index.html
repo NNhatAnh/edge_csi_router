@@ -409,13 +409,39 @@
                             <span class="metric-symbol blue">◎</span>
                         </div>
                     </div>
+                    <!-- 3 Tab Môi Trường -->
+                    <div class="dist-env-tabs" id="dist-env-tabs">
+                        <button type="button" class="dist-env-tab active" id="env-tab-los" data-env="los" data-n="1.75" title="Truyền thẳng LoS: Phòng thoáng, tầm nhìn thẳng (n=1.75)">
+                            <span data-i18n="env_los">Truyền thẳng</span>
+                        </button>
+                        <button type="button" class="dist-env-tab" id="env-tab-standard" data-env="standard" data-n="2.15" title="Tiêu chuẩn: Căn hộ văn phòng bình thường (n=2.15)">
+                            <span data-i18n="env_standard">Tiêu chuẩn</span>
+                        </button>
+                        <button type="button" class="dist-env-tab" id="env-tab-nlos" data-env="nlos" data-n="3.00" title="Nhiều vật cản NLoS: Góc khuất, sau tường/vách (n=3.00)">
+                            <span data-i18n="env_nlos">Nhiều vật cản</span>
+                        </button>
+                    </div>
                     <div class="metric-value-row">
-                        <div class="metric-value"><span id="distance-val">—</span><small>m</small></div>
+                        <div class="metric-value">
+                            <span id="distance-val">—</span><small>m</small>
+                            <span class="dist-error-tag" id="dist-error-tag" title="Sai số xấp xỉ ước tính">±<span id="dist-error-val">0.15</span>m</span>
+                        </div>
                         <span class="motion-chip" id="distance-zone-chip">—</span>
                     </div>
+                    <!-- Điều chỉnh hệ số n & Hiệu chuẩn -->
+                    <div class="dist-n-control-row">
+                        <div class="dist-n-adjuster-wrap">
+                            <label class="dist-n-label" for="dist-n-input" data-i18n="path_loss_n">Hệ số n:</label>
+                            <div class="dist-n-adjuster">
+                                <button type="button" class="dist-n-btn" id="dist-n-dec" title="Giảm n 0.05">-</button>
+                                <input type="number" id="dist-n-input" class="dist-n-input" value="1.75" step="0.05" min="1.0" max="5.0" title="Hệ số suy hao n">
+                                <button type="button" class="dist-n-btn" id="dist-n-inc" title="Tăng n 0.05">+</button>
+                            </div>
+                        </div>
+                        <button class="dist-cal-btn" id="dist-cal-btn" title="Hiệu chuẩn nhanh khoảng cách" data-i18n="btn_calibrate">Hiệu chuẩn</button>
+                    </div>
                     <div class="dist-diag-row">
-                        <span class="dist-diag-info" id="dist-diag-info">RSSI: — · A1m: — · Mặc định</span>
-                        <button class="dist-cal-btn" id="dist-cal-btn" title="Hiệu chuẩn nhanh khoảng cách">Hiệu chuẩn</button>
+                        <span class="dist-diag-info" id="dist-diag-info">RSSI: — · A1m: — · n: 1.75</span>
                     </div>
                     <div class="metric-caption" id="distance-caption">Chờ tín hiệu RSSI + CSI</div>
                 </article>

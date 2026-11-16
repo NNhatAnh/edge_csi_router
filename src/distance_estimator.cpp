@@ -55,12 +55,12 @@ void radix2IFFT(std::vector<std::complex<float>> &data) {
 
 // Bảng tham số mặc định chuẩn hóa theo vật lý sóng (FSPL) và đo kiểm thực nghiệm
 static const BandDefaultParams kBandDefaults[] = {
-    // Band24GHz: 2.4 GHz (2412 MHz, FSPL 1m = 40.2 dB) - Ít suy hao qua vật cản, bước sóng 12.5cm
-    {-34.0f, 1.95f, 2412.0f, "2.4 GHz"},
-    // Band5GHz: 5.2 GHz (5210 MHz, FSPL 1m = 46.8 dB) - Khớp thực tế RSSI -44 dBm ở 1.5m
-    {-40.0f, 2.15f, 5210.0f, "5.2 GHz"},
-    // Band6GHz: 6 GHz (6130 MHz, FSPL 1m = 48.7 dB) - Suy hao FSPL cao hơn 5GHz +1.9 dB, bước sóng 4.6cm
-    {-42.0f, 2.25f, 6130.0f, "6 GHz"}
+    // Band24GHz: 2.4 GHz (2412 MHz, FSPL 1m = 40.2 dB) - LoS n ~ 1.70
+    {-34.0f, 1.70f, 2412.0f, "2.4 GHz"},
+    // Band5GHz: 5.2 GHz (5210 MHz, FSPL 1m = 46.8 dB) - LoS n ~ 1.75 (khắc phục nén cự ly)
+    {-40.0f, 1.75f, 5210.0f, "5.2 GHz"},
+    // Band6GHz: 6 GHz (6130 MHz, FSPL 1m = 48.7 dB) - LoS n ~ 1.80
+    {-42.0f, 1.80f, 6130.0f, "6 GHz"}
 };
 
 std::string normalizeMacUpper(std::string mac) {
@@ -75,6 +75,46 @@ DistanceEstimator::DistanceEstimator() {
     loadCalibrationsFromFile();
     applyBandDefaults();
     reset();
+}
+
+float DistanceEstimator::getDefaultNForEnv(DistanceEnvMode mode, WifiBand band) {
+    switch (mode) {
+        case DistanceEnvMode::LoS:
+            return (band == WifiBand::Band24GHz) ? 1.70f : ((band == WifiBand::Band6GHz) ? 1.80f : 1.75f);
+        case DistanceEnvMode::Standard:
+            return (band == WifiBand::Band24GHz) ? 2.05f : ((band == WifiBand::Band6GHz) ? 2.20f : 2.15f);
+        case DistanceEnvMode::NLoS:
+            return (band == WifiBand::Band24GHz) ? 2.80f : ((band == WifiBand::Band6GHz) ? 3.10f : 3.00f);
+    }
+    return 1.75f;
+}
+
+std::string DistanceEstimator::getEnvModeString() const {
+    switch (env_mode_) {
+        case DistanceEnvMode::LoS: return "los";
+        case DistanceEnvMode::Standard: return "standard";
+        case DistanceEnvMode::NLoS: return "nlos";
+    }
+    return "los";
+}
+
+void DistanceEstimator::setEnvMode(DistanceEnvMode mode, float custom_n) {
+    env_mode_ = mode;
+    if (custom_n >= 1.10f && custom_n <= 4.50f) {
+        path_loss_n_ = custom_n;
+    } else {
+        path_loss_n_ = getDefaultNForEnv(mode, band_);
+    }
+}
+
+void DistanceEstimator::setEnvModeString(const std::string &env, float custom_n) {
+    if (env == "standard") {
+        setEnvMode(DistanceEnvMode::Standard, custom_n);
+    } else if (env == "nlos") {
+        setEnvMode(DistanceEnvMode::NLoS, custom_n);
+    } else {
+        setEnvMode(DistanceEnvMode::LoS, custom_n);
+    }
 }
 
 void DistanceEstimator::reset() {
@@ -148,6 +188,7 @@ void DistanceEstimator::applyBandDefaults() {
             if (it != calibrations_.end()) {
                 dynamic_a_1m_ = it->second.a_1m;
                 path_loss_n_ = it->second.n;
+                setEnvModeString(it->second.env_mode, it->second.n);
                 is_custom_calibrated_ = true;
                 active_profile_name_ = "Calibrated";
                 return;
@@ -236,7 +277,7 @@ void DistanceEstimator::setClientProfile(const std::string &hostname, int /*pack
     applyBandDefaults();
 }
 
-bool DistanceEstimator::calibrate(const std::string &mac, float actual_distance_m) {
+bool DistanceEstimator::calibrate(const std::string &mac, float actual_distance_m, float custom_n) {
     if (actual_distance_m < 0.2f || actual_distance_m > 25.0f) {
         return false;
     }
@@ -244,6 +285,10 @@ bool DistanceEstimator::calibrate(const std::string &mac, float actual_distance_
     std::string use_mac = mac.empty() ? target_mac_ : mac;
     if (use_mac.empty() || use_mac == "auto") {
         use_mac = "DEFAULT";
+    }
+
+    if (custom_n >= 1.10f && custom_n <= 4.50f) {
+        path_loss_n_ = custom_n;
     }
 
     // Tính A_cal từ RSSI đã làm mượt: A_cal = RSSI + 10 * n * log10(d_ref)
@@ -255,6 +300,7 @@ bool DistanceEstimator::calibrate(const std::string &mac, float actual_distance_
     cal.band = getBandName();
     cal.a_1m = std::round(cal_a_1m * 10.0f) / 10.0f;
     cal.n = path_loss_n_;
+    cal.env_mode = getEnvModeString();
     cal.calibrated_at_dist_m = actual_distance_m;
     cal.timestamp_sec = std::chrono::duration_cast<std::chrono::seconds>(
         std::chrono::system_clock::now().time_since_epoch()).count();
@@ -277,7 +323,8 @@ bool DistanceEstimator::calibrate(const std::string &mac, float actual_distance_
     p_cov_[1][1] = 0.05f;
 
     std::cout << "[Distance] Calibrated " << use_mac << " on " << cal.band
-              << " at " << actual_distance_m << "m: A_1m = " << cal.a_1m << " dBm\n";
+              << " at " << actual_distance_m << "m (n=" << cal.n << ", env=" << cal.env_mode
+              << "): A_1m = " << cal.a_1m << " dBm\n";
     return true;
 }
 
@@ -319,8 +366,8 @@ void DistanceEstimator::loadCalibrationsFromFile() {
     if (!f.is_open()) return;
 
     std::string line;
-    std::string cur_mac, cur_band;
-    float cur_a = -40.0f, cur_n = 2.15f, cur_d = 1.0f;
+    std::string cur_mac, cur_band, cur_env = "los";
+    float cur_a = -40.0f, cur_n = 1.75f, cur_d = 1.0f;
     int64_t cur_ts = 0;
 
     // Parser JSON tối giản không phụ thuộc thư viện ngoài
@@ -334,6 +381,11 @@ void DistanceEstimator::loadCalibrationsFromFile() {
         if (band_pos != std::string::npos) {
             size_t end = line.find('\"', band_pos + 9);
             if (end != std::string::npos) cur_band = line.substr(band_pos + 9, end - (band_pos + 9));
+        }
+        size_t env_pos = line.find("\"env\": \"");
+        if (env_pos != std::string::npos) {
+            size_t end = line.find('\"', env_pos + 8);
+            if (end != std::string::npos) cur_env = line.substr(env_pos + 8, end - (env_pos + 8));
         }
         size_t a_pos = line.find("\"a_1m\": ");
         if (a_pos != std::string::npos) {
@@ -359,6 +411,7 @@ void DistanceEstimator::loadCalibrationsFromFile() {
             c.a_1m = cur_a;
             c.n = cur_n;
             c.calibrated_at_dist_m = cur_d;
+            c.env_mode = cur_env.empty() ? "los" : cur_env;
             c.timestamp_sec = cur_ts;
 
             WifiBand b = WifiBand::Band5GHz;
@@ -367,6 +420,7 @@ void DistanceEstimator::loadCalibrationsFromFile() {
 
             calibrations_[makeCalKey(c.mac, b)] = c;
             cur_mac.clear();
+            cur_env = "los";
         }
     }
 }
@@ -392,6 +446,7 @@ void DistanceEstimator::saveCalibrationsToFile() const {
           << "      \"a_1m\": " << c.a_1m << ",\n"
           << "      \"n\": " << c.n << ",\n"
           << "      \"dist\": " << c.calibrated_at_dist_m << ",\n"
+          << "      \"env\": \"" << (c.env_mode.empty() ? "los" : c.env_mode) << "\",\n"
           << "      \"ts\": " << c.timestamp_sec << "\n"
           << "    }";
     }
@@ -483,23 +538,18 @@ void DistanceEstimator::process(CSIData &frame, int fallback_rssi_dbm) {
         raw_rssi_dbm = std::clamp(-95.0f + csi_pwr + gain_comp - agc_comp, -85.0f, -15.0f);
     }
 
-    // 2. Lọc làm mượt EMA với vùng chết (Deadband thích ứng) trên miền dB
+    // 2. Lọc làm mượt EMA thích ứng (Adaptive Dynamic EMA) trên miền dB
     if (!has_smoothed_rssi_) {
         smoothed_rssi_dbm_ = raw_rssi_dbm;
         has_smoothed_rssi_ = true;
     } else {
         const float delta_rssi = raw_rssi_dbm - smoothed_rssi_dbm_;
-        // Xác định đối tượng đang tĩnh hay đang chuyển động từ motion detector
-        const bool is_stationary = frame.motion_ready && (!frame.presence_detected || frame.motion_score < frame.motion_threshold_low);
-        const float deadband = is_stationary ? 1.5f : 0.6f;
-
-        if (std::abs(delta_rssi) < deadband) {
-            // Dao động nhỏ dưới ngưỡng nhiễu đa đường: chỉ làm mượt cực chậm để số đứng im
-            smoothed_rssi_dbm_ += 0.02f * delta_rssi;
-        } else {
-            // Thay đổi lớn thực sự: bám đuổi nhanh hơn
-            smoothed_rssi_dbm_ += 0.20f * delta_rssi;
-        }
+        const float abs_delta = std::abs(delta_rssi);
+        // Alpha thích ứng:
+        // - Khi tĩnh (|delta| < 0.2 dB): alpha = 0.08 (vừa đủ mượt, không trôi)
+        // - Khi di chuyển (|delta| >= 0.5 dB): alpha tự động tăng lên 0.25 - 0.45 để bám đuổi trong 200-300ms
+        const float dynamic_alpha = std::clamp(0.08f + 0.37f * (abs_delta / 1.8f), 0.08f, 0.45f);
+        smoothed_rssi_dbm_ += dynamic_alpha * delta_rssi;
     }
 
     const float rssi_dbm = smoothed_rssi_dbm_;
@@ -550,14 +600,14 @@ void DistanceEstimator::process(CSIData &frame, int fallback_rssi_dbm) {
 
         // Cập nhật (Measurement update step)
         const float csi_quality = std::clamp(k_rician, 0.2f, 4.0f) * std::clamp(eta_los, 0.2f, 1.0f);
-        const float r_meas = is_stationary ? (1.0f / csi_quality) : (0.35f / csi_quality);
+        const float r_meas = is_stationary ? (0.40f / csi_quality) : (0.15f / csi_quality);
         const float s = p_cov_[0][0] + r_meas;
         const float k0 = p_cov_[0][0] / s;
         const float k1 = p_cov_[1][0] / s;
 
         float y = clamped_raw_dist - x_dist_;
-        if (is_stationary && std::abs(y) < 0.12f) {
-            // Sai số dưới 12cm khi đứng yên coi như nhiễu: không kéo số đo
+        if (is_stationary && std::abs(y) < 0.03f) {
+            // Chỉ triệt tiêu vi sai số dưới 3cm khi thực sự tĩnh để số đứng yên
             y = 0.0f;
         }
 
@@ -581,6 +631,14 @@ void DistanceEstimator::process(CSIData &frame, int fallback_rssi_dbm) {
     // 6. Đưa kết quả vào telemetry CSIData
     frame.estimated_distance_m = std::round(x_dist_ * 100.0f) / 100.0f;
     frame.distance_confidence = std::clamp(1.0f - (p_cov_[0][0] / 0.5f), 0.3f, 0.99f);
+
+    // Tính sai số cự ly xấp xỉ động (Dynamic Error Margin ± m)
+    const float sigma_rssi = std::clamp(1.0f + (1.0f - eta_los) * 2.0f, 1.0f, 3.5f);
+    const float rel_error = (0.2303f / std::max(1.1f, path_loss_n_)) * sigma_rssi;
+    const float raw_err = std::max(0.06f, x_dist_ * rel_error);
+    last_error_margin_m_ = std::round(raw_err * 100.0f) / 100.0f;
+    frame.distance_error_margin_m = last_error_margin_m_;
+    frame.distance_env_mode = getEnvModeString();
 
     // Phân vùng cự ly (Proximity Zoning)
     if (x_dist_ < 0.6f) {

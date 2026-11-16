@@ -151,6 +151,8 @@ std::string CSIData::toJson(bool include_raw_iq) const {
          << ",\"smoothed_rssi_db\":" << safeFloat(smoothed_rssi_db)
          << ",\"estimated_distance_m\":" << safeFloat(estimated_distance_m)
          << ",\"distance_confidence\":" << safeFloat(distance_confidence)
+         << ",\"distance_error_margin_m\":" << safeFloat(distance_error_margin_m)
+         << ",\"distance_env_mode\":\"" << escapeJsonString(distance_env_mode) << "\""
          << ",\"distance_zone\":\"" << escapeJsonString(distance_zone) << "\""
          << ",\"distance_trend\":\"" << escapeJsonString(distance_trend) << "\""
          << ",\"distance_band\":\"" << escapeJsonString(distance_band) << "\""

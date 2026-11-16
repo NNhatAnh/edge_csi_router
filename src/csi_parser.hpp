@@ -65,6 +65,8 @@ struct CSIData {
     // Distance Estimation (RSSI + CSI Fusion)
     float estimated_distance_m = 0.0f;
     float distance_confidence = 0.0f;
+    float distance_error_margin_m = 0.15f;      // Sai số cự ly ước tính (± m)
+    std::string distance_env_mode = "los";      // "los", "standard", "nlos"
     std::string distance_zone = "unknown";      // "immediate", "near", "mid", "far"
     std::string distance_trend = "stationary";  // "approaching", "departing", "stationary"
     float csi_los_ratio = 0.0f;
@@ -72,7 +74,7 @@ struct CSIData {
     std::string distance_band = "5.2 GHz";      // "2.4 GHz", "5.2 GHz", "6 GHz"
     float distance_freq_mhz = 5210.0f;
     float distance_a_1m = -40.0f;
-    float distance_n = 2.15f;
+    float distance_n = 1.75f;
     std::string distance_cal_source = "default"; // "default", "custom"
 
     // Link Stability & Connection Quality Assessment (RSSI + CSI Fusion)

@@ -6,6 +6,12 @@ echo "=========================================================="
 echo "    DỪNG HỆ THỐNG VNPT EDGE CSI & GIẢI PHÓNG TÀI NGUYÊN   "
 echo "=========================================================="
 
+# Nếu đang chạy dưới dạng dịch vụ OpenWrt procd, dừng dịch vụ để tránh procd tự hồi sinh
+if [ -z "${EDGE_CSI_STOPPING:-}" ] && [ -x /etc/init.d/edge_csi ]; then
+    export EDGE_CSI_STOPPING=1
+    /etc/init.d/edge_csi stop 2>/dev/null || true
+fi
+
 echo "[1/2] Dừng các tiến trình và xóa file lock..."
 killall -9 edge_csi_daemon wake_native cfr_test_app 2>/dev/null || true
 rm -f /tmp/cfr_spool.lock /tmp/wake_ready_* /tmp/edge_csi_dump.bin 2>/dev/null || true

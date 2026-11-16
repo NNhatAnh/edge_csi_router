@@ -24,6 +24,11 @@ const i18n = {
         metric_stability: 'ĐỘ ỔN ĐỊNH & CHẤT LƯỢNG',
         metric_motion: 'MOTION SCORE',
         metric_distance: 'KHOẢNG CÁCH',
+        env_los: 'Truyền thẳng',
+        env_standard: 'Tiêu chuẩn',
+        env_nlos: 'Nhiều vật cản',
+        path_loss_n: 'Hệ số n:',
+        btn_calibrate: 'Hiệu chuẩn',
         metric_presence: 'NHẬN DIỆN HIỆN DIỆN',
         metric_wave: 'CỬ CHỈ VẪY TAY',
         wave_idle: 'KHÔNG CÓ',
@@ -188,6 +193,11 @@ const i18n = {
         metric_stability: 'STABILITY & QUALITY',
         metric_motion: 'MOTION SCORE',
         metric_distance: 'DISTANCE',
+        env_los: 'Direct LoS',
+        env_standard: 'Standard',
+        env_nlos: 'Dense NLoS',
+        path_loss_n: 'Exponent n:',
+        btn_calibrate: 'Calibrate',
         metric_presence: 'PRESENCE DETECTION',
         metric_wave: 'HAND-WAVE GESTURE',
         wave_idle: 'NONE',
@@ -400,6 +410,15 @@ const domElements = {
     distLiveDot: document.getElementById('dist-live-dot'),
     distDiagInfo: document.getElementById('dist-diag-info'),
     distCalBtn: document.getElementById('dist-cal-btn'),
+    distEnvTabs: document.getElementById('dist-env-tabs'),
+    envTabLoS: document.getElementById('env-tab-los'),
+    envTabStandard: document.getElementById('env-tab-standard'),
+    envTabNLoS: document.getElementById('env-tab-nlos'),
+    distErrorTag: document.getElementById('dist-error-tag'),
+    distErrorVal: document.getElementById('dist-error-val'),
+    distNInput: document.getElementById('dist-n-input'),
+    distNDec: document.getElementById('dist-n-dec'),
+    distNInc: document.getElementById('dist-n-inc'),
     gestureVPanel: document.getElementById('gesture-v-panel'),
     vShape: document.getElementById('vShape'),
     vDown: document.getElementById('vDown'),
@@ -667,9 +686,18 @@ function updateDomMetrics(frame, isNewFrame, now) {
 
         if (domElements.distDiagInfo) {
             const a1m = frame.distance_a_1m !== undefined ? Number(frame.distance_a_1m).toFixed(1) : '—';
-            const nVal = frame.distance_n !== undefined ? Number(frame.distance_n).toFixed(2) : '2.15';
+            const nVal = frame.distance_n !== undefined ? Number(frame.distance_n).toFixed(2) : '1.75';
             const src = frame.distance_cal_source === 'custom' ? (currentLang === 'vi' ? 'Hiệu chuẩn riêng' : 'Calibrated') : (currentLang === 'vi' ? 'Mặc định' : 'Default');
             domElements.distDiagInfo.textContent = `A1m: ${a1m} dBm · n: ${nVal} (${src})`;
+        }
+
+        if (domElements.distErrorVal && frame.distance_error_margin_m !== undefined) {
+            const err = Number(frame.distance_error_margin_m) || 0.15;
+            domElements.distErrorVal.textContent = err.toFixed(2);
+        }
+
+        if (frame.distance_env_mode) {
+            syncDistanceEnvUI(frame.distance_env_mode, frame.distance_n);
         }
 
         if (domElements.distLiveDot && isNewFrame) {
@@ -1542,6 +1570,97 @@ document.querySelectorAll('.tab-btn').forEach(button => {
 chainSelect.addEventListener('change', scheduleRender);
 calibrateButton.addEventListener('click', requestCalibration);
 
+function getTargetMacForDistance() {
+    let targetMac = cfrState.targetMac || cfrState.target_mac || '';
+    if (!targetMac && currentProberConfig && currentProberConfig.clients && currentProberConfig.clients.length > 0) {
+        const c5 = currentProberConfig.clients.find(c => c.is_5ghz) || currentProberConfig.clients[0];
+        if (c5) targetMac = c5.mac;
+    }
+    return targetMac || 'auto';
+}
+
+function syncDistanceEnvUI(envMode, nVal) {
+    if (domElements.envTabLoS && domElements.envTabStandard && domElements.envTabNLoS) {
+        domElements.envTabLoS.classList.toggle('active', envMode === 'los');
+        domElements.envTabStandard.classList.toggle('active', envMode === 'standard');
+        domElements.envTabNLoS.classList.toggle('active', envMode === 'nlos');
+    }
+    if (domElements.distNInput && document.activeElement !== domElements.distNInput && nVal !== undefined) {
+        domElements.distNInput.value = Number(nVal).toFixed(2);
+    }
+}
+
+function initDistanceControls() {
+    const tabs = [
+        { el: domElements.envTabLoS, env: 'los', defN: 1.75 },
+        { el: domElements.envTabStandard, env: 'standard', defN: 2.15 },
+        { el: domElements.envTabNLoS, env: 'nlos', defN: 3.00 }
+    ];
+
+    tabs.forEach(item => {
+        if (!item.el) return;
+        item.el.addEventListener('click', async () => {
+            tabs.forEach(t => { if (t.el) t.el.classList.remove('active'); });
+            item.el.classList.add('active');
+            if (domElements.distNInput) {
+                domElements.distNInput.value = item.defN.toFixed(2);
+            }
+            const targetMac = getTargetMacForDistance();
+            try {
+                await fetch('/api/distance/set_env', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ env: item.env, n: item.defN, mac: targetMac })
+                });
+            } catch (err) {
+                console.error('Failed to set distance env:', err);
+            }
+        });
+    });
+
+    const sendNUpdate = async (nVal) => {
+        const targetMac = getTargetMacForDistance();
+        try {
+            await fetch('/api/distance/set_n', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ n: nVal, mac: targetMac })
+            });
+        } catch (err) {
+            console.error('Failed to set path loss exponent n:', err);
+        }
+    };
+
+    if (domElements.distNDec) {
+        domElements.distNDec.addEventListener('click', () => {
+            let n = parseFloat(domElements.distNInput ? domElements.distNInput.value : '1.75') || 1.75;
+            n = Math.max(1.0, Math.round((n - 0.05) * 100) / 100);
+            if (domElements.distNInput) domElements.distNInput.value = n.toFixed(2);
+            sendNUpdate(n);
+        });
+    }
+
+    if (domElements.distNInc) {
+        domElements.distNInc.addEventListener('click', () => {
+            let n = parseFloat(domElements.distNInput ? domElements.distNInput.value : '1.75') || 1.75;
+            n = Math.min(5.0, Math.round((n + 0.05) * 100) / 100);
+            if (domElements.distNInput) domElements.distNInput.value = n.toFixed(2);
+            sendNUpdate(n);
+        });
+    }
+
+    if (domElements.distNInput) {
+        domElements.distNInput.addEventListener('change', () => {
+            let n = parseFloat(domElements.distNInput.value);
+            if (isNaN(n) || n < 1.0) n = 1.0;
+            if (n > 5.0) n = 5.0;
+            domElements.distNInput.value = n.toFixed(2);
+            sendNUpdate(n);
+        });
+    }
+}
+initDistanceControls();
+
 if (domElements.distCalBtn) {
     domElements.distCalBtn.addEventListener('click', async () => {
         const promptMsg = currentLang === 'vi'
@@ -1550,12 +1669,7 @@ if (domElements.distCalBtn) {
         const input = window.prompt(promptMsg, '1.5');
         if (!input) return;
 
-        let targetMac = cfrState.targetMac || cfrState.target_mac || '';
-        if (!targetMac && currentProberConfig && currentProberConfig.clients && currentProberConfig.clients.length > 0) {
-            const c5 = currentProberConfig.clients.find(c => c.is_5ghz) || currentProberConfig.clients[0];
-            if (c5) targetMac = c5.mac;
-        }
-        if (!targetMac) targetMac = 'auto';
+        let targetMac = getTargetMacForDistance();
 
         const trimmed = input.trim().toLowerCase();
         if (trimmed === '0' || trimmed === 'reset') {
@@ -1580,17 +1694,18 @@ if (domElements.distCalBtn) {
             return;
         }
 
+        const customN = parseFloat(domElements.distNInput ? domElements.distNInput.value : '1.75') || 1.75;
         try {
             const res = await fetch('/api/distance/calibrate', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ distance_m: distM, mac: targetMac })
+                body: JSON.stringify({ distance_m: distM, mac: targetMac, n: customN })
             });
             if (res.ok) {
                 const data = await res.json();
                 alert(currentLang === 'vi'
-                    ? `Hiệu chuẩn thành công tại ${distM} m!\nThiết bị: ${data.mac || targetMac}\nA1m = ${data.applied_a_1m} dBm (${data.band})`
-                    : `Calibrated successfully at ${distM} m!\nDevice: ${data.mac || targetMac}\nA1m = ${data.applied_a_1m} dBm (${data.band})`);
+                    ? `Hiệu chuẩn thành công tại ${distM} m!\nThiết bị: ${data.mac || targetMac}\nA1m = ${data.applied_a_1m} dBm · n = ${data.applied_n || customN} (${data.band})`
+                    : `Calibrated successfully at ${distM} m!\nDevice: ${data.mac || targetMac}\nA1m = ${data.applied_a_1m} dBm · n = ${data.applied_n || customN} (${data.band})`);
             } else {
                 const err = await res.json();
                 alert(`Lỗi: ${err.error || 'Calibration failed'}`);

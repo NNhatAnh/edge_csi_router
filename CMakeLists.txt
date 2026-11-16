@@ -46,7 +46,8 @@ add_custom_command(TARGET edge_csi_daemon POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy_if_different "${CMAKE_SOURCE_DIR}/start_all.sh" "${CMAKE_BINARY_DIR}/start_all.sh"
     COMMAND ${CMAKE_COMMAND} -E copy_if_different "${CMAKE_SOURCE_DIR}/stop_all.sh" "${CMAKE_BINARY_DIR}/stop_all.sh"
     COMMAND ${CMAKE_COMMAND} -E copy_if_different "${CMAKE_SOURCE_DIR}/capture_wake.sh" "${CMAKE_BINARY_DIR}/capture_wake.sh"
-    COMMENT ">>> Da dong bo cac script .sh, models va web vao: ${CMAKE_BINARY_DIR}"
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different "${CMAKE_SOURCE_DIR}/edge_csi.init" "${CMAKE_BINARY_DIR}/edge_csi"
+    COMMENT ">>> Da dong bo cac script .sh, edge_csi, models va web vao: ${CMAKE_BINARY_DIR}"
 )
 
 if(EXISTS "${CMAKE_SOURCE_DIR}/wake_native")
@@ -60,7 +61,8 @@ if(UNIX)
         COMMAND chmod +x "${CMAKE_BINARY_DIR}/edge_csi_daemon"
                          "${CMAKE_BINARY_DIR}/start_all.sh"
                          "${CMAKE_BINARY_DIR}/stop_all.sh"
-                         "${CMAKE_BINARY_DIR}/capture_wake.sh" 2>/dev/null || true
+                         "${CMAKE_BINARY_DIR}/capture_wake.sh"
+                         "${CMAKE_BINARY_DIR}/edge_csi" 2>/dev/null || true
     )
     if(EXISTS "${CMAKE_SOURCE_DIR}/wake_native")
         add_custom_command(TARGET edge_csi_daemon POST_BUILD
@@ -86,6 +88,7 @@ if(NOT "${_BUILD_DIR_NAME}" STREQUAL "build_demo")
         COMMAND ${CMAKE_COMMAND} -E copy_if_different "${CMAKE_SOURCE_DIR}/start_all.sh" "${PACKAGE_DIR}/start_all.sh"
         COMMAND ${CMAKE_COMMAND} -E copy_if_different "${CMAKE_SOURCE_DIR}/stop_all.sh" "${PACKAGE_DIR}/stop_all.sh"
         COMMAND ${CMAKE_COMMAND} -E copy_if_different "${CMAKE_SOURCE_DIR}/capture_wake.sh" "${PACKAGE_DIR}/capture_wake.sh"
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different "${CMAKE_SOURCE_DIR}/edge_csi.init" "${PACKAGE_DIR}/edge_csi"
         DEPENDS edge_csi_daemon
         COMMENT ">>> Dang tong hop goi trien khai sach vao: ${PACKAGE_DIR}"
     )
@@ -102,7 +105,8 @@ if(NOT "${_BUILD_DIR_NAME}" STREQUAL "build_demo")
             COMMAND chmod +x "${PACKAGE_DIR}/edge_csi_daemon"
                              "${PACKAGE_DIR}/start_all.sh"
                              "${PACKAGE_DIR}/stop_all.sh"
-                             "${PACKAGE_DIR}/capture_wake.sh" 2>/dev/null || true
+                             "${PACKAGE_DIR}/capture_wake.sh"
+                             "${PACKAGE_DIR}/edge_csi" 2>/dev/null || true
             COMMENT ">>> Da phan quyen thuc thi (chmod +x) cho cac file trong ${PACKAGE_DIR}"
         )
     endif()
