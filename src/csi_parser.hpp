@@ -59,6 +59,7 @@ struct CSIData {
 
     // RSSI & AGC Hardware Metadata
     int8_t rssi_comb_db = 0;
+    float smoothed_rssi_db = 0.0f;
     uint8_t agc_indices[3]{};
 
     // Distance Estimation (RSSI + CSI Fusion)
@@ -68,10 +69,44 @@ struct CSIData {
     std::string distance_trend = "stationary";  // "approaching", "departing", "stationary"
     float csi_los_ratio = 0.0f;
     float csi_rician_k = 0.0f;
+    std::string distance_band = "5.2 GHz";      // "2.4 GHz", "5.2 GHz", "6 GHz"
+    float distance_freq_mhz = 5210.0f;
+    float distance_a_1m = -40.0f;
+    float distance_n = 2.15f;
+    std::string distance_cal_source = "default"; // "default", "custom"
+
+    // Link Stability & Connection Quality Assessment (RSSI + CSI Fusion)
+    float link_stability_score = 0.0f;           // Điểm chất lượng kết nối 0 - 100
+    std::string link_status_text = "calibrating"; // "clean_los", "multipath_stable", "deep_fade", "dynamic_motion", "weak"
+    float spectral_correlation = 1.0f;           // Hệ số tương quan vân phổ Pearson với frame trước
+    float deep_fade_ratio = 1.0f;                // Tỷ số suy hao chọn lọc tần số (Mean/Min)
+    float temporal_csi_variance = 0.0f;          // Phương sai biên độ theo thời gian (độ động môi trường)
+    bool is_agc_event = false;                   // Cờ báo hiệu bước nhảy do AGC phần cứng
+    bool deep_fade_warning = false;              // Cảnh báo xuất hiện vết lõm tần số (nguy cơ lỗi MCS cao)
+
+    // Model Wake 8082 V6 (M5R) Gesture Recognition (Duy nhat 1 model)
+    std::string wakeup_model = "M5R_V6";
+    std::string wakeup_state = "WAIT_READY";
+    std::string wakeup_reason = "startup";
+    std::string wakeup_event = "NONE";
+    float wakeup_score = 0.0f;
+    int wakeup_label = 0;
+    bool wakeup_triggered = false;
+    float wakeup_progress = 0.0f;
+    float wakeup_stroke_fraction = 0.0f;
+    float gesture_down_duration = 0.0f;
+    float gesture_pause_duration = 0.0f;
+    float gesture_up_duration = 0.0f;
+    int wakeup_ring_size = 0;
+    int wakeup_ring_capacity = 40;
+    int v6_accepted = 0;
+    int v6_rejected = 0;
 
     size_t tonesPerChain() const;
-    std::string toJson() const;
+    std::string toJson(bool include_raw_iq = false) const;
 };
+
+std::string escapeJsonString(const std::string &input);
 
 class CSIParser {
   public:

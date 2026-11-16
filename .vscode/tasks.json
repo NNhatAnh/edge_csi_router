@@ -1,0 +1,22 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Build Router ARM64 (WSL)",
+            "type": "shell",
+            "command": "wsl -d Ubuntu -- sh -c \"cd /mnt/c/Users/anhnh/nanh/VQEC/edge_csi_router && cmake --build build -j\\$(nproc)\"",
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "problemMatcher": "$gcc"
+        },
+        {
+            "label": "Reconfigure & Build ARM64 (WSL)",
+            "type": "shell",
+            "command": "wsl -d Ubuntu -- sh -c \"cd /mnt/c/Users/anhnh/nanh/VQEC/edge_csi_router && rm -rf build && cmake -B build -DCMAKE_TOOLCHAIN_FILE=arm64_toolchain.cmake && cmake --build build -j\\$(nproc)\"",
+            "group": "build",
+            "problemMatcher": "$gcc"
+        }
+    ]
+}

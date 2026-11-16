@@ -6,7 +6,9 @@
 #include <ifaddrs.h>
 #include <net/if.h>
 #include <netinet/in.h>
+#include <netinet/tcp.h>
 #include <sys/socket.h>
+#include <sys/time.h>
 #include <unistd.h>
 #include <filesystem>
 #include <fstream>
@@ -15,6 +17,22 @@
 
 namespace {
 constexpr size_t kMaximumClientWorkers = 16;
+
+bool equalsIgnoreCase(const std::string &a, const std::string &b) {
+    if (a.size() != b.size()) return false;
+    for (size_t i = 0; i < a.size(); ++i) {
+        if (std::tolower(static_cast<unsigned char>(a[i])) !=
+            std::tolower(static_cast<unsigned char>(b[i]))) {
+            return false;
+        }
+    }
+    return true;
+}
+
+bool endsWith(const std::string &str, const std::string &suffix) {
+    return str.size() >= suffix.size() &&
+           str.compare(str.size() - suffix.size(), suffix.size(), suffix) == 0;
+}
 
 bool sendAll(int socket_fd, const std::string &data) {
     size_t sent = 0;
@@ -95,7 +113,7 @@ WebServer::WebServer(int web_port, int ingest_port, std::string web_root,
     : web_port_(web_port), ingest_port_(ingest_port),
       web_root_(std::move(web_root)), prober_(prober),
       cfr_controller_(cfr_controller), web_fd_(-1), ingest_fd_(-1),
-      is_running_(false) {}
+      is_running_(false), v6_engine_(std::make_unique<V6NativeEngine>()) {}
 
 WebServer::~WebServer() { stop(); }
 
@@ -142,6 +160,9 @@ bool WebServer::start() {
 }
 
 void WebServer::stop() {
+    if (v6_engine_) {
+        v6_engine_->stop("WebServer shutdown");
+    }
     {
         std::lock_guard<std::mutex> lock(workers_mutex_);
         if (!is_running_.exchange(false))
@@ -181,25 +202,66 @@ void WebServer::publish(const CSIData &frame) {
     std::lock_guard<std::mutex> lock(data_mutex_);
     latest_frame_ = frame;
     motion_detector_.update(latest_frame_);
+
+    wakeup_detector_.update(latest_frame_);
+
     breath_detector_.update(latest_frame_);
     wave_detector_.update(latest_frame_);
 
-    // Tự động nhận diện băng tần (2.4 GHz vs 5.2 GHz)
+    // Cập nhật cấu hình băng thông từ chính metadata phần cứng của frame (0 syscall, 0 popen)
+    distance_estimator_.setChannelBandwidth(latest_frame_.channel_bw);
+
+    // Tự động nhận diện băng tần (2.4 GHz vs 5.2 GHz vs 6 GHz) từ CFRController chỉ khi đổi interface
     if (cfr_controller_) {
-        const CFRCaptureStatus cstat = cfr_controller_->getStatus();
-        if (!cstat.iface.empty()) {
-            if (cstat.iface.find(".1-") != std::string::npos ||
-                cstat.iface.find("2.4") != std::string::npos ||
-                cstat.iface.find("2g") != std::string::npos) {
-                distance_estimator_.setBand(WifiBand::Band24GHz);
-            } else {
-                distance_estimator_.setBand(WifiBand::Band52GHz);
+        const std::string iface = cfr_controller_->getCaptureIface();
+        if (iface != last_capture_iface_ && !iface.empty()) {
+            last_capture_iface_ = iface;
+            distance_estimator_.setFrequencyMHz(cfr_controller_->getCenterFreqMHz());
+        }
+
+        // Tự động nhận diện profile thiết bị (Apple / Samsung / Phổ thông) chỉ khi đổi target
+        if (prober_) {
+            const std::string target_mac = cfr_controller_->getTargetMac();
+            if (target_mac != last_target_mac_) {
+                last_target_mac_ = target_mac;
+                cached_target_hostname_ = "";
+                if (!target_mac.empty()) {
+                    ProberStatus pstat = prober_->getStatus(false);
+                    for (const auto &c : pstat.clients) {
+                        if (equalsIgnoreCase(c.mac, target_mac)) {
+                            cached_target_hostname_ = c.hostname;
+                            break;
+                        }
+                    }
+                }
+                distance_estimator_.setTargetDevice(target_mac, cached_target_hostname_);
+            }
+        }
+    }
+
+    // Lấy RSSI trung bình từ driver kernel station dump nếu có để làm neo kiểm chuẩn
+    int fallback_rssi = 0;
+    if (prober_ && cfr_controller_) {
+        const std::string t_mac = cfr_controller_->getTargetMac();
+        if (!t_mac.empty()) {
+            ProberStatus pstat = prober_->getStatus(false);
+            for (const auto &c : pstat.clients) {
+                if (equalsIgnoreCase(c.mac, t_mac)) {
+                    int sig = std::atoi(c.signal_dbm.c_str());
+                    if (sig < 0 && sig > -100) {
+                        fallback_rssi = sig;
+                    }
+                    break;
+                }
             }
         }
     }
 
     // Khoảng cách và mức RSSI được tính toán trực tiếp từ biên độ CSI và AGC phần cứng của frame
-    distance_estimator_.process(latest_frame_, 0);
+    distance_estimator_.process(latest_frame_, fallback_rssi);
+
+    // Đánh giá độ ổn định và chất lượng kết nối của client (kết hợp RSSI + CSI)
+    link_stability_estimator_.process(latest_frame_);
 
     // Quyết định hiện diện hợp nhất 3 trạng thái cốt lõi:
     // 1. Chuyển động vĩ mô (người đi lại / cử động) - đồng bộ cờ presence_detected đã qua bộ lọc Hysteresis & Deadband từ motion_detector_
@@ -231,8 +293,10 @@ void WebServer::resetMotionCalibration() {
         std::lock_guard<std::mutex> lock(data_mutex_);
         motion_detector_.reset();
         breath_detector_.reset();
+        wakeup_detector_.reset();
         wave_detector_.reset();
         distance_estimator_.reset();
+        link_stability_estimator_.reset();
         if (has_frame_) {
             latest_frame_.motion_score = 0.0f;
             latest_frame_.motion_threshold_high = 0.0f;
@@ -305,6 +369,11 @@ void WebServer::runIngestServer() {
 }
 
 void WebServer::startClientWorker(int client_fd, bool web_client) {
+    if (web_client) {
+        struct timeval tv{3, 0};
+        setsockopt(client_fd, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv));
+        setsockopt(client_fd, SOL_SOCKET, SO_SNDTIMEO, &tv, sizeof(tv));
+    }
     {
         std::lock_guard<std::mutex> lock(workers_mutex_);
         if (!is_running_) {
@@ -404,6 +473,29 @@ void WebServer::handleWebClient(int client_fd) {
         return;
     }
 
+    if (path == "/api/devices") {
+        std::ostringstream ss;
+        ss << "[";
+        if (prober_) {
+            ProberStatus pstat = prober_->getStatus(false);
+            bool first = true;
+            for (const auto &c : pstat.clients) {
+                if (c.mac.empty()) continue;
+                if (!first) ss << ",";
+                first = false;
+                ss << "{\"mac\":\"" << c.mac << "\""
+                   << ",\"ip\":\"" << c.ip << "\""
+                   << ",\"hostname\":\"" << escapeJsonString(c.hostname) << "\""
+                   << ",\"band\":\"" << escapeJsonString(c.band) << "\""
+                   << ",\"iface\":\"" << escapeJsonString(c.iface) << "\""
+                   << ",\"signal_dbm\":\"" << escapeJsonString(c.signal_dbm) << "\"}";
+            }
+        }
+        ss << "]";
+        sendAll(client_fd, httpResponse("200 OK", "application/json; charset=utf-8", ss.str()));
+        return;
+    }
+
     if (path.rfind("/api/cfr/download", 0) == 0) {
         handleCfrDownload(client_fd);
         return;
@@ -417,6 +509,28 @@ void WebServer::handleWebClient(int client_fd) {
             body = full_request.substr(header_end + 4);
         }
         handleCfrApi(client_fd, method, body);
+        return;
+    }
+
+    if (path.rfind("/api/distance", 0) == 0) {
+        const std::string full_request(request, static_cast<size_t>(bytes_read));
+        std::string body;
+        const size_t header_end = full_request.find("\r\n\r\n");
+        if (header_end != std::string::npos) {
+            body = full_request.substr(header_end + 4);
+        }
+        handleDistanceApi(client_fd, method, path, body);
+        return;
+    }
+
+    if (path.rfind("/api/v6", 0) == 0) {
+        const std::string full_request(request, static_cast<size_t>(bytes_read));
+        std::string body;
+        const size_t header_end = full_request.find("\r\n\r\n");
+        if (header_end != std::string::npos) {
+            body = full_request.substr(header_end + 4);
+        }
+        handleV6Api(client_fd, method, path, body);
         return;
     }
 
@@ -478,6 +592,14 @@ void WebServer::handleWebClient(int client_fd) {
 
     std::string filepath;
     std::string content_type;
+
+    if (path.find("..") != std::string::npos) {
+        sendAll(client_fd,
+                httpResponse("403 Forbidden", "text/plain; charset=utf-8",
+                             "Forbidden"));
+        return;
+    }
+
     if (path == "/" || path == "/index.html") {
         filepath = web_root_ + "/index.html";
         content_type = "text/html; charset=utf-8";
@@ -487,6 +609,21 @@ void WebServer::handleWebClient(int client_fd) {
     } else if (path == "/script.js") {
         filepath = web_root_ + "/script.js";
         content_type = "application/javascript; charset=utf-8";
+    } else if (path == "/Logo-VNPT-Technology.png" || endsWith(path, ".png")) {
+        filepath = web_root_ + path;
+        content_type = "image/png";
+    } else if (endsWith(path, ".svg")) {
+        filepath = web_root_ + path;
+        content_type = "image/svg+xml";
+    } else if (endsWith(path, ".ico")) {
+        filepath = web_root_ + path;
+        content_type = "image/x-icon";
+    } else if (endsWith(path, ".jpg") || endsWith(path, ".jpeg")) {
+        filepath = web_root_ + path;
+        content_type = "image/jpeg";
+    } else if (endsWith(path, ".webp")) {
+        filepath = web_root_ + path;
+        content_type = "image/webp";
     } else {
         sendAll(client_fd,
                 httpResponse("404 Not Found", "text/plain; charset=utf-8",
@@ -518,8 +655,7 @@ void WebServer::handleProberApi(int client_fd, const std::string &method,
     if (method == "POST") {
         ProberStatus current = prober_->getStatus(false);
         bool new_enabled = current.enabled;
-        std::string new_mode = current.mode;
-        std::vector<std::string> new_targets = current.target_ips;
+        std::string new_target = current.target_ip;
         int new_interval = current.interval_ms;
 
         // Trích xuất "enabled": true/false
@@ -534,53 +670,31 @@ void WebServer::handleProberApi(int client_fd, const std::string &method,
                     new_enabled = false;
             }
         }
-        // Trích xuất "mode": "single" / "multi"
-        pos = body.find("\"mode\"");
+
+        // Trích xuất "target_ip" hoặc "target_ips" (chỉ lấy 1 mục tiêu duy nhất)
+        pos = body.find("\"target_ip\"");
         if (pos != std::string::npos) {
-            size_t first_q = body.find('\"', pos + 6);
+            size_t first_q = body.find('\"', pos + 11);
             if (first_q != std::string::npos) {
                 size_t second_q = body.find('\"', first_q + 1);
                 if (second_q != std::string::npos) {
-                    new_mode = body.substr(first_q + 1, second_q - first_q - 1);
-                }
-            }
-        }
-        // Trích xuất "target_ips": ["...", "..."]
-        pos = body.find("\"target_ips\"");
-        if (pos != std::string::npos) {
-            size_t start_arr = body.find('[', pos);
-            size_t end_arr = body.find(']', start_arr);
-            if (start_arr != std::string::npos && end_arr != std::string::npos) {
-                new_targets.clear();
-                std::string arr_str = body.substr(start_arr + 1, end_arr - start_arr - 1);
-                size_t p = 0;
-                while ((p = arr_str.find('\"', p)) != std::string::npos) {
-                    size_t p2 = arr_str.find('\"', p + 1);
-                    if (p2 == std::string::npos)
-                        break;
-                    std::string ip = arr_str.substr(p + 1, p2 - p - 1);
-                    if (!ip.empty())
-                        new_targets.push_back(ip);
-                    p = p2 + 1;
+                    new_target = body.substr(first_q + 1, second_q - first_q - 1);
                 }
             }
         } else {
-            // Hoặc trích xuất "target_ip": "..." nếu gửi kiểu đơn
-            pos = body.find("\"target_ip\"");
+            pos = body.find("\"target_ips\"");
             if (pos != std::string::npos) {
-                size_t first_q = body.find('\"', pos + 11);
+                size_t start_arr = body.find('[', pos);
+                size_t first_q = (start_arr != std::string::npos) ? body.find('\"', start_arr) : std::string::npos;
                 if (first_q != std::string::npos) {
                     size_t second_q = body.find('\"', first_q + 1);
                     if (second_q != std::string::npos) {
-                        std::string ip = body.substr(first_q + 1, second_q - first_q - 1);
-                        if (!ip.empty()) {
-                            new_targets.clear();
-                            new_targets.push_back(ip);
-                        }
+                        new_target = body.substr(first_q + 1, second_q - first_q - 1);
                     }
                 }
             }
         }
+
         // Trích xuất "interval_ms": 50
         pos = body.find("\"interval_ms\"");
         if (pos != std::string::npos) {
@@ -593,7 +707,7 @@ void WebServer::handleProberApi(int client_fd, const std::string &method,
             }
         }
 
-        prober_->setConfig(new_enabled, new_mode, new_targets, new_interval);
+        prober_->setConfig(new_enabled, new_target, new_interval);
     }
 
     // Format ProberStatus thành JSON trả về
@@ -689,6 +803,9 @@ void WebServer::handleCfrApi(int client_fd, const std::string &method,
 
         if (action == "stop") {
             cfr_controller_->stopCapture();
+            if (prober_) {
+                prober_->setEnabled(false);
+            }
             {
                 std::lock_guard<std::mutex> lock(data_mutex_);
                 has_frame_ = false;
@@ -698,6 +815,30 @@ void WebServer::handleCfrApi(int client_fd, const std::string &method,
             sendAll(client_fd,
                     httpResponse("200 OK", "application/json; charset=utf-8",
                                  "{\"status\":\"ok\",\"running\":false}"));
+            return;
+        }
+
+        if (action == "update_period") {
+            int new_period = 50;
+            size_t pos_p = body.find("\"period\"");
+            if (pos_p != std::string::npos) {
+                size_t col = body.find(':', pos_p);
+                if (col != std::string::npos) {
+                    try {
+                        new_period = std::stoi(body.substr(col + 1, 10));
+                    } catch (...) {}
+                }
+            }
+            if (new_period >= 10 && new_period <= 2000) {
+                cfr_controller_->updatePeriod(new_period);
+                if (prober_) {
+                    CFRCaptureStatus cstat = cfr_controller_->getStatus();
+                    prober_->setConfig(true, cstat.target_ip, new_period, cstat.target_mac);
+                }
+            }
+            sendAll(client_fd,
+                    httpResponse("200 OK", "application/json; charset=utf-8",
+                                 "{\"status\":\"ok\",\"period\":" + std::to_string(new_period) + "}"));
             return;
         }
 
@@ -711,7 +852,7 @@ void WebServer::handleCfrApi(int client_fd, const std::string &method,
         std::string mac;
         std::string iface;
         std::string ip;
-        int period = 50;
+        int period = 10;
         int bandwidth = 0;
         int method_id = 0;
         bool auto_probe = true;
@@ -773,57 +914,158 @@ void WebServer::handleCfrApi(int client_fd, const std::string &method,
         }
 
         // Trích xuất "bandwidth": 0, 1, 2, 3, 4
+        bool has_bandwidth_param = false;
         pos = body.find("\"bandwidth\"");
         if (pos != std::string::npos) {
             size_t col = body.find(':', pos);
             if (col != std::string::npos) {
                 try {
                     bandwidth = std::stoi(body.substr(col + 1, 10));
+                    has_bandwidth_param = true;
                 } catch (...) {}
             }
         }
 
-        // Nếu MAC trống hoặc "auto", tự động chọn thiết bị Wi-Fi có sóng tốt nhất
+        // Trích xuất "method" hoặc "method_id": 0, 1
+        pos = body.find("\"method\"");
+        if (pos == std::string::npos) {
+            pos = body.find("\"method_id\"");
+        }
+        if (pos != std::string::npos) {
+            size_t col = body.find(':', pos);
+            if (col != std::string::npos) {
+                try {
+                    method_id = std::stoi(body.substr(col + 1, 10));
+                } catch (...) {}
+            }
+        }
+
+        // Nếu MAC trống hoặc "auto", tự động chọn thiết bị Wi-Fi tốt nhất
+        // Ưu tiên:
+        // 1. Thiết bị đang được chọn trong prober (nếu có target_ip cụ thể != "auto")
+        // 2. Thiết bị trên băng tần 5GHz có sóng mạnh nhất (vì 5GHz hỗ trợ 80MHz và Gesture Model 1)
+        // 3. Fallback sang 2.4GHz nếu không có thiết bị nào trên 5GHz
         if ((mac.empty() || mac == "auto") && prober_) {
             ProberStatus pstat = prober_->getStatus(false);
             std::vector<ClientInfo> clients = pstat.clients;
             if (clients.empty()) {
                 clients = prober_->scanClients();
             }
-            int best_signal = -999;
-            for (const auto &client : clients) {
-                if (!client.is_wireless)
-                    continue;
-                int sig = -100;
-                try {
-                    sig = std::stoi(client.signal_dbm);
-                } catch (...) {}
-                if (sig > best_signal || mac.empty()) {
-                    best_signal = sig;
-                    mac = client.mac;
-                    iface = client.iface;
-                    if (ip.empty() && client.ip != "N/A")
-                        ip = client.ip;
+
+            const ClientInfo *chosen_client = nullptr;
+
+            // Nếu người dùng đã chọn 1 target_ip cụ thể trong prober (khác auto và rỗng)
+            if (!ip.empty() && ip != "auto" && ip != "N/A") {
+                for (const auto &c : clients) {
+                    if (c.ip == ip || c.mac == ip) {
+                        chosen_client = &c;
+                        break;
+                    }
                 }
+            } else if (!pstat.target_ips.empty() && !pstat.target_ips[0].empty() &&
+                       pstat.target_ips[0] != "auto" && pstat.target_ips[0] != "N/A") {
+                for (const auto &c : clients) {
+                    if (c.ip == pstat.target_ips[0] || c.mac == pstat.target_ips[0]) {
+                        chosen_client = &c;
+                        break;
+                    }
+                }
+            }
+
+            if (!chosen_client) {
+                sendAll(client_fd,
+                        httpResponse("400 Bad Request", "application/json; charset=utf-8",
+                                     "{\"error\":\"Chưa chọn thiết bị Wi-Fi để thu thập CSI. Vui lòng chọn thiết bị trên giao diện.\"}"));
+                return;
+            }
+
+            mac = chosen_client->mac;
+            iface = chosen_client->iface;
+            ip = (chosen_client->ip != "N/A" && !chosen_client->ip.empty()) ? chosen_client->ip : "";
+            if (!has_bandwidth_param && chosen_client->max_bandwidth > 0) {
+                bandwidth = chosen_client->max_bandwidth;
             }
         }
 
         if (mac.empty()) {
             sendAll(client_fd,
                     httpResponse("400 Bad Request", "application/json; charset=utf-8",
-                                 "{\"error\":\"No Wi-Fi client available for capture\"}"));
+                                 "{\"error\":\"Chưa chọn thiết bị Wi-Fi để thu thập CSI. Vui lòng chọn thiết bị trên giao diện.\"}"));
             return;
         }
 
+        // Nếu capture ĐANG CHẠY cho đúng trạm này với cùng băng thông:
+        // Không kill tiến trình và không restart CFR, chỉ cần kích hoạt wake-up burst bổ sung!
+        CFRCaptureStatus cur_cfr = cfr_controller_->getStatus();
+        if (cur_cfr.running && equalsIgnoreCase(cur_cfr.target_mac, mac) &&
+            (bandwidth == 0 || bandwidth == cur_cfr.bandwidth)) {
+            if (period > 0 && period != cur_cfr.period) {
+                cfr_controller_->updatePeriod(period);
+                cur_cfr.period = period;
+            }
+            if (auto_probe && prober_) {
+                std::string burst_ip = (!ip.empty() && ip != "N/A") ? ip : cur_cfr.target_ip;
+                if (burst_ip.empty()) burst_ip = prober_->findIpForMac(mac);
+                if (!burst_ip.empty()) {
+                    int p_interval = (period > 0) ? period : cur_cfr.period;
+                    prober_->setConfig(true, burst_ip, p_interval, mac);
+                    prober_->triggerBurst(burst_ip, mac, 15);
+                }
+            }
+            std::ostringstream ss;
+            ss << "{\"status\":\"ok\",\"running\":true"
+               << ",\"target_mac\":\"" << cur_cfr.target_mac << "\""
+               << ",\"target_ip\":\"" << cur_cfr.target_ip << "\""
+               << ",\"iface\":\"" << cur_cfr.iface << "\""
+               << ",\"phy\":\"" << cur_cfr.phy << "\""
+               << ",\"hw\":\"" << cur_cfr.hw << "\""
+               << ",\"mac_dev\":\"" << cur_cfr.mac_dev << "\""
+               << ",\"bandwidth\":" << cur_cfr.bandwidth
+               << ",\"period\":" << cur_cfr.period
+               << ",\"latest_file\":\"" << cur_cfr.latest_file << "\""
+               << ",\"latest_file_size\":" << cur_cfr.latest_file_size
+               << ",\"pid\":" << cur_cfr.pid
+               << ",\"uptime_sec\":" << cur_cfr.uptime_sec
+               << ",\"available_bandwidths\":[";
+            for (size_t b = 0; b < cur_cfr.available_bandwidths.size(); ++b) {
+                if (b > 0) ss << ",";
+                ss << cur_cfr.available_bandwidths[b];
+            }
+            ss << "]}";
+            sendAll(client_fd, httpResponse("200 OK", "application/json; charset=utf-8", ss.str()));
+            return;
+        }
+
+        // 1. Pre-warm: Đánh thức thiết bị trước bằng chuỗi gói thăm dò nếu auto_probe bật
+        if (auto_probe && prober_) {
+            ProberStatus pstat = prober_->getStatus(false);
+            int probe_interval = (period > 0) ? period : pstat.interval_ms;
+            std::string burst_ip = (!ip.empty() && ip != "N/A") ? ip : "";
+            if (burst_ip.empty() && !mac.empty()) {
+                burst_ip = prober_->findIpForMac(mac);
+                if (!burst_ip.empty()) {
+                    ip = burst_ip;
+                }
+            }
+            if (!burst_ip.empty()) {
+                prober_->setConfig(true, burst_ip, probe_interval, mac);
+                // Bắn 10 gói ARP + UDP có khoảng nghỉ 10ms giữa các gói để đánh thức trạm êm dịu mà không làm nghẽn hàng đợi
+                prober_->triggerBurst(burst_ip, mac, 10);
+                std::this_thread::sleep_for(std::chrono::milliseconds(150));
+            }
+        }
+
+        // 2. Tự động dừng V6 Native Engine nếu đang chạy để nhường relay cho CFR Overview
+        if (v6_engine_ && v6_engine_->isRunning()) {
+            v6_engine_->stop("Stop for CFR Overview capture");
+            std::this_thread::sleep_for(std::chrono::milliseconds(60));
+        }
+
+        // 3. Kích hoạt thu CFR khi trạm đã thức giấc
         bool started = cfr_controller_->startCapture(mac, iface, ip, period, bandwidth, method_id);
         CFRCaptureStatus status = cfr_controller_->getStatus();
 
         if (started) {
-            if (auto_probe && !ip.empty() && ip != "N/A" && prober_) {
-                ProberStatus pstat = prober_->getStatus(false);
-                prober_->setConfig(true, "single", {ip}, pstat.interval_ms);
-            }
-
             std::ostringstream ss;
             ss << "{\"status\":\"ok\",\"running\":true"
                << ",\"target_mac\":\"" << status.target_mac << "\""
@@ -863,7 +1105,8 @@ void WebServer::handleCfrApi(int client_fd, const std::string &method,
             has_frame_ = false;
             motion_detector_.reset();
             breath_detector_.reset();
-            wave_detector_.reset();
+            wakeup_detector_.reset();
+        wave_detector_.reset();
         }
     }
     std::ostringstream ss;
@@ -950,6 +1193,247 @@ void WebServer::handleCfrDownload(int client_fd) {
     }
 }
 
+void WebServer::handleDistanceApi(int client_fd, const std::string &method,
+                                  const std::string &path, const std::string &body) {
+    if (method == "POST") {
+        if (path == "/api/distance/calibrate") {
+            float distance_m = 1.0f;
+            size_t pos = body.find("\"distance_m\"");
+            if (pos != std::string::npos) {
+                size_t colon = body.find(':', pos);
+                if (colon != std::string::npos) {
+                    try {
+                        distance_m = std::stof(body.substr(colon + 1));
+                    } catch (...) {}
+                }
+            }
+
+            std::string mac;
+            size_t mpos = body.find("\"mac\"");
+            if (mpos != std::string::npos) {
+                size_t q1 = body.find('\"', mpos + 5);
+                if (q1 != std::string::npos) {
+                    size_t q2 = body.find('\"', q1 + 1);
+                    if (q2 != std::string::npos) {
+                        mac = body.substr(q1 + 1, q2 - q1 - 1);
+                    }
+                }
+            }
+            if (mac.empty() || mac == "auto" || mac == "DEFAULT") {
+                if (cfr_controller_ && !cfr_controller_->getTargetMac().empty()) {
+                    mac = cfr_controller_->getTargetMac();
+                } else if (!last_target_mac_.empty()) {
+                    mac = last_target_mac_;
+                } else if (prober_) {
+                    ProberStatus pstat = prober_->getStatus(false);
+                    if (!pstat.clients.empty()) {
+                        mac = pstat.clients[0].mac;
+                    }
+                }
+            }
+            if (mac.empty() || mac == "auto") {
+                mac = "DEFAULT";
+            }
+
+            bool ok = distance_estimator_.calibrate(mac, distance_m);
+            if (ok) {
+                std::ostringstream resp;
+                resp << "{\"status\":\"ok\",\"mac\":\"" << mac
+                     << "\",\"distance_m\":" << distance_m
+                     << ",\"band\":\"" << distance_estimator_.getBandName() << "\""
+                     << ",\"applied_a_1m\":" << distance_estimator_.getEffectiveA1m()
+                     << ",\"applied_n\":" << distance_estimator_.getPathLossExponent()
+                     << "}";
+                sendAll(client_fd, httpResponse("200 OK", "application/json; charset=utf-8", resp.str()));
+            } else {
+                sendAll(client_fd, httpResponse("400 Bad Request", "application/json; charset=utf-8",
+                                                "{\"error\":\"Failed to calibrate. Ensure target MAC and valid distance (>0.2m)\"}"));
+            }
+            return;
+        } else if (path == "/api/distance/reset_cal") {
+            std::string mac;
+            size_t mpos = body.find("\"mac\"");
+            if (mpos != std::string::npos) {
+                size_t q1 = body.find('\"', mpos + 5);
+                if (q1 != std::string::npos) {
+                    size_t q2 = body.find('\"', q1 + 1);
+                    if (q2 != std::string::npos) {
+                        mac = body.substr(q1 + 1, q2 - q1 - 1);
+                    }
+                }
+            }
+            if (mac.empty() || mac == "auto") {
+                if (cfr_controller_ && !cfr_controller_->getTargetMac().empty()) {
+                    mac = cfr_controller_->getTargetMac();
+                } else if (!last_target_mac_.empty()) {
+                    mac = last_target_mac_;
+                }
+            }
+            distance_estimator_.resetCalibration(mac);
+            sendAll(client_fd, httpResponse("200 OK", "application/json; charset=utf-8", "{\"status\":\"ok\",\"message\":\"Calibration reset\"}"));
+            return;
+        }
+    } else if (method == "GET") {
+        if (path == "/api/distance/calibrations") {
+            auto list = distance_estimator_.getAllCalibrations();
+            std::ostringstream resp;
+            resp << "{\"calibrations\":[";
+            for (size_t i = 0; i < list.size(); ++i) {
+                if (i > 0) resp << ",";
+                resp << "{\"mac\":\"" << list[i].mac
+                     << "\",\"band\":\"" << list[i].band
+                     << "\",\"a_1m\":" << list[i].a_1m
+                     << ",\"n\":" << list[i].n
+                     << ",\"dist\":" << list[i].calibrated_at_dist_m
+                     << ",\"ts\":" << list[i].timestamp_sec << "}";
+            }
+            resp << "]}";
+            sendAll(client_fd, httpResponse("200 OK", "application/json; charset=utf-8", resp.str()));
+            return;
+        }
+    }
+
+    sendAll(client_fd, httpResponse("404 Not Found", "application/json; charset=utf-8", "{\"error\":\"Unknown distance API\"}"));
+}
+
+void WebServer::handleV6Api(int client_fd, const std::string &method,
+                            const std::string &path, const std::string &body) {
+    if (!v6_engine_) {
+        sendAll(client_fd, httpResponse("500 Internal Server Error", "application/json; charset=utf-8",
+                                        "{\"error\":\"V6 Engine not initialized\"}"));
+        return;
+    }
+
+    if (path == "/api/v6/score" || path == "/api/v6/status") {
+        sendAll(client_fd, httpResponse("200 OK", "application/json; charset=utf-8",
+                                        v6_engine_->getSnapshotJson()));
+        return;
+    }
+
+    if (path == "/api/v6/devices") {
+        std::ostringstream ss;
+        ss << "[";
+        if (prober_) {
+            ProberStatus ps = prober_->getStatus(false);
+            bool first = true;
+            for (const auto &c : ps.clients) {
+                if (c.mac.empty()) continue;
+                if (!first) ss << ",";
+                first = false;
+                ss << "{\"mac\":\"" << c.mac << "\",\"ip\":\"" << c.ip << "\"}";
+            }
+        }
+        ss << "]";
+        sendAll(client_fd, httpResponse("200 OK", "application/json; charset=utf-8", ss.str()));
+        return;
+    }
+
+    if (path == "/api/v6/start") {
+        if (method != "POST") {
+            sendAll(client_fd, httpResponse("405 Method Not Allowed", "application/json; charset=utf-8",
+                                            "{\"error\":\"Method not allowed\"}"));
+            return;
+        }
+
+        // 1. Phân giải mac và ip từ body JSON
+        std::string mac;
+        std::string ip;
+        size_t mac_pos = body.find("\"mac\"");
+        if (mac_pos != std::string::npos) {
+            size_t q1 = body.find('\"', mac_pos + 5);
+            if (q1 != std::string::npos) {
+                size_t q2 = body.find('\"', q1 + 1);
+                if (q2 != std::string::npos) {
+                    mac = body.substr(q1 + 1, q2 - q1 - 1);
+                }
+            }
+        }
+        size_t ip_pos = body.find("\"ip\"");
+        if (ip_pos != std::string::npos) {
+            size_t q1 = body.find('\"', ip_pos + 4);
+            if (q1 != std::string::npos) {
+                size_t q2 = body.find('\"', q1 + 1);
+                if (q2 != std::string::npos) {
+                    ip = body.substr(q1 + 1, q2 - q1 - 1);
+                }
+            }
+        }
+
+        // Nếu client không truyền mac/ip, tự lấy từ cfr_controller hoặc prober
+        if (mac.empty() && cfr_controller_) {
+            mac = cfr_controller_->getTargetMac();
+        }
+        if (ip.empty() && prober_) {
+            ProberStatus ps = prober_->getStatus(false);
+            for (const auto &c : ps.clients) {
+                if (!mac.empty() && strcasecmp(c.mac.c_str(), mac.c_str()) == 0) {
+                    ip = c.ip;
+                    break;
+                }
+            }
+        }
+
+        // 2. Dừng capture của daemon nếu đang chạy để nhường relay phần cứng cho V6 Native Engine
+        if (cfr_controller_ && cfr_controller_->isRunning()) {
+            std::cout << "[Web] Stopping CFR capture before launching V6 Native Engine\n";
+            cfr_controller_->stopCapture("Handing over hardware to V6 Native Engine");
+            std::this_thread::sleep_for(std::chrono::milliseconds(80));
+        }
+
+        // 3. Khởi chạy V6 Native Engine
+        std::string err;
+        bool ok = v6_engine_->start(mac, ip, &err);
+        if (ok) {
+            sendAll(client_fd, httpResponse("200 OK", "application/json; charset=utf-8",
+                                            "{\"status\":\"ok\",\"running\":true,\"mac\":\"" + mac + "\",\"ip\":\"" + ip + "\"}"));
+        } else {
+            sendAll(client_fd, httpResponse("500 Internal Server Error", "application/json; charset=utf-8",
+                                            "{\"status\":\"error\",\"error\":\"" + err + "\"}"));
+        }
+        return;
+    }
+
+    if (path == "/api/v6/stop") {
+        v6_engine_->stop("User requested stop");
+        sendAll(client_fd, httpResponse("200 OK", "application/json; charset=utf-8",
+                                        "{\"status\":\"ok\",\"running\":false}"));
+        return;
+    }
+
+    if (path == "/api/v6/sensitivity" || path == "/api/v6/config") {
+        if (method == "POST") {
+            double high = 0.80;
+            double low = 0.65;
+            size_t pos_high = body.find("\"threshold_high\"");
+            if (pos_high == std::string::npos) pos_high = body.find("\"high\"");
+            if (pos_high != std::string::npos) {
+                size_t col = body.find(':', pos_high);
+                if (col != std::string::npos) {
+                    try { high = std::stod(body.substr(col + 1, 10)); } catch (...) {}
+                }
+            }
+            size_t pos_low = body.find("\"threshold_low\"");
+            if (pos_low == std::string::npos) pos_low = body.find("\"low\"");
+            if (pos_low != std::string::npos) {
+                size_t col = body.find(':', pos_low);
+                if (col != std::string::npos) {
+                    try { low = std::stod(body.substr(col + 1, 10)); } catch (...) {}
+                }
+            }
+            v6_engine_->setSensitivity(high, low);
+        }
+        std::ostringstream ss;
+        ss << std::fixed << std::setprecision(2);
+        ss << "{\"status\":\"ok\",\"threshold_high\":" << v6_engine_->getThresholdHigh()
+           << ",\"threshold_low\":" << v6_engine_->getThresholdLow() << "}";
+        sendAll(client_fd, httpResponse("200 OK", "application/json; charset=utf-8", ss.str()));
+        return;
+    }
+
+    sendAll(client_fd, httpResponse("404 Not Found", "application/json; charset=utf-8",
+                                    "{\"error\":\"Unknown V6 API endpoint\"}"));
+}
+
 void WebServer::handleIngestClient(int client_fd) {
     CSIParser parser;
     uint8_t buffer[16384];
@@ -975,6 +1459,14 @@ void WebServer::handleIngestClient(int client_fd) {
 }
 
 void WebServer::handleEventStream(int client_fd) {
+    // Thiết lập timeout gửi và tắt Nagle's algorithm để phản hồi tức thì, tránh ứ đọng Send-Q khi Wi-Fi lag
+    struct timeval snd_tv;
+    snd_tv.tv_sec = 2;
+    snd_tv.tv_usec = 0;
+    setsockopt(client_fd, SOL_SOCKET, SO_SNDTIMEO, (const char *)&snd_tv, sizeof(snd_tv));
+    int one = 1;
+    setsockopt(client_fd, IPPROTO_TCP, TCP_NODELAY, &one, sizeof(one));
+
     const std::string headers = "HTTP/1.1 200 OK\r\n"
                                 "Content-Type: text/event-stream\r\n"
                                 "Cache-Control: no-cache\r\n"
@@ -983,6 +1475,9 @@ void WebServer::handleEventStream(int client_fd) {
     if (!sendAll(client_fd, headers))
         return;
 
+    std::cout << "[Web] SSE client stream connected (fd=" << client_fd << ")\n";
+
+    constexpr int64_t kPaceMs = 10; // ~100 FPS (10ms) - chuẩn tốc độ Model V6 100Hz siêu nhạy, không trễ
     uint64_t last_sequence = 0;
     auto last_send_time = std::chrono::steady_clock::now();
 
@@ -1009,27 +1504,37 @@ void WebServer::handleEventStream(int client_fd) {
             const auto elapsed_ms =
                 std::chrono::duration_cast<std::chrono::milliseconds>(now - last_send_time).count();
 
-            // Giới hạn tần suất đẩy SSE tối đa ~30 FPS (mỗi 33ms) để không làm nghẽn Wi-Fi và CPU browser
-            if (elapsed_ms >= 33) {
-                last_send_time = now;
-                const std::string event =
-                    "id: " + std::to_string(current_sequence) +
-                    "\n"
-                    "event: csi\n"
-                    "data: " +
-                    frame.toJson() + "\n\n";
-                if (!sendAll(client_fd, event))
-                    break;
-                last_sequence = current_sequence;
-            } else {
-                // Đã có frame mới nhưng chưa đến nhịp 33ms: ngủ ngắn bù nhịp để không chạy loop rỗng
+            if (elapsed_ms < kPaceMs) {
                 std::this_thread::sleep_for(
-                    std::chrono::milliseconds(std::max<int64_t>(1, 33 - elapsed_ms)));
+                    std::chrono::milliseconds(std::max<int64_t>(1, kPaceMs - elapsed_ms)));
+                // Lấy frame mới nhất sau khi ngủ nhịp bù
+                {
+                    std::lock_guard<std::mutex> lock(data_mutex_);
+                    if (!is_running_)
+                        break;
+                    has_frame = has_frame_;
+                    current_sequence = sequence_;
+                    if (has_frame)
+                        frame = latest_frame_;
+                }
             }
+
+            last_send_time = std::chrono::steady_clock::now();
+            last_sequence = current_sequence;
+            const std::string event =
+                "id: " + std::to_string(current_sequence) +
+                "\n"
+                "event: csi\n"
+                "data: " +
+                frame.toJson(false) + "\n\n";
+            if (!sendAll(client_fd, event))
+                break;
         } else if (!sendAll(client_fd, ": keep-alive\n\n")) {
             break;
         }
     }
+
+    std::cout << "[Web] SSE client stream disconnected (fd=" << client_fd << ")\n";
 }
 
 std::string WebServer::readFile(const std::string &filepath) const {

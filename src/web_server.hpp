@@ -5,12 +5,16 @@
 #include "cfr_controller.hpp"
 #include "csi_parser.hpp"
 #include "distance_estimator.hpp"
+#include "link_stability_estimator.hpp"
 #include "motion.hpp"
 #include "prober.hpp"
+#include "wakeup_detector.hpp"
 #include "wave_detector.hpp"
+#include "v6_native_engine.hpp"
 
 #include <atomic>
 #include <condition_variable>
+#include <memory>
 #include <mutex>
 #include <string>
 #include <thread>
@@ -48,11 +52,19 @@ class WebServer {
     std::condition_variable data_changed_;
     MotionDetector motion_detector_;
     BreathDetector breath_detector_;
+    WakeupDetector wakeup_detector_;
     WaveDetector wave_detector_;
     DistanceEstimator distance_estimator_;
+    LinkStabilityEstimator link_stability_estimator_;
+    std::unique_ptr<V6NativeEngine> v6_engine_;
     CSIData latest_frame_;
     uint64_t sequence_ = 0;
     bool has_frame_ = false;
+
+    std::string last_target_mac_;
+    std::string last_capture_iface_;
+    std::string cached_target_hostname_;
+    uint32_t profile_lookup_counter_ = 0;
 
     void runWebServer();
     void runIngestServer();
@@ -64,6 +76,10 @@ class WebServer {
     void handleCfrApi(int client_fd, const std::string &method,
                       const std::string &body);
     void handleCfrDownload(int client_fd);
+    void handleDistanceApi(int client_fd, const std::string &method,
+                           const std::string &path, const std::string &body);
+    void handleV6Api(int client_fd, const std::string &method,
+                     const std::string &path, const std::string &body);
     void startClientWorker(int client_fd, bool web_client);
 
     std::string readFile(const std::string &filepath) const;

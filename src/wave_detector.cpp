@@ -1,5 +1,4 @@
 #include "wave_detector.hpp"
-#include "csi_rf_model1.h"
 
 #include <algorithm>
 #include <cmath>
@@ -281,16 +280,12 @@ void WaveDetector::processWindow(uint64_t current_ts_us, float motion_score) {
         v_sr2.push_back(p.shape_step_rate[2]);
     }
 
-    float features[CSI_RF1_N_INPUT];
-    features[0] = computeMedian(v_dr0);
-    features[1] = computeMedian(v_dr1);
-    features[2] = computeMedian(v_dr2);
-    features[3] = computeMedian(v_sr0);
-    features[4] = computeMedian(v_sr2);
-
-    double proba[CSI_RF1_N_CLASSES] = {0.0, 0.0};
-    csi_rf1_predict(features, proba);
-    raw_prob_ = static_cast<float>(proba[1]);
+    (void)v_dr0;
+    (void)v_dr1;
+    (void)v_dr2;
+    (void)v_sr0;
+    (void)v_sr2;
+    raw_prob_ = 0.0f;
 
     // Exponential Moving Average (EMA) to smooth momentary Wi-Fi noise and prevent UI jitter
     if (smooth_prob_ <= 0.0001f) {
@@ -317,8 +312,9 @@ void WaveDetector::processWindow(uint64_t current_ts_us, float motion_score) {
     }
 
     // Gross motion gating: gross full-body movement or walking produces high motion_score
-    // genuine hand waving is localized (motion_score usually <= 3.8f)
-    const bool is_gross_motion = (motion_score > 3.8f);
+    // genuine hand waving is localized (motion_score usually <= 0.40f)
+    constexpr float kGrossMotionWaveThreshold = 0.45f;
+    const bool is_gross_motion = (motion_score > kGrossMotionWaveThreshold);
 
     // Adaptive persistence filter: require required_consecutive_hits_ continuous positive frames
     // This maintains exactly ~350ms physical duration across any ping rate, eliminating 100% of Wi-Fi noise spikes.

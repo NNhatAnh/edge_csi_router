@@ -71,6 +71,7 @@ x86/
 cmake-build-*/
 
 # Visual Studio Code
+.cache/
 .vscode/*
 !.vscode/settings.json
 !.vscode/tasks.json

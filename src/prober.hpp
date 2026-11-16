@@ -39,9 +39,9 @@ struct ClientInfo {
 
 struct ProberStatus {
     bool enabled = false;
-    std::string mode = "single"; // "single" hoặc "multi"
-    std::string target_ip;       // Cho single mode
-    std::vector<std::string> target_ips; // Cho multi mode
+    std::string mode = "single"; // Cố định single mode (đơn mục tiêu)
+    std::string target_ip;
+    std::vector<std::string> target_ips; // Tương thích ngược JSON
     int interval_ms = 50;
     std::string interface_name;
     uint64_t packets_sent = 0;
@@ -57,12 +57,19 @@ class ActiveProber {
 
     bool start();
     void stop();
+    void setEnabled(bool enabled);
+    bool isEnabled() const { return enabled_; }
 
+    void setConfig(bool enabled, const std::string &target_ip, int interval_ms,
+                   const std::string &target_mac_hint = "");
     void setConfig(bool enabled, const std::string &mode,
-                   const std::vector<std::string> &target_ips, int interval_ms);
+                   const std::vector<std::string> &target_ips, int interval_ms,
+                   const std::string &target_mac_hint = "");
+    void triggerBurst(const std::string &ip, const std::string &target_mac_hint = "", int count = 5);
     ProberStatus getStatus(bool scan_network = false);
     void scanNetwork(std::vector<WifiCardInfo> &cards, std::vector<ClientInfo> &clients);
     std::vector<ClientInfo> scanClients();
+    std::string findIpForMac(const std::string &mac);
 
   private:
     std::string interface_name_;
@@ -77,8 +84,9 @@ class ActiveProber {
     std::mutex mutex_;
     std::condition_variable cv_;
     bool enabled_ = false;
-    std::string mode_ = "single";
-    std::vector<std::string> target_ips_;
+    std::string target_ip_;
+    std::string target_mac_hint_;
+    std::atomic<int> warmup_counter_{0};
     int interval_ms_ = 50;
     uint64_t packets_sent_ = 0;
 
@@ -91,8 +99,9 @@ class ActiveProber {
     void run();
     bool initSockets();
     void closeSockets();
+    std::string findMacForIp(const std::string &ip);
     bool sendUdpProbe(const std::string &ip);
-    bool sendArpProbe(const std::string &ip);
+    bool sendArpProbe(const std::string &ip, const std::string &hint_mac = "");
     std::vector<std::string> getActiveTargets();
 };
 

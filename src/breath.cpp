@@ -650,7 +650,9 @@ void BreathDetector::updateBreathingEstimate(CSIData &frame) {
         // Nhận diện trạng thái ngủ: nhịp thở chậm đều (8 - 18 BPM), RRV thấp, tính chu kỳ cao
         if (current_bpm_ >= 8.0f && current_bpm_ <= 18.0f &&
             current_rrv_ <= 0.20f && current_regularity_ >= 0.40f) {
-            if (++sleep_qualify_counter_ >= 4) { // Duy trì ổn định > 10 giây
+            // Ước lượng chạy mỗi 5 frame (~0.25s), cần 40 chu kỳ để duy trì ổn định >= 10 giây
+            constexpr size_t kSleepQualifyCount = 40;
+            if (++sleep_qualify_counter_ >= kSleepQualifyCount) {
                 is_sleeping_ = true;
             }
         } else {

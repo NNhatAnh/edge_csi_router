@@ -4,19 +4,14 @@
 
 const i18n = {
     vi: {
-        brand_sub: 'WIRELESS SENSING',
+        brand_sub: 'AI GATEWAY · EDGE CSI',
         nav_workspace: 'WORKSPACE',
         tab_overview: 'Tổng quan',
-        tab_breath: 'Dạng sóng thở',
-        tab_amplitude: 'Biên độ CSI',
-        tab_phase: 'Pha CSI',
-        tab_iq: 'Chòm sao I/Q',
-        tab_chains: 'So sánh antenna',
-        tab_packet: 'Thông tin gói',
+        tab_gesture_v: 'Cử chỉ chữ V',
         sidebar_footer: 'Edge processing<br>Local network only',
         topbar_eyebrow: 'ĐO ĐẠC ROUTER / GIÁM SÁT CSI',
         btn_calibrate: 'Hiệu chuẩn lại',
-        status_live: 'TRỰC TIẾP',
+        status_live: 'ĐÃ BẬT · LIVE',
         status_waiting: 'ĐANG CHỜ DỮ LIỆU',
         status_offline: 'MẤT KẾT NỐI',
         status_connecting: 'ĐANG KẾT NỐI',
@@ -26,7 +21,9 @@ const i18n = {
         status_packet_wait: 'Đang chờ gói (Client ngủ hoặc chu kỳ beacon thưa)',
         metric_sc: 'SUBCARRIERS',
         metric_chains: 'ANTENNA CHAINS',
+        metric_stability: 'ĐỘ ỔN ĐỊNH & CHẤT LƯỢNG',
         metric_motion: 'MOTION SCORE',
+        metric_distance: 'KHOẢNG CÁCH',
         metric_presence: 'NHẬN DIỆN HIỆN DIỆN',
         metric_wave: 'CỬ CHỈ VẪY TAY',
         wave_idle: 'KHÔNG CÓ',
@@ -63,9 +60,6 @@ const i18n = {
         prober_desc: 'Router tự động phát gói tin thăm dò (ARP / UDP) để kích thích gói phản hồi từ điện thoại, duy trì luồng CSI liên tục ngay cả khi người dùng không chạm vào máy.',
         prober_on: 'Đang phát',
         prober_off: 'Đang tắt',
-        prober_mode_label: 'Chế độ thu:',
-        mode_single: 'Đơn thiết bị (Single Device)',
-        mode_multi: 'Đa thiết bị (Multi-Device)',
         target_client_label: 'Thiết bị Wi-Fi mục tiêu:',
         auto_select_wifi: '-- Tự động chọn client Wi-Fi mạnh nhất --',
         custom_ip_placeholder: 'Nhập IP thủ công (vd: 192.168.10.238)',
@@ -73,24 +67,28 @@ const i18n = {
         auto_strongest_btn: 'Tự động chọn sóng mạnh nhất',
         manual_ip_btn: 'Nhập IP thủ công',
         refresh_btn: 'Quét lại',
-        select_all: 'Chọn tất cả',
-        deselect_all: 'Bỏ chọn tất cả',
-        selected_count: 'Đã chọn: ',
         col_select: 'Chọn',
         col_device: 'Tên thiết bị',
         col_ip: 'Địa chỉ IP',
         col_mac: 'Địa chỉ MAC',
         col_signal: 'RSSI',
+        col_distance: 'Khoảng cách',
         col_bitrate: 'Tốc độ TX',
-        col_activity: 'Lần cuối thấy',
+        col_activity: 'Hoạt động',
+        badge_capturing: 'ĐANG THU',
+        zone_immediate: 'Sát (<0.6m)',
+        zone_near: 'Gần (0.6-1.8m)',
+        zone_mid: 'Vừa (1.8-4m)',
+        zone_far: 'Xa (>4m)',
         no_card_stations: 'Không có thiết bị nào đang kết nối trên card này',
         no_ip_assigned: 'Chưa cấp IP',
-        selecting_auto: 'Đang chọn: Tự động (Sóng mạnh nhất)',
+        selecting_auto: 'Chưa chọn thiết bị (Nhấp chọn thiết bị bên dưới để thu)',
+        unselected_device: 'Chưa chọn thiết bị (Nhấp chọn thiết bị bên dưới để thu)',
+        prompt_select_device: 'Vui lòng nhấp chọn một thiết bị Wi-Fi trong danh sách bên dưới trước khi bắt đầu thu!',
+        option_default_tag: 'Mặc định',
         selecting_manual: 'Đang chọn thủ công: ',
         selecting_device: 'Đang chọn: ',
         devices_count: 'thiết bị',
-        select_card: 'Chọn card này',
-        deselect_card: 'Bỏ chọn card',
         searching_wifi_clients: 'Đang tải thông tin Card Wi-Fi và thiết bị kết nối...',
         no_wifi_clients: 'Không tìm thấy Card Wi-Fi hoặc thiết bị kết nối.',
         interval_label: 'Chu kỳ phát (Interval):',
@@ -101,7 +99,6 @@ const i18n = {
         stat_status: 'Trạng thái',
         prober_active: 'Đang ping',
         prober_idle: 'Tạm dừng',
-        col_action: 'Thao tác',
         // CFR Panel
         cfr_badge: 'ATH12K · HARDWARE CFR PIPELINE',
         cfr_title: 'Điều Khiển Thu Thập CSI (CFR Capture Control)',
@@ -131,33 +128,54 @@ const i18n = {
         btn_quick_capture: 'Thu CSI',
         pill_capturing: 'ĐANG THU',
         cfr_no_client_alert: 'Không tìm thấy thiết bị Wi-Fi nào đang kết nối. Vui lòng kết nối thiết bị vào Wi-Fi trước.',
-        thres_high_short: 'Cao',
-        thres_low_short: 'Thấp',
+        // Gesture V
+        gesture_badge: 'GIÁM SÁT CỬ CHỈ THỜI GIAN THỰC',
+        gesture_title: 'Nhận Diện Cử Chỉ Chữ V (V-Shape Gesture)',
+        gesture_subtitle: 'Nét xuống ➔ Dừng tại đáy ➔ Nét lên. Hệ thống tự động ghi nhận khi hoàn thành đúng chu kỳ cử chỉ.',
+        gesture_state_idle: 'Chờ tín hiệu',
+        gesture_state_not_capturing: 'Chờ thu CSI',
+        gesture_guide_not_capturing: 'Vui lòng nhấn [Bắt đầu thu CSI] trên thiết bị mục tiêu để kích hoạt nhận diện cử chỉ',
+        gesture_celebrate_title: 'GHI NHẬN CỬ CHỈ CHỮ V THÀNH CÔNG!',
+        gesture_celebrate_desc: 'Đã hoàn thành đầy đủ chu kỳ cử chỉ (Xuống ➔ Đáy ➔ Lên) đạt độ chuẩn xác cao.',
+        v_canvas_title: 'TRỰC QUAN HÓA QUỸ ĐẠO CỬ CHỈ',
+        v_label_start: '① Bắt đầu nét xuống',
+        v_label_pause: '② Dừng tại đáy',
+        v_label_end: '③ Hoàn tất nét lên',
+        v_guide_title: 'QUY TRÌNH THỰC HIỆN CỬ CHỈ',
+        v_step_1_title: 'Nét vẽ xuống (Down-stroke)',
+        v_step_1_desc: 'Thực hiện nét chuyển động từ trên xuống dưới liên tục ≥ 0.5s. Quỹ đạo bên trái sẽ sáng kích hoạt.',
+        v_step_2_title: 'Dừng tại đáy (Apex Pause)',
+        v_step_2_desc: 'Tạm dừng chuyển động rõ ràng tại đáy ≥ 0.2s. Điểm chóp đáy phát xung nhịp xác nhận.',
+        v_step_3_title: 'Nét vẽ lên (Up-stroke)',
+        v_step_3_desc: 'Thực hiện nét chuyển động từ dưới lên trên liên tục ≥ 0.5s. Quỹ đạo bên phải sẽ sáng vút lên.',
+        v_step_4_title: 'Hoàn tất chu kỳ',
+        v_step_4_desc: 'Hoàn tất cả 3 bước trong ≤ 5.0s ➔ Toàn bộ ký hiệu chữ V xác nhận thành công!',
+        v_tele_model: 'LOẠI CỬ CHỈ',
+        v_tele_threshold: 'NGƯỠNG KÍCH HOẠT',
+        v_tele_score: 'ĐIỂM TIN CẬY (CONFIDENCE)',
+        v_tele_label: 'TRẠNG THÁI VẬN ĐỘNG',
+        v_tele_stage: 'PHA HIỆN TẠI',
+        v_tele_timing: 'THỜI LƯỢNG (XUỐNG / ĐÁY / LÊN)',
+        m5r_chart_kicker: 'THEO DÕI LIÊN TỤC',
+        m5r_chart_title: 'Đồ Thị Điểm Tin Cậy & Ngưỡng Kích Hoạt',
+        legend_m5r_score: 'Điểm tin cậy',
+        legend_m5r_thresh: 'Ngưỡng kích hoạt (0.68)',
+        v_guide_ready: 'Sẵn sàng thực hiện cử chỉ...',
         // Views
         views: {
-            overview: { title: 'Tổng quan tín hiệu', kicker: 'LIVE ACTIVITY', chart: 'Motion score & ngưỡng phát hiện' },
-            breath: { title: 'Dạng sóng nhịp thở & Phân biệt người', kicker: 'HUMAN DISCRIMINATION', chart: 'Biên độ pha vi chuyển động (rad)' },
-            amplitude: { title: 'Biên độ CSI', kicker: 'CHANNEL RESPONSE', chart: 'Biên độ theo tone · raw I/Q' },
-            phase: { title: 'Pha CSI', kicker: 'PHASE RESPONSE', chart: 'Pha theo tone · radian' },
-            iq: { title: 'Chòm sao I/Q', kicker: 'COMPLEX CHANNEL', chart: 'Phân bố mẫu I/Q' },
-            chains: { title: 'So sánh antenna', kicker: 'RF CHAINS', chart: 'Biên độ giữa các antenna chains' },
-            packet: { title: 'Thông tin gói', kicker: 'FRAME INSPECTOR', chart: 'CSI amplitude của frame hiện tại' }
+            overview: { title: 'Tổng quan tín hiệu', kicker: 'LIVE ACTIVITY', chart: 'Biến thiên mức độ chuyển động (Motion Score)' },
+            gesture_v: { title: 'Nhận diện cử chỉ chữ V', kicker: 'GESTURE TELEMETRY', chart: 'Điểm tin cậy & Quỹ đạo cử chỉ' }
         }
     },
     en: {
-        brand_sub: 'WIRELESS SENSING',
+        brand_sub: 'AI GATEWAY · EDGE CSI',
         nav_workspace: 'WORKSPACE',
         tab_overview: 'Overview',
-        tab_breath: 'Respiration Wave',
-        tab_amplitude: 'CSI Amplitude',
-        tab_phase: 'CSI Phase',
-        tab_iq: 'I/Q Constellation',
-        tab_chains: 'Antenna Chains',
-        tab_packet: 'Frame Inspector',
+        tab_gesture_v: 'V-Gesture',
         sidebar_footer: 'Edge processing<br>Local network only',
         topbar_eyebrow: 'ROUTER TELEMETRY / CSI MONITOR',
         btn_calibrate: 'Recalibrate',
-        status_live: 'LIVE',
+        status_live: 'ENABLED · LIVE',
         status_waiting: 'WAITING FOR DATA',
         status_offline: 'DISCONNECTED',
         status_connecting: 'CONNECTING',
@@ -167,7 +185,9 @@ const i18n = {
         status_packet_wait: 'Waiting for packets (Client asleep or slow beacons)',
         metric_sc: 'SUBCARRIERS',
         metric_chains: 'ANTENNA CHAINS',
+        metric_stability: 'STABILITY & QUALITY',
         metric_motion: 'MOTION SCORE',
+        metric_distance: 'DISTANCE',
         metric_presence: 'PRESENCE DETECTION',
         metric_wave: 'HAND-WAVE GESTURE',
         wave_idle: 'NONE',
@@ -204,9 +224,6 @@ const i18n = {
         prober_desc: 'Router automatically transmits probe packets (ARP / UDP) to trigger client responses, maintaining a continuous CSI stream even when phones are locked or sleeping.',
         prober_on: 'Probing',
         prober_off: 'Disabled',
-        prober_mode_label: 'Capture Mode:',
-        mode_single: 'Single Device',
-        mode_multi: 'Multi-Device',
         target_client_label: 'Target Wi-Fi Device(s):',
         auto_select_wifi: '-- Auto-select strongest Wi-Fi client --',
         custom_ip_placeholder: 'Custom IP (e.g. 192.168.10.238)',
@@ -214,24 +231,28 @@ const i18n = {
         auto_strongest_btn: 'Auto Strongest Signal',
         manual_ip_btn: 'Manual IP',
         refresh_btn: 'Refresh',
-        select_all: 'Select All',
-        deselect_all: 'Deselect All',
-        selected_count: 'Selected: ',
         col_select: 'Select',
         col_device: 'Device Name',
         col_ip: 'IP Address',
         col_mac: 'MAC Address',
         col_signal: 'RSSI',
+        col_distance: 'Distance',
         col_bitrate: 'TX Rate',
-        col_activity: 'Last Seen',
+        col_activity: 'Activity',
+        badge_capturing: 'CAPTURING',
+        zone_immediate: 'Immediate (<0.6m)',
+        zone_near: 'Near (0.6-1.8m)',
+        zone_mid: 'Mid (1.8-4m)',
+        zone_far: 'Far (>4m)',
         no_card_stations: 'No stations connected on this interface',
         no_ip_assigned: 'No IP',
-        selecting_auto: 'Target: Auto (Strongest Signal)',
+        selecting_auto: 'No device selected (Click a device below to capture)',
+        unselected_device: 'No device selected (Click a device below to capture)',
+        prompt_select_device: 'Please select a Wi-Fi device from the list below before starting capture!',
+        option_default_tag: 'Default',
         selecting_manual: 'Target Manual IP: ',
         selecting_device: 'Target: ',
         devices_count: 'device(s)',
-        select_card: 'Select card',
-        deselect_card: 'Deselect card',
         searching_wifi_clients: 'Loading Wi-Fi cards and connected devices...',
         no_wifi_clients: 'No Wi-Fi cards or stations detected.',
         interval_label: 'Ping Interval:',
@@ -242,7 +263,6 @@ const i18n = {
         stat_status: 'Status',
         prober_active: 'Probing',
         prober_idle: 'Idle',
-        col_action: 'Action',
         // CFR Panel
         cfr_badge: 'ATH12K · HARDWARE CFR PIPELINE',
         cfr_title: 'CSI CFR Capture Control',
@@ -272,17 +292,43 @@ const i18n = {
         btn_quick_capture: 'Capture',
         pill_capturing: 'CAPTURING',
         cfr_no_client_alert: 'No connected Wi-Fi station found. Please connect a phone/laptop to Wi-Fi first.',
-        thres_high_short: 'High',
-        thres_low_short: 'Low',
+        // Gesture V
+        gesture_badge: 'REALTIME GESTURE TELEMETRY',
+        gesture_title: 'V-Shape Gesture Recognition',
+        gesture_subtitle: 'Down-stroke ➔ Apex pause ➔ Up-stroke. Automatically registered upon completing the cycle.',
+        gesture_state_idle: 'Waiting for signal',
+        gesture_state_not_capturing: 'Awaiting Capture',
+        gesture_guide_not_capturing: 'Please click [Start CSI Capture] on target device to activate gesture recognition',
+        gesture_celebrate_title: 'GESTURE REGISTERED SUCCESSFULLY!',
+        gesture_celebrate_desc: 'Completed V-shape gesture cycle with high confidence.',
+        v_canvas_title: 'GESTURE TRAJECTORY VISUALIZATION',
+        v_label_start: '① Start Down-Stroke',
+        v_label_pause: '② Pause at Apex',
+        v_label_end: '③ Finish Up-Stroke',
+        v_guide_title: 'GESTURE EXECUTION PROCEDURE',
+        v_step_1_title: 'Down-stroke',
+        v_step_1_desc: 'Execute downward motion continuously for ≥ 0.5s. Left trajectory illuminates active.',
+        v_step_2_title: 'Apex Pause',
+        v_step_2_desc: 'Pause motion steadily at the vertex for ≥ 0.2s. Apex beacon pulses to confirm.',
+        v_step_3_title: 'Up-stroke',
+        v_step_3_desc: 'Execute upward motion continuously for ≥ 0.5s. Right trajectory illuminates upwards.',
+        v_step_4_title: 'Cycle Complete',
+        v_step_4_desc: 'Complete all steps within ≤ 5.0s ➔ Gesture registered successfully!',
+        v_tele_model: 'GESTURE TYPE',
+        v_tele_threshold: 'DECISION THRESHOLD',
+        v_tele_score: 'CONFIDENCE SCORE',
+        v_tele_label: 'MOTION STATE',
+        v_tele_stage: 'ACTIVE PHASE',
+        v_tele_timing: 'DOWN / PAUSE / UP',
+        m5r_chart_kicker: 'CONTINUOUS MONITORING',
+        m5r_chart_title: 'Confidence Score & Trigger Threshold',
+        legend_m5r_score: 'Confidence Score',
+        legend_m5r_thresh: 'Trigger Threshold (0.68)',
+        v_guide_ready: 'Ready for gesture execution...',
         // Views
         views: {
-            overview: { title: 'Signal Overview', kicker: 'LIVE ACTIVITY', chart: 'Motion score & detection thresholds' },
-            breath: { title: 'Respiration Wave & Discrimination', kicker: 'HUMAN DISCRIMINATION', chart: 'Micro-motion phase residual (rad)' },
-            amplitude: { title: 'CSI Amplitude', kicker: 'CHANNEL RESPONSE', chart: 'Tone amplitude · raw I/Q' },
-            phase: { title: 'CSI Phase', kicker: 'PHASE RESPONSE', chart: 'Tone phase · radians' },
-            iq: { title: 'I/Q Constellation', kicker: 'COMPLEX CHANNEL', chart: 'I/Q sample constellation' },
-            chains: { title: 'Antenna Comparison', kicker: 'RF CHAINS', chart: 'Amplitude across RF chains' },
-            packet: { title: 'Frame Inspector', kicker: 'FRAME INSPECTOR', chart: 'CSI amplitude of current frame' }
+            overview: { title: 'Signal Overview', kicker: 'LIVE ACTIVITY', chart: 'Motion Score Activity' },
+            gesture_v: { title: 'V-Shape Gesture Recognition', kicker: 'GESTURE TELEMETRY', chart: 'Confidence Score & Trajectory' }
         }
     }
 };
@@ -325,7 +371,7 @@ function applyLanguage(lang) {
     }
 }
 
-const colors = ['#4be2d0', '#a98cff', '#ffb86b', '#71a7ff', '#ff7f9d'];
+const colors = ['#00e5ff', '#ff2a85', '#8b5cf6', '#0072ce', '#38bdf8'];
 const canvas = document.getElementById('signal-chart');
 const context = canvas.getContext('2d');
 const emptyOverlay = document.getElementById('chart-empty');
@@ -333,28 +379,53 @@ const chainSelect = document.getElementById('chain-select');
 const calibrateButton = document.getElementById('calibrate-button');
 
 const domElements = {
-    scCount: document.getElementById('sc-count'),
-    scCaption: document.getElementById('sc-caption'),
-    chainCount: document.getElementById('chain-count'),
-    nssCaption: document.getElementById('nss-caption'),
+    stabilityScoreVal: document.getElementById('stability-score-val'),
+    stabilityStatusChip: document.getElementById('stability-status-chip'),
+    stabilityNeedle: document.getElementById('stability-needle'),
+    gaugeCenterCap: document.getElementById('gauge-center-cap'),
+    stabilityAgcPill: document.getElementById('stability-agc-pill'),
+    stabilityAgcText: document.getElementById('stability-agc-text'),
+    stabilityFadePill: document.getElementById('stability-fade-pill'),
+    stabilityFadeText: document.getElementById('stability-fade-text'),
+    stabilityKPill: document.getElementById('stability-k-pill'),
+    stabilityKText: document.getElementById('stability-k-text'),
+    stabilityCaption: document.getElementById('stability-caption'),
+    stabilityLiveDot: document.getElementById('stability-live-dot'),
     motionValue: document.getElementById('motion-value'),
     motionCaption: document.getElementById('motion-caption'),
-    presenceValue: document.getElementById('presence-value'),
-    presenceCaption: document.getElementById('presence-caption'),
-    waveValue: document.getElementById('wave-value'),
-    waveCaption: document.getElementById('wave-caption'),
-    waveChip: document.getElementById('wave-confidence-chip'),
-    waveCard: document.getElementById('metric-card-wave'),
     distanceVal: document.getElementById('distance-val'),
     distanceZoneChip: document.getElementById('distance-zone-chip'),
     distanceCaption: document.getElementById('distance-caption'),
     fsplBandBadge: document.getElementById('fspl-band-badge'),
-    frameRate: document.getElementById('frame-rate'),
-    chipTsf: document.getElementById('chip-tsf'),
-    ppduId: document.getElementById('ppdu-id'),
-    bandwidth: document.getElementById('bandwidth'),
-    apMac: document.getElementById('ap-mac'),
-    frameId: document.getElementById('frame-id')
+    distLiveDot: document.getElementById('dist-live-dot'),
+    distDiagInfo: document.getElementById('dist-diag-info'),
+    distCalBtn: document.getElementById('dist-cal-btn'),
+    gestureVPanel: document.getElementById('gesture-v-panel'),
+    vShape: document.getElementById('vShape'),
+    vDown: document.getElementById('vDown'),
+    vUp: document.getElementById('vUp'),
+    vPoint: document.getElementById('vPoint'),
+    v6StateLabel: document.getElementById('v6StateLabel'),
+    v6GuideDetail: document.getElementById('v6GuideDetail'),
+    v6GuideBox: document.getElementById('v6GuideBox'),
+    v6SyncedTarget: document.getElementById('v6-synced-target'),
+    v6TeleScore: document.getElementById('v6-tele-score'),
+    v6TeleLabel: document.getElementById('v6-tele-label'),
+    v6TelePass: document.getElementById('v6-tele-pass'),
+    v6TeleFail: document.getElementById('v6-tele-fail'),
+    v6Notice: document.getElementById('v6Notice'),
+    v6TimingDetails: document.getElementById('v6TimingDetails')
+};
+
+let currentProberConfig = {
+    enabled: false,
+    mode: 'single',
+    target_ip: '',
+    target_ips: [],
+    interval_ms: 50,
+    packets_sent: 0,
+    cards: [],
+    clients: []
 };
 
 let activeView = 'overview';
@@ -372,16 +443,168 @@ function scheduleRender() {
         renderRequested = true;
         requestAnimationFrame(() => {
             renderRequested = false;
+            if (document.hidden) return; // Không tốn CPU render canvas khi tab đang ẩn
             drawCurrent();
         });
     }
 }
 
+function getDistanceZoneMeta(distOrZone) {
+    let zone = distOrZone;
+    if (typeof distOrZone === 'number') {
+        if (distOrZone < 0.6) zone = 'immediate';
+        else if (distOrZone < 1.8) zone = 'near';
+        else if (distOrZone < 4.0) zone = 'mid';
+        else zone = 'far';
+    }
+    switch (zone) {
+        case 'immediate':
+            return {
+                label: t('zone_immediate'),
+                cls: 'zone-immediate'
+            };
+        case 'near':
+            return {
+                label: t('zone_near'),
+                cls: 'zone-near'
+            };
+        case 'mid':
+            return {
+                label: t('zone_mid'),
+                cls: 'zone-mid'
+            };
+        case 'far':
+        default:
+            return {
+                label: t('zone_far'),
+                cls: 'zone-far'
+            };
+    }
+}
+
+function updateStabilityUI(frame, isNewFrame) {
+    if (!domElements.stabilityScoreVal || !frame) return;
+
+    if (domElements.stabilityLiveDot && isNewFrame) {
+        if (!domElements.stabilityLiveDot.classList.contains('pulse')) {
+            domElements.stabilityLiveDot.classList.add('pulse');
+            setTimeout(() => {
+                if (domElements.stabilityLiveDot) domElements.stabilityLiveDot.classList.remove('pulse');
+            }, 300);
+        }
+    }
+
+    const score = Number(frame.link_stability_score);
+    const hasScore = !isNaN(score) && score > 0;
+    const statusText = frame.link_status_text || 'calibrating';
+    const isAgcEvent = Boolean(frame.is_agc_event);
+    const deepFadeWarn = Boolean(frame.deep_fade_warning);
+    const fadeRatio = Number(frame.deep_fade_ratio) || 1.0;
+    const spectralCorr = Number(frame.spectral_correlation) || 1.0;
+    const kRician = Number(frame.csi_rician_k) || 0.0;
+    const losRatio = Number(frame.csi_los_ratio) || 0.0;
+    const varTime = Number(frame.temporal_csi_variance) || 0.0;
+
+    if (hasScore) {
+        domElements.stabilityScoreVal.textContent = Math.round(score);
+
+        // Update Analog Gauge Needle Rotation (-90deg at 0 to +90deg at 100)
+        if (domElements.stabilityNeedle) {
+            const clampedScore = Math.min(100, Math.max(0, score));
+            const angle = -90 + (clampedScore / 100) * 180;
+            domElements.stabilityNeedle.style.transform = `rotate(${angle.toFixed(1)}deg)`;
+
+            const needleColorCls = score >= 85 ? 'needle-high' : score >= 70 ? 'needle-med' : score >= 50 ? 'needle-warn' : 'needle-low';
+            domElements.stabilityNeedle.className = `gauge-needle ${needleColorCls}`;
+        }
+
+        // Update Chip status
+        if (domElements.stabilityStatusChip) {
+            let chipText = 'KHỞI TẠO';
+            let chipCls = 'motion-chip';
+            if (statusText === 'clean_los') {
+                chipText = currentLang === 'vi' ? 'LoS SẠCH' : 'CLEAN LoS';
+                chipCls = 'motion-chip chip-los';
+            } else if (statusText === 'multipath_stable') {
+                chipText = currentLang === 'vi' ? 'PHẢN XẠ TĨNH' : 'MULTIPATH';
+                chipCls = 'motion-chip chip-multipath';
+            } else if (statusText === 'deep_fade') {
+                chipText = currentLang === 'vi' ? 'LÕM TẦN SỐ' : 'DEEP FADE';
+                chipCls = 'motion-chip chip-fade';
+            } else if (statusText === 'dynamic_motion') {
+                chipText = currentLang === 'vi' ? 'NHIỄU ĐỘNG' : 'DYNAMIC';
+                chipCls = 'motion-chip chip-dynamic';
+            } else if (statusText === 'weak') {
+                chipText = currentLang === 'vi' ? 'SÓNG YẾU' : 'WEAK SIGNAL';
+                chipCls = 'motion-chip chip-weak';
+            }
+            domElements.stabilityStatusChip.textContent = chipText;
+            domElements.stabilityStatusChip.className = chipCls;
+        }
+
+        // Update AGC Pill
+        if (domElements.stabilityAgcPill && domElements.stabilityAgcText) {
+            if (isAgcEvent) {
+                domElements.stabilityAgcPill.className = 'stability-pill pill-agc-jump';
+                domElements.stabilityAgcText.textContent = currentLang === 'vi' ? '⚡ AGC Bù trừ' : '⚡ AGC Hop';
+                domElements.stabilityAgcPill.title = currentLang === 'vi' 
+                    ? 'Phần cứng AGC nhảy nấc độ lợi, vân phổ CSI bất biến (đã bù trừ)' 
+                    : 'Hardware AGC gain switch detected, spectral shape invariant';
+            } else {
+                domElements.stabilityAgcPill.className = 'stability-pill';
+                domElements.stabilityAgcText.textContent = currentLang === 'vi' ? 'AGC Ổn định' : 'AGC Stable';
+                domElements.stabilityAgcPill.title = currentLang === 'vi' ? 'Mạch khuếch đại tự động ổn định' : 'AGC gain stable';
+            }
+        }
+
+        // Update Deep Fade Pill
+        if (domElements.stabilityFadePill && domElements.stabilityFadeText) {
+            if (deepFadeWarn) {
+                domElements.stabilityFadePill.className = 'stability-pill pill-fade-warn';
+                domElements.stabilityFadeText.textContent = currentLang === 'vi' ? `⚠️ Lõm ${fadeRatio.toFixed(1)}x` : `⚠️ Fade ${fadeRatio.toFixed(1)}x`;
+                domElements.stabilityFadePill.title = currentLang === 'vi' 
+                    ? 'Xuất hiện vết lõm suy hao chọn lọc tần số sâu (nguy cơ lỗi bit ở MCS cao)' 
+                    : 'Frequency-selective deep fade detected (risk of bit error at high MCS)';
+            } else {
+                domElements.stabilityFadePill.className = 'stability-pill';
+                domElements.stabilityFadeText.textContent = `Fade: ${fadeRatio.toFixed(1)}x`;
+                domElements.stabilityFadePill.title = currentLang === 'vi' ? 'Không có suy hao sâu cục bộ' : 'Flat channel response';
+            }
+        }
+
+        // Update K & LoS Pill
+        if (domElements.stabilityKPill && domElements.stabilityKText) {
+            domElements.stabilityKPill.className = 'stability-pill ' + (kRician >= 2.5 ? 'pill-clean' : '');
+            domElements.stabilityKText.textContent = `K: ${kRician.toFixed(1)} · LoS: ${Math.round(losRatio * 100)}%`;
+        }
+
+        // Update Caption
+        if (domElements.stabilityCaption) {
+            domElements.stabilityCaption.textContent = currentLang === 'vi'
+                ? `Tương quan vân phổ r = ${spectralCorr.toFixed(3)} · Biến thiên σ² = ${varTime.toFixed(4)}`
+                : `Spectral correlation r = ${spectralCorr.toFixed(3)} · Variance σ² = ${varTime.toFixed(4)}`;
+        }
+    } else {
+        domElements.stabilityScoreVal.textContent = '—';
+        if (domElements.stabilityNeedle) {
+            domElements.stabilityNeedle.style.transform = 'rotate(-90deg)';
+            domElements.stabilityNeedle.className = 'gauge-needle';
+        }
+        if (domElements.stabilityStatusChip) {
+            domElements.stabilityStatusChip.textContent = currentLang === 'vi' ? 'CHỜ DỮ LIỆU' : 'AWAITING';
+            domElements.stabilityStatusChip.className = 'motion-chip';
+        }
+        if (domElements.stabilityCaption) {
+            domElements.stabilityCaption.textContent = currentLang === 'vi' 
+                ? 'Đang phân tích vân phổ CSI & RSSI...' 
+                : 'Analyzing CSI & RSSI spectrum...';
+        }
+    }
+}
+
 function updateDomMetrics(frame, isNewFrame, now) {
-    if (domElements.scCount) domElements.scCount.textContent = Number(frame.subcarriers_count || 0).toLocaleString();
-    if (domElements.scCaption) domElements.scCaption.textContent = `${frame.tones_per_chain || 0} tone / chain`;
-    if (domElements.chainCount) domElements.chainCount.textContent = String(frame.num_chains || frame.chains?.length || 0);
-    if (domElements.nssCaption) domElements.nssCaption.textContent = `Spatial streams ${frame.nss ?? '—'}`;
+    updateStabilityUI(frame, isNewFrame);
+
     if (domElements.motionValue) {
         domElements.motionValue.textContent = frame.motion_ready
             ? (Number(frame.motion_score) || 0).toFixed(4)
@@ -389,17 +612,8 @@ function updateDomMetrics(frame, isNewFrame, now) {
     }
 
     const thresHigh = Number(frame.motion_threshold_high) || 0;
-    const thresLow = Number(frame.motion_threshold_low) || 0;
-    const thresHighEl = document.getElementById('thres-high-val');
-    const thresLowEl = document.getElementById('thres-low-val');
     const motionChipEl = document.getElementById('motion-chip');
 
-    if (thresHighEl) {
-        thresHighEl.textContent = thresHigh > 0 ? thresHigh.toFixed(4) : '—';
-    }
-    if (thresLowEl) {
-        thresLowEl.textContent = thresLow > 0 ? thresLow.toFixed(4) : '—';
-    }
     if (motionChipEl) {
         if (!frame.motion_calibrated) {
             motionChipEl.className = 'motion-chip';
@@ -432,79 +646,6 @@ function updateDomMetrics(frame, isNewFrame, now) {
         }
     }
 
-    const status = frame.presence_status || (frame.presence_detected ? (frame.is_human_presence ? 'human_present' : 'human_moving') : 'empty_room');
-
-    if (domElements.presenceValue && domElements.presenceCaption) {
-        if (status === 'human_moving' || status === 'gross_motion') {
-            domElements.presenceValue.textContent = t('presence_moving');
-            domElements.presenceValue.style.color = '#ffb86b';
-            domElements.presenceCaption.textContent = t('caption_moving');
-        } else if (status === 'human_present') {
-            domElements.presenceValue.textContent = t('presence_present');
-            domElements.presenceValue.style.color = '#4be2d0';
-            const bpm = Number(frame.breath_bpm || 0).toFixed(1);
-            const span = Number(frame.breath_phase_span || 0).toFixed(2);
-            const reg = Math.round(Number(frame.breath_regularity || 0) * 100);
-            const sleepStr = frame.is_sleeping ? (currentLang === 'vi' ? ' · Đang ngủ' : ' · Sleeping') : '';
-            domElements.presenceCaption.textContent = currentLang === 'vi'
-                ? `Nhịp thở: ${bpm} BPM · Tự tương quan: ${reg}% · Span: ${span} rad${sleepStr}`
-                : `Respiration: ${bpm} BPM · Autocorr: ${reg}% · Span: ${span} rad${sleepStr}`;
-        } else if (status === 'calibrating') {
-            domElements.presenceValue.textContent = t('presence_calibrating');
-            domElements.presenceValue.style.color = '#71a7ff';
-            domElements.presenceCaption.textContent = t('caption_calibrating');
-        } else {
-            domElements.presenceValue.textContent = t('presence_empty');
-            domElements.presenceValue.style.color = '#77869d';
-            domElements.presenceCaption.textContent = t('caption_empty');
-        }
-    }
-
-    if (domElements.waveValue && domElements.waveCaption) {
-        const pct = Math.round((Number(frame.wave_confidence) || 0) * 100);
-        const rawPct = Math.round((Number(frame.wave_raw_prob) || 0) * 100);
-        const samples = Number(frame.wave_samples_in_window) || 0;
-        const reason = frame.wave_reason || 'idle';
-        const tones = frame.tones_per_chain || 0;
-        const chains = frame.num_chains || 0;
-
-        if (domElements.waveChip) {
-            domElements.waveChip.textContent = `${pct}%`;
-        }
-
-        if (frame.wave_status === 'unavailable') {
-            domElements.waveValue.textContent = t('wave_waiting');
-            domElements.waveValue.style.color = '#77869d';
-            let detail = t('caption_wave_waiting');
-            if (reason === 'waiting_80mhz') {
-                detail = currentLang === 'vi' ? `Chờ kênh 80 MHz (${tones}/208 tones)` : `Waiting 80 MHz (${tones}/208 tones)`;
-            } else if (reason === 'waiting_3chains') {
-                detail = currentLang === 'vi' ? `Chờ 3 antenna (${chains}/3 chains)` : `Waiting 3 antennas (${chains}/3 chains)`;
-            } else if (reason === 'too_few_samples') {
-                detail = currentLang === 'vi' ? `Chờ dữ liệu (${samples}/16 mẫu · bật Prober)` : `Waiting samples (${samples}/16 · enable Prober)`;
-            }
-            domElements.waveCaption.textContent = detail;
-            if (domElements.waveCard) domElements.waveCard.classList.remove('detected');
-            if (domElements.waveChip) domElements.waveChip.className = 'wave-confidence-chip';
-        } else if (frame.wave_detected) {
-            domElements.waveValue.textContent = t('wave_detected');
-            domElements.waveValue.style.color = '#4be2d0';
-            domElements.waveCaption.textContent = currentLang === 'vi'
-                ? `Cử chỉ vẫy tay đang diễn ra (P: ${pct}%)`
-                : `Waving gesture in progress (P: ${pct}%)`;
-            if (domElements.waveCard) domElements.waveCard.classList.add('detected');
-            if (domElements.waveChip) domElements.waveChip.className = 'wave-confidence-chip wave-active';
-        } else {
-            domElements.waveValue.textContent = t('wave_idle');
-            domElements.waveValue.style.color = '#8fa3bf';
-            domElements.waveCaption.textContent = currentLang === 'vi'
-                ? `Chưa phát hiện · ${samples} mẫu/3.2s · P: ${rawPct}%`
-                : `Idle · ${samples} samples/3.2s · P: ${rawPct}%`;
-            if (domElements.waveCard) domElements.waveCard.classList.remove('detected');
-            if (domElements.waveChip) domElements.waveChip.className = 'wave-confidence-chip';
-        }
-    }
-
     if (domElements.distanceVal && domElements.distanceCaption) {
         const dist = Number(frame.estimated_distance_m) || 0;
         const zone = frame.distance_zone || 'unknown';
@@ -512,16 +653,36 @@ function updateDomMetrics(frame, isNewFrame, now) {
         const rssi = frame.rssi_comb_db !== undefined ? frame.rssi_comb_db : '—';
         const los = Math.round((Number(frame.csi_los_ratio) || 0) * 100);
 
-        // Cập nhật tag băng tần FSPL (2.4 GHz vs 5.2 GHz)
         if (domElements.fsplBandBadge) {
-            const iface = (cfrState && cfrState.iface) ? cfrState.iface : '';
-            const is2g = (iface.includes('2.4') || iface.includes('.1-') || iface.includes('2g'));
-            domElements.fsplBandBadge.textContent = is2g ? 'FSPL 2.4 GHz' : 'FSPL 5.2 GHz';
-            domElements.fsplBandBadge.className = is2g ? 'fspl-band-badge band-2g' : 'fspl-band-badge band-5g';
+            const band = frame.distance_band || ((cfrState && cfrState.band_name) ? cfrState.band_name : '5.2 GHz');
+            domElements.fsplBandBadge.textContent = band;
+            if (band.includes('2.4')) {
+                domElements.fsplBandBadge.className = 'fspl-band-badge band-2g';
+            } else if (band.includes('6')) {
+                domElements.fsplBandBadge.className = 'fspl-band-badge band-6g';
+            } else {
+                domElements.fsplBandBadge.className = 'fspl-band-badge band-5g';
+            }
+        }
+
+        if (domElements.distDiagInfo) {
+            const a1m = frame.distance_a_1m !== undefined ? Number(frame.distance_a_1m).toFixed(1) : '—';
+            const nVal = frame.distance_n !== undefined ? Number(frame.distance_n).toFixed(2) : '2.15';
+            const src = frame.distance_cal_source === 'custom' ? (currentLang === 'vi' ? 'Hiệu chuẩn riêng' : 'Calibrated') : (currentLang === 'vi' ? 'Mặc định' : 'Default');
+            domElements.distDiagInfo.textContent = `A1m: ${a1m} dBm · n: ${nVal} (${src})`;
+        }
+
+        if (domElements.distLiveDot && isNewFrame) {
+            if (!domElements.distLiveDot.classList.contains('pulse')) {
+                domElements.distLiveDot.classList.add('pulse');
+                setTimeout(() => {
+                    if (domElements.distLiveDot) domElements.distLiveDot.classList.remove('pulse');
+                }, 300);
+            }
         }
 
         if (dist > 0) {
-            domElements.distanceVal.textContent = dist.toFixed(1);
+            domElements.distanceVal.textContent = dist.toFixed(2);
 
             let zoneText = '—';
             let zoneClass = 'motion-chip';
@@ -553,44 +714,745 @@ function updateDomMetrics(frame, isNewFrame, now) {
                 trendText = currentLang === 'vi' ? 'Đang đi xa' : 'Departing';
             }
 
-            domElements.distanceCaption.textContent = `${trendIcon} ${trendText} · RSSI: ${rssi} dBm · LoS: ${los}% (FSPL)`;
+            domElements.distanceCaption.textContent = `${trendIcon} ${trendText} · RSSI: ${rssi} dBm · LoS: ${los}%`;
         } else {
             domElements.distanceVal.textContent = '—';
             if (domElements.distanceZoneChip) domElements.distanceZoneChip.textContent = '—';
-            domElements.distanceCaption.textContent = currentLang === 'vi' ? 'Chờ tín hiệu RSSI + CSI (FSPL)' : 'Waiting RSSI + CSI (FSPL)';
+            domElements.distanceCaption.textContent = currentLang === 'vi' ? 'Chờ tín hiệu RSSI + CSI' : 'Waiting RSSI + CSI';
         }
     }
 
-    if (domElements.frameRate) domElements.frameRate.textContent = frameRate.toFixed(1);
-    if (domElements.chipTsf) domElements.chipTsf.textContent = frame.chip_tsf_us ? `${Number(frame.chip_tsf_us).toLocaleString()} µs` : '—';
-    if (domElements.ppduId) domElements.ppduId.textContent = frame.phy_ppdu_id ?? '—';
-    if (domElements.bandwidth) domElements.bandwidth.textContent = frame.channel_bw_code ?? '—';
-    if (domElements.apMac) domElements.apMac.textContent = frame.ap_mac || '—';
-    if (domElements.frameId) domElements.frameId.textContent = `PPDU ${frame.phy_ppdu_id ?? '—'}`;
     if (frame && frame.rssi_comb_db !== undefined) {
         const liveValEl = document.querySelector('.capturing-row .station-rssi-text');
         if (liveValEl) {
             liveValEl.textContent = `${frame.rssi_comb_db} dBm`;
         }
     }
+
+    updateGestureVUI(frame);
+
     if (isNewFrame) {
         setStatus('live', (currentLang === 'vi' ? 'Nhận frame ' : 'Frame received ') + new Date().toLocaleTimeString());
     }
 }
 
+const M5R_STROKE_LEN = 267; // Approximate length in px for each V stroke arm
+
+function updateGestureVUI(frame) {
+    if (!frame) return;
+    const stage = frame.gesture_stage || frame.wakeup_state || 'WAIT_STILL';
+    const reason = frame.gesture_reason || frame.wakeup_reason || 'startup';
+    const score = Number(frame.gesture_score !== undefined ? frame.gesture_score : (frame.wakeup_score || 0)) || 0;
+    const label = Number(frame.gesture_label !== undefined ? frame.gesture_label : (frame.wakeup_label || 0)) || 0;
+    const triggered = Boolean(frame.gesture_triggered || frame.wakeup_triggered);
+    const progress = Math.max(0, Math.min(1.0, Number(frame.gesture_progress !== undefined ? frame.gesture_progress : (frame.wakeup_progress || 0)) || 0));
+    const activeModel = frame.gesture_model || frame.wakeup_model || 'M1';
+
+    if (domElements.vTeleActiveModel) {
+        domElements.vTeleActiveModel.textContent = activeModel;
+    }
+    if (domElements.gestureModelSelect && document.activeElement !== domElements.gestureModelSelect) {
+        if (domElements.gestureModelSelect.value !== activeModel) {
+            domElements.gestureModelSelect.value = activeModel;
+        }
+    }
+
+    // If capture is stopped or model IDLE
+    if (!cfrState.running || stage === 'IDLE' || reason === 'not_capturing') {
+        if (domElements.gestureStateBadge && domElements.gestureStateText) {
+            domElements.gestureStateBadge.className = 'badge-idle';
+            domElements.gestureStateText.textContent = t('gesture_state_not_capturing');
+        }
+        if (domElements.gestureCelebrateBanner) domElements.gestureCelebrateBanner.hidden = true;
+        if (domElements.vStageInstruction) domElements.vStageInstruction.textContent = t('gesture_guide_not_capturing');
+        if (domElements.vProgressBar) domElements.vProgressBar.style.width = '0%';
+        if (domElements.vStrokeDown) {
+            domElements.vStrokeDown.style.strokeDashoffset = `${M5R_STROKE_LEN}px`;
+            domElements.vStrokeDown.classList.remove('illuminated');
+        }
+        if (domElements.vStrokeUp) {
+            domElements.vStrokeUp.style.strokeDashoffset = `${M5R_STROKE_LEN}px`;
+            domElements.vStrokeUp.classList.remove('illuminated');
+        }
+        if (domElements.vVertexBeacon) domElements.vVertexBeacon.classList.remove('pulsing');
+        const svgEl = document.getElementById('v-gesture-svg');
+        if (svgEl) svgEl.classList.remove('v-success-glow');
+        if (domElements.m5rScoreDisplay) domElements.m5rScoreDisplay.textContent = '0.0000';
+        if (domElements.m5rLabelChip) {
+            domElements.m5rLabelChip.className = 'motion-chip chip-still';
+            domElements.m5rLabelChip.textContent = '0 · CHỜ THU';
+        }
+        if (domElements.m5rStageDisplay) domElements.m5rStageDisplay.textContent = 'CHỜ THU CSI';
+        if (domElements.m5rTimingDisplay) domElements.m5rTimingDisplay.textContent = '0.0s / 0.0s / 0.0s';
+        return;
+    }
+
+    const isSuccess = triggered || stage === 'SUCCESS' || stage === 'PASS' || stage === 'WAKE';
+    const isDown = stage === 'MOVE1' || stage === 'DOWN' || stage === 'DOWN_STROKE';
+    const isPause = stage === 'PAUSE' || stage === 'BOTTOM' || stage === 'BOTTOM_PAUSE';
+    const isUp = stage === 'MOVE2' || stage === 'UP' || stage === 'UP_STROKE';
+    const isFinalStill = stage === 'FINAL_STILL' || stage === 'FINISH';
+    const isWaitStill = stage === 'WAIT_STILL' || stage === 'TABLE';
+    const isReady = stage === 'READY' || stage === 'SETTLE';
+
+    // 1. Update State Badge
+    if (domElements.gestureStateBadge && domElements.gestureStateText) {
+        let badgeCls = 'badge-idle';
+        let badgeTxt = 'SẴN SÀNG';
+
+        if (isSuccess) {
+            badgeCls = 'badge-active badge-success-glow';
+            badgeTxt = currentLang === 'vi' ? '✓ NHẬN DIỆN THÀNH CÔNG' : '✓ RECOGNIZED';
+        } else if (isDown) {
+            badgeCls = 'badge-active badge-drawing';
+            badgeTxt = currentLang === 'vi' ? 'PHA 1: NÉT XUỐNG' : 'PHASE 1: DOWN-STROKE';
+        } else if (isPause) {
+            badgeCls = 'badge-active badge-pause';
+            badgeTxt = currentLang === 'vi' ? 'PHA 2: DỪNG TẠI ĐÁY' : 'PHASE 2: APEX PAUSE';
+        } else if (isUp) {
+            badgeCls = 'badge-active badge-drawing';
+            badgeTxt = currentLang === 'vi' ? 'PHA 3: NÉT LÊN' : 'PHASE 3: UP-STROKE';
+        } else if (isFinalStill) {
+            badgeCls = 'badge-active badge-drawing';
+            badgeTxt = currentLang === 'vi' ? 'XÁC NHẬN GIỮ YÊN' : 'CONFIRMING STILL';
+        } else if (isWaitStill) {
+            badgeCls = 'badge-idle';
+            badgeTxt = currentLang === 'vi' ? 'CHỜ TĨNH NỀN (3S)' : 'WAIT STILL (3S)';
+        } else if (isReady) {
+            badgeCls = 'badge-idle';
+            badgeTxt = currentLang === 'vi' ? 'SẴN SÀNG VẼ CHỮ V' : 'READY FOR V-GESTURE';
+        }
+
+        domElements.gestureStateBadge.className = badgeCls;
+        domElements.gestureStateText.textContent = badgeTxt;
+    }
+
+    // 2. Progressive V-Gesture Stroke Illumination
+    const svgEl = document.getElementById('v-gesture-svg');
+    if (domElements.vStrokeDown && domElements.vStrokeUp && domElements.vVertexBeacon) {
+        if (isSuccess) {
+            // Success: both strokes 100% lit, glow effect on entire V
+            domElements.vStrokeDown.style.strokeDashoffset = '0px';
+            domElements.vStrokeDown.classList.add('illuminated');
+            domElements.vStrokeUp.style.strokeDashoffset = '0px';
+            domElements.vStrokeUp.classList.add('illuminated');
+            domElements.vVertexBeacon.classList.add('pulsing');
+            if (svgEl) svgEl.classList.add('v-success-glow');
+            if (domElements.vProgressBar) domElements.vProgressBar.style.width = '100%';
+        } else if (isDown) {
+            if (svgEl) svgEl.classList.remove('v-success-glow');
+            const downRatio = Math.min(1.0, Math.max(0.1, progress / 0.40));
+            domElements.vStrokeDown.style.strokeDashoffset = `${M5R_STROKE_LEN * (1.0 - downRatio)}px`;
+            domElements.vStrokeDown.classList.add('illuminated');
+            domElements.vStrokeUp.style.strokeDashoffset = `${M5R_STROKE_LEN}px`;
+            domElements.vStrokeUp.classList.remove('illuminated');
+            domElements.vVertexBeacon.classList.remove('pulsing');
+            if (domElements.vProgressBar) domElements.vProgressBar.style.width = `${downRatio * 45}%`;
+        } else if (isPause) {
+            if (svgEl) svgEl.classList.remove('v-success-glow');
+            domElements.vStrokeDown.style.strokeDashoffset = '0px';
+            domElements.vStrokeDown.classList.add('illuminated');
+            domElements.vStrokeUp.style.strokeDashoffset = `${M5R_STROKE_LEN}px`;
+            domElements.vStrokeUp.classList.remove('illuminated');
+            domElements.vVertexBeacon.classList.add('pulsing');
+            if (domElements.vProgressBar) domElements.vProgressBar.style.width = '50%';
+        } else if (isUp) {
+            if (svgEl) svgEl.classList.remove('v-success-glow');
+            domElements.vStrokeDown.style.strokeDashoffset = '0px';
+            domElements.vStrokeDown.classList.add('illuminated');
+            const upRatio = Math.min(1.0, Math.max(0.1, (progress - 0.50) / 0.45));
+            domElements.vStrokeUp.style.strokeDashoffset = `${M5R_STROKE_LEN * (1.0 - upRatio)}px`;
+            domElements.vStrokeUp.classList.add('illuminated');
+            domElements.vVertexBeacon.classList.add('pulsing');
+            if (domElements.vProgressBar) domElements.vProgressBar.style.width = `${55 + upRatio * 40}%`;
+        } else if (isFinalStill) {
+            if (svgEl) svgEl.classList.remove('v-success-glow');
+            domElements.vStrokeDown.style.strokeDashoffset = '0px';
+            domElements.vStrokeDown.classList.add('illuminated');
+            domElements.vStrokeUp.style.strokeDashoffset = '0px';
+            domElements.vStrokeUp.classList.add('illuminated');
+            domElements.vVertexBeacon.classList.add('pulsing');
+            if (domElements.vProgressBar) domElements.vProgressBar.style.width = '95%';
+        } else {
+            // READY or WAIT_STILL
+            if (svgEl) svgEl.classList.remove('v-success-glow');
+            domElements.vStrokeDown.style.strokeDashoffset = `${M5R_STROKE_LEN}px`;
+            domElements.vStrokeDown.classList.remove('illuminated');
+            domElements.vStrokeUp.style.strokeDashoffset = `${M5R_STROKE_LEN}px`;
+            domElements.vStrokeUp.classList.remove('illuminated');
+            domElements.vVertexBeacon.classList.remove('pulsing');
+            if (domElements.vProgressBar) domElements.vProgressBar.style.width = '0%';
+        }
+    }
+
+    // 3. Update Instruction Cards Highlight
+    if (domElements.instSteps) {
+        let activeIdx = -1;
+        if (isSuccess || isFinalStill) activeIdx = 3;
+        else if (isUp) activeIdx = 2;
+        else if (isPause) activeIdx = 1;
+        else if (isDown) activeIdx = 0;
+
+        domElements.instSteps.forEach((el, idx) => {
+            if (!el) return;
+            el.classList.toggle('active', idx === activeIdx);
+            el.classList.toggle('completed', idx < activeIdx || isSuccess);
+        });
+    }
+
+    // 4. Update HUD Instruction
+    if (domElements.vStageInstruction) {
+        if (isSuccess) {
+            domElements.vStageInstruction.textContent = currentLang === 'vi'
+                ? 'Hoàn tất: Đã ghi nhận cử chỉ chữ V hợp lệ!'
+                : 'Completed: V-shape gesture registered successfully!';
+        } else if (isDown) {
+            domElements.vStageInstruction.textContent = currentLang === 'vi'
+                ? 'Đang thực hiện nét xuống... di chuyển dứt khoát'
+                : 'Executing down-stroke... move deliberately';
+        } else if (isPause) {
+            domElements.vStageInstruction.textContent = currentLang === 'vi'
+                ? 'Dừng tại đáy: Giữ vị trí 0.2s – 2.0s rồi chuyển sang nét lên'
+                : 'Holding at apex: Pause for 0.2s – 2.0s then stroke upward';
+        } else if (isUp) {
+            domElements.vStageInstruction.textContent = currentLang === 'vi'
+                ? 'Đang thực hiện nét lên... di chuyển vút lên đỉnh'
+                : 'Executing up-stroke... move upward to the top';
+        } else if (isFinalStill) {
+            domElements.vStageInstruction.textContent = currentLang === 'vi'
+                ? 'Đã xong nét lên: Giữ yên máy 1.0s để xác nhận hoàn tất!'
+                : 'Up-stroke done: Hold still for 1.0s to confirm completion!';
+        } else if (isWaitStill) {
+            domElements.vStageInstruction.textContent = currentLang === 'vi'
+                ? 'Đang thiết lập nền tĩnh: Đặt điện thoại yên trong 3 giây...'
+                : 'Establishing baseline: Keep phone still for 3 seconds...';
+        } else {
+            domElements.vStageInstruction.textContent = currentLang === 'vi'
+                ? 'Sẵn sàng: Bắt đầu nét vẽ xuống để thực hiện cử chỉ chữ V'
+                : 'Ready: Begin down-stroke to perform V-gesture';
+        }
+    }
+
+    // 5. Celebration Banner
+    if (domElements.gestureCelebrateBanner) {
+        domElements.gestureCelebrateBanner.hidden = !isSuccess;
+    }
+
+    // 6. Telemetry Display
+    if (domElements.m5rScoreDisplay) domElements.m5rScoreDisplay.textContent = score.toFixed(4);
+    if (domElements.m5rLabelChip) {
+        if (label === 1) {
+            domElements.m5rLabelChip.className = 'motion-chip motion-active';
+            domElements.m5rLabelChip.textContent = currentLang === 'vi' ? '1 · DI CHUYỂN' : '1 · MOTION';
+        } else {
+            domElements.m5rLabelChip.className = 'motion-chip chip-still';
+            domElements.m5rLabelChip.textContent = currentLang === 'vi' ? '0 · TĨNH' : '0 · STILL';
+        }
+    }
+    if (domElements.m5rStageDisplay) domElements.m5rStageDisplay.textContent = stage;
+    if (domElements.m5rTimingDisplay) {
+        const dDur = Number(frame.gesture_down_duration || 0).toFixed(1);
+        const pDur = Number(frame.gesture_pause_duration || 0).toFixed(1);
+        const uDur = Number(frame.gesture_up_duration || 0).toFixed(1);
+        domElements.m5rTimingDisplay.textContent = `${dDur}s / ${pDur}s / ${uDur}s`;
+    }
+
+    // 7. Render V6 Visualizer
+    renderV(frame);
+}
+
+const v6Reasons = {
+    draw_timeout: 'Bạn vẽ quá thời gian (tối đa 5,0 giây).',
+    down_short: 'Nét xuống quá ngắn (< 0,15 giây).',
+    down_long: 'Nét xuống quá dài (> 1,50 giây).',
+    pause_short: 'Khoảng khựng ở đáy quá ngắn (< 0,15 giây).',
+    pause_long: 'Khoảng khựng ở đáy quá dài (> 2,00 giây).',
+    up_short: 'Nét lên quá ngắn (< 0,15 giây).',
+    up_long: 'Nét lên quá dài (> 2,00 giây).',
+    finish_moved: 'Điện thoại còn chuyển động trong lúc xác nhận.'
+};
+
+const v6Instructions = {
+    WAIT_READY: 'Đang ổn định tín hiệu...',
+    READY: 'Sẵn sàng',
+    DOWN: 'Vẽ nét chéo xuống',
+    DOWN_HOLD: 'Vẽ nét chéo xuống',
+    BOTTOM: 'Khựng nhẹ ở đáy',
+    UP_CUE: 'Khựng nhẹ ở đáy',
+    UP: 'Vẽ nét chéo lên',
+    UP_HOLD: 'Vẽ nét chéo lên',
+    FINISH: 'Giữ yên để xác nhận',
+    PASS: 'Đã nhận diện thành công!',
+    FAIL: 'Không nhận diện'
+};
+
+function renderV(s) {
+    if (!s) return;
+    const vShape = domElements.vShape || document.getElementById('vShape');
+    const stateLabel = domElements.v6StateLabel || document.getElementById('v6StateLabel');
+    const detailLabel = domElements.v6GuideDetail || document.getElementById('v6GuideDetail');
+    const guideBox = domElements.v6GuideBox || document.getElementById('v6GuideBox');
+
+    const state = s.state || s.v6_state || s.gesture_stage || s.wakeup_state || 'WAIT_READY';
+    const progress = Number(s.stroke_progress ?? s.v6_progress ?? s.gesture_progress ?? s.wakeup_progress) || 0;
+    const fraction = Math.min(1, Math.max(0, Number(s.stroke_fraction ?? s.v6_fraction ?? s.wakeup_stroke_fraction) || 0));
+    const reason = s.result_reason || s.reason || s.v6_reason || s.gesture_reason || s.wakeup_reason || '';
+
+    if (vShape) {
+        const marks = [
+            ['vDown', 'DOWN', 1],
+            ['vPoint', 'BOTTOM', 2],
+            ['vUp', 'UP', 3]
+        ];
+        vShape.dataset.reset = String(!progress && state !== 'DOWN');
+        for (const [id, phase, rank] of marks) {
+            const confirmed = progress >= rank;
+            const isPhaseMatch = (state === phase || (state && state.startsWith(phase))) && (phase !== 'UP' || state !== 'UP_CUE');
+            const fill = confirmed ? 1 : (isPhaseMatch ? fraction : 0);
+            const node = domElements[id] || document.getElementById(id);
+            if (node) {
+                node.style.setProperty('--fraction', fill);
+                node.style.setProperty('--remaining', (100 * (1 - fill)) + '%');
+                node.dataset.confirmed = String(confirmed);
+            }
+        }
+
+        // Cập nhật đường nét SVG và mũi tên hướng dẫn vẽ trực quan (Chuẩn màu xanh dương VNPT)
+        const strokeDown = document.getElementById('vStrokeDown');
+        const strokeUp = document.getElementById('vStrokeUp');
+        const pointSvg = document.getElementById('vPointSvg');
+        const arrowDown = document.getElementById('vArrowGuideDown');
+        const arrowUp = document.getElementById('vArrowGuideUp');
+
+        const maxLen = 147;
+        const downConfirmed = progress >= 1;
+        const downFill = downConfirmed ? 1 : (state === 'DOWN' || state === 'DOWN_HOLD' ? fraction : 0);
+        if (strokeDown) {
+            strokeDown.style.strokeDashoffset = (maxLen * (1 - downFill)) + 'px';
+        }
+
+        // Định nghĩa chính xác trạng thái chuyển động
+        const isDrawingDown = state === 'DOWN' || state === 'DOWN_HOLD';
+        const isAtBottom = state === 'BOTTOM' || state === 'UP_CUE';
+        const isDrawingUp = state === 'UP' || state === 'UP_HOLD';
+        const isPass = state === 'PASS' || progress >= 3;
+
+        // Nét 2: Kéo lên
+        // TUYỆT ĐỐI KHÔNG tự vẽ hay fill màu khi đang khựng ở đáy (state === 'BOTTOM' hoặc 'UP_CUE').
+        // CHỈ khi mô hình nhận diện người dùng thực sự kéo lên (state === 'UP' hoặc 'UP_HOLD') mới fill màu theo fraction!
+        // Hoặc khi cử chỉ hoàn thành công nhận (progress >= 3 hoặc state === 'PASS')
+        let upFill = 0;
+        if (isPass) {
+            upFill = 1;
+        } else if (isDrawingUp) {
+            upFill = fraction;
+        } else {
+            upFill = 0;
+        }
+        if (strokeUp) {
+            strokeUp.style.strokeDashoffset = (maxLen * (1 - upFill)) + 'px';
+        }
+
+        const pointActive = progress >= 2 || isAtBottom;
+        if (pointSvg) {
+            pointSvg.classList.toggle('active', pointActive);
+        }
+
+        if (arrowDown) {
+            arrowDown.classList.toggle('active', isDrawingDown);
+            arrowDown.classList.toggle('hint', state === 'READY' || state === 'WAIT_READY');
+        }
+
+        // Mũi tên 2 (KÉO LÊN ↗): Bừng sáng ngay sau khi khựng ở đáy xong (isAtBottom) để báo hiệu cho người dùng biết cần vẽ lên tiếp
+        // Duy trì sáng khi người dùng đang vẽ lên (isDrawingUp), tắt khi hoàn thành (pass)
+        if (arrowUp) {
+            arrowUp.classList.toggle('active', (isAtBottom || isDrawingUp) && !isPass);
+            arrowUp.classList.toggle('hint', false);
+        }
+
+        const finished = state === 'PASS' || state === 'FAIL';
+        const outcome = finished ? state.toLowerCase() : '';
+        if (guideBox) guideBox.dataset.outcome = outcome;
+        vShape.dataset.outcome = outcome;
+
+        if (outcome === 'pass') {
+            if (strokeDown) strokeDown.style.strokeDashoffset = '0px';
+            if (strokeUp) strokeUp.style.strokeDashoffset = '0px';
+            if (pointSvg) pointSvg.classList.add('active');
+            if (arrowDown) arrowDown.classList.remove('active', 'hint');
+            if (arrowUp) arrowUp.classList.remove('active', 'hint');
+        }
+    }
+
+    if (stateLabel) {
+        const finished = state === 'PASS' || state === 'FAIL';
+        const instruction = s.stale && !finished
+            ? 'Đang chờ tín hiệu CSI...'
+            : (v6Instructions[state] || state);
+        stateLabel.textContent = instruction;
+    }
+    if (detailLabel) {
+        const finished = state === 'PASS' || state === 'FAIL';
+        const outcome = finished ? state.toLowerCase() : '';
+        const detail = outcome === 'fail' ? (v6Reasons[reason] || reason || '') : '';
+        detailLabel.textContent = detail;
+        detailLabel.hidden = !detail;
+    }
+
+    // Cập nhật các chỉ số telemetry M5R
+    const scoreVal = s.score !== null && s.score !== undefined ? Number(s.score) : (Number(s.v6_score ?? s.gesture_score ?? s.wakeup_score) || 0);
+    const labelVal = s.label !== null && s.label !== undefined ? Number(s.label) : (Number(s.v6_label ?? s.gesture_label ?? s.wakeup_label) || 0);
+    if (domElements.v6TeleScore) domElements.v6TeleScore.textContent = scoreVal.toFixed(4);
+    if (domElements.v6TeleLabel) {
+        domElements.v6TeleLabel.textContent = labelVal === 1 ? '1 (ĐỘNG)' : '0 (TĨNH)';
+        domElements.v6TeleLabel.style.color = labelVal === 1 ? '#00e5ff' : '#8fa2bd';
+    }
+
+    const thresHigh = s.threshold_high !== null && s.threshold_high !== undefined ? Number(s.threshold_high) : 0.80;
+    const thresLow = s.threshold_low !== null && s.threshold_low !== undefined ? Number(s.threshold_low) : 0.65;
+    const teleThres = document.getElementById('v6-tele-threshold');
+    if (teleThres) {
+        teleThres.textContent = `${thresHigh.toFixed(2)} / ${thresLow.toFixed(2)}`;
+    }
+
+    // Đồng bộ thông tin thiết bị mục tiêu
+    if (domElements.v6SyncedTarget) {
+        let mac = cfrState.targetMac || (currentProberConfig.clients && currentProberConfig.clients[0]?.mac) || '';
+        let ip = cfrState.targetIp || (currentProberConfig.clients && currentProberConfig.clients[0]?.ip) || '';
+        domElements.v6SyncedTarget.textContent = mac ? `${ip ? ip + ' · ' : ''}${mac}` : 'Đang chờ thiết bị 5 GHz...';
+    }
+}
+
 function setStatus(status, description) {
+    const pill = document.getElementById('connection-pill');
     const dot = document.getElementById('status-dot');
     const label = document.getElementById('status');
     const lastUpdate = document.getElementById('last-update');
-    if (dot) dot.className = `status-dot ${status}`;
-    if (label) label.textContent = status === 'live' ? t('status_live') : status === 'waiting' ? t('status_waiting') : t('status_offline');
+
+    if (pill) {
+        pill.className = `connection-live-pill ${status === 'live' ? '' : status === 'waiting' ? 'pill-waiting' : 'pill-offline'}`;
+    }
+    if (dot) {
+        dot.className = `live-status-dot ${status}`;
+    }
+    if (label) {
+        label.textContent = status === 'live' 
+            ? (currentLang === 'vi' ? 'ĐÃ BẬT · LIVE' : 'ENABLED · LIVE') 
+            : status === 'waiting' ? t('status_waiting') : t('status_offline');
+    }
     if (lastUpdate) {
         lastUpdate.textContent = description;
         lastUpdate.title = description;
     }
 }
 
-function setView(view) {
+// ============================================================================
+// Model V6 Native Engine Controller (Cổng 5243 - Trực Tiếp Động Cơ M5R Chuẩn 100%)
+// ============================================================================
+const v6State = {
+    running: false,
+    mac: '',
+    ip: '',
+    pollTimer: null,
+    devices: [],
+    masterActive: false,
+    isPolling: false
+};
+
+function showV6Notice(message, isError = false) {
+    if (!domElements.v6Notice) return;
+    if (!message) {
+        domElements.v6Notice.hidden = true;
+        domElements.v6Notice.textContent = '';
+        return;
+    }
+    domElements.v6Notice.hidden = false;
+    domElements.v6Notice.textContent = message;
+    domElements.v6Notice.style.color = isError ? '#ef4444' : '#00e5ff';
+}
+
+function updateV6UIControls(running) {
+    v6State.running = Boolean(running);
+    if (domElements.v6StartBtn) domElements.v6StartBtn.disabled = v6State.running;
+    if (domElements.v6StopBtn) domElements.v6StopBtn.disabled = !v6State.running;
+    if (domElements.v6DeviceSelect) domElements.v6DeviceSelect.disabled = v6State.running;
+    if (domElements.v6IpInput) domElements.v6IpInput.disabled = v6State.running;
+    if (domElements.v6RefreshBtn) domElements.v6RefreshBtn.disabled = v6State.running;
+}
+
+function syncTargetDeviceToV6(mac, ip) {
+    if (!mac) return;
+    v6State.mac = mac;
+    if (ip) v6State.ip = ip;
+
+    if (domElements.v6DeviceSelect) {
+        let found = false;
+        for (let i = 0; i < domElements.v6DeviceSelect.options.length; i++) {
+            const opt = domElements.v6DeviceSelect.options[i];
+            if (opt.value && opt.value.toLowerCase() === mac.toLowerCase()) {
+                domElements.v6DeviceSelect.selectedIndex = i;
+                found = true;
+                if (!ip && opt.dataset.ip) {
+                    v6State.ip = opt.dataset.ip;
+                }
+                break;
+            }
+        }
+        if (!found && mac) {
+            const newOpt = document.createElement('option');
+            newOpt.value = mac;
+            newOpt.dataset.ip = ip || '';
+            newOpt.textContent = `${ip ? ip + ' · ' : ''}${mac} (Mục tiêu hiện tại)`;
+            domElements.v6DeviceSelect.appendChild(newOpt);
+            domElements.v6DeviceSelect.value = mac;
+        }
+    }
+
+    if (domElements.v6IpInput && v6State.ip) {
+        domElements.v6IpInput.value = v6State.ip;
+    }
+
+    if (domElements.v6SyncedTarget) {
+        const displayIp = v6State.ip || (domElements.v6IpInput ? domElements.v6IpInput.value : '');
+        domElements.v6SyncedTarget.textContent = `${displayIp ? displayIp + ' · ' : ''}${mac}`;
+    }
+}
+
+async function fetchV6Devices(forceRefresh = false) {
+    try {
+        const res = await fetch('/api/v6/devices');
+        if (!res.ok) return;
+        const devices = await res.json();
+        v6State.devices = Array.isArray(devices) ? devices : [];
+
+        // Hợp nhất với danh sách trạm từ currentProberConfig nếu có
+        if (currentProberConfig && Array.isArray(currentProberConfig.clients)) {
+            for (const pc of currentProberConfig.clients) {
+                if (!pc.mac) continue;
+                const exists = v6State.devices.find(d => d.mac && d.mac.toLowerCase() === pc.mac.toLowerCase());
+                if (!exists) {
+                    v6State.devices.push({ mac: pc.mac, ip: pc.ip || '', is_5ghz: pc.is_5ghz });
+                } else if (pc.ip && !exists.ip) {
+                    exists.ip = pc.ip;
+                }
+            }
+        }
+
+        if (domElements.v6DeviceSelect) {
+            const currentSelected = domElements.v6DeviceSelect.value || v6State.mac || cfrState.target_mac || cfrState.targetMac || '';
+            domElements.v6DeviceSelect.innerHTML = '';
+            
+            if (v6State.devices.length === 0) {
+                const emptyOpt = document.createElement('option');
+                emptyOpt.value = '';
+                emptyOpt.textContent = 'Chưa phát hiện thiết bị (Bấm Tìm thiết bị)';
+                domElements.v6DeviceSelect.appendChild(emptyOpt);
+            } else {
+                for (const d of v6State.devices) {
+                    const opt = document.createElement('option');
+                    opt.value = d.mac;
+                    opt.dataset.ip = d.ip || '';
+                    const label = `${d.ip ? d.ip + ' · ' : ''}${d.mac}${d.is_5ghz ? ' (5 GHz)' : ''}`;
+                    opt.textContent = label;
+                    domElements.v6DeviceSelect.appendChild(opt);
+                }
+            }
+
+            // Đồng bộ thiết bị đã chọn trước đó
+            if (currentSelected) {
+                syncTargetDeviceToV6(currentSelected, v6State.ip || cfrState.target_ip || cfrState.targetIp);
+            } else if (v6State.devices.length > 0) {
+                const first5g = v6State.devices.find(d => d.is_5ghz) || v6State.devices[0];
+                syncTargetDeviceToV6(first5g.mac, first5g.ip);
+            }
+        }
+    } catch (e) {
+        console.warn('Lỗi tải danh sách thiết bị V6:', e);
+    }
+}
+
+async function startV6Capture() {
+    if (v6State.running) return;
+
+    let mac = (domElements.v6DeviceSelect ? domElements.v6DeviceSelect.value : '') || v6State.mac || cfrState.target_mac || cfrState.targetMac || '';
+    let ip = (domElements.v6IpInput ? domElements.v6IpInput.value.trim() : '') || v6State.ip || cfrState.target_ip || cfrState.targetIp || '';
+
+    if (!mac) {
+        showV6Notice('Vui lòng chọn thiết bị trước khi bắt đầu', true);
+        return;
+    }
+
+    v6State.masterActive = true;
+    v6State.mac = mac;
+    v6State.ip = ip;
+    cfrState.target_mac = mac;
+    cfrState.targetMac = mac;
+    cfrState.target_ip = ip;
+    cfrState.targetIp = ip;
+    syncTargetDeviceToV6(mac, ip);
+
+    showV6Notice('Đang khởi động Model V6 Native...');
+    updateV6UIControls(true);
+
+    try {
+        const res = await fetch('/api/v6/start', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ mac, ip })
+        });
+        const data = await res.json();
+        if (!res.ok || data.status !== 'ok') {
+            throw new Error(data.error || 'Khởi động V6 thất bại');
+        }
+
+        showV6Notice('');
+        v6State.running = true;
+        updateV6UIControls(true);
+        startV6Polling();
+    } catch (e) {
+        showV6Notice('Lỗi: ' + e.message, true);
+        updateV6UIControls(false);
+    }
+}
+
+async function stopV6Capture(clearMaster = true) {
+    if (clearMaster) {
+        v6State.masterActive = false;
+    }
+    stopV6Polling();
+    v6State.running = false;
+    updateV6UIControls(false);
+    try {
+        await fetch('/api/v6/stop', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({})
+        });
+    } catch (_) {}
+    renderV({ state: 'READY', stroke_progress: 0, stroke_fraction: 0, score: 0, label: 0 });
+}
+
+function startV6Polling() {
+    stopV6Polling();
+    v6State.pollTimer = setInterval(pollV6Score, 60);
+}
+
+function stopV6Polling() {
+    if (v6State.pollTimer) {
+        clearInterval(v6State.pollTimer);
+        v6State.pollTimer = null;
+    }
+}
+
+async function pollV6Score() {
+    if (!v6State.running && activeView !== 'gesture_v') {
+        stopV6Polling();
+        return;
+    }
+    if (v6State.isPolling) return;
+    v6State.isPolling = true;
+
+    try {
+        const res = await fetch('/api/v6/score');
+        if (!res.ok) return;
+        const data = await res.json();
+        if (!data) return;
+
+        // Nếu backend báo đã dừng (tiến trình thoát hoặc chuyển tab)
+        if (data.running === false && v6State.running) {
+            v6State.running = false;
+            updateV6UIControls(false);
+            showV6Notice(''); // Ẩn hoàn toàn thông báo lỗi trước mặt người dùng
+            renderV({ state: 'READY', stroke_progress: 0, stroke_fraction: 0, score: 0, label: 0 });
+        } else if (data.running && !v6State.running) {
+            v6State.running = true;
+            updateV6UIControls(true);
+        }
+
+        renderV(data);
+    } catch (e) {
+        // Lỗi mạng hoặc server dừng
+    } finally {
+        v6State.isPolling = false;
+    }
+}
+
+function initV6Controls() {
+    if (domElements.v6StartBtn) {
+        domElements.v6StartBtn.addEventListener('click', startV6Capture);
+    }
+    if (domElements.v6StopBtn) {
+        domElements.v6StopBtn.addEventListener('click', () => stopV6Capture(true));
+    }
+    if (domElements.v6RefreshBtn) {
+        domElements.v6RefreshBtn.addEventListener('click', () => {
+            fetchV6Devices(true);
+        });
+    }
+    if (domElements.v6DeviceSelect) {
+        domElements.v6DeviceSelect.addEventListener('change', () => {
+            const sel = domElements.v6DeviceSelect;
+            const opt = sel.options[sel.selectedIndex];
+            if (opt) {
+                const mac = opt.value;
+                const ip = opt.dataset.ip || '';
+                syncTargetDeviceToV6(mac, ip);
+            }
+        });
+    }
+    if (domElements.v6IpInput) {
+        domElements.v6IpInput.addEventListener('input', () => {
+            v6State.ip = domElements.v6IpInput.value.trim();
+        });
+    }
+
+    // Thiết lập và khởi tạo bộ nút chuyển chế độ chống nhiễu người ở gần
+    const sensButtons = document.querySelectorAll('.v6-sens-btn');
+    if (sensButtons.length > 0) {
+        sensButtons.forEach(btn => {
+            btn.addEventListener('click', async () => {
+                sensButtons.forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                const high = parseFloat(btn.dataset.high) || 0.80;
+                const low = parseFloat(btn.dataset.low) || 0.65;
+                const mode = btn.dataset.mode || 'anti_noise';
+                try {
+                    localStorage.setItem('v6_sens_mode', mode);
+                    await fetch('/api/v6/sensitivity', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ threshold_high: high, threshold_low: low })
+                    });
+                } catch (_) {}
+                const teleThres = document.getElementById('v6-tele-threshold');
+                if (teleThres) {
+                    teleThres.textContent = `${high.toFixed(2)} / ${low.toFixed(2)}`;
+                }
+            });
+        });
+
+        // Khôi phục lựa chọn đã lưu hoặc mặc định anti_noise (0.80 / 0.65)
+        const savedMode = localStorage.getItem('v6_sens_mode') || 'anti_noise';
+        const targetBtn = Array.from(sensButtons).find(b => b.dataset.mode === savedMode) || sensButtons[1];
+        if (targetBtn) {
+            sensButtons.forEach(b => b.classList.remove('active'));
+            targetBtn.classList.add('active');
+            const high = parseFloat(targetBtn.dataset.high) || 0.80;
+            const low = parseFloat(targetBtn.dataset.low) || 0.65;
+            fetch('/api/v6/sensitivity', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ threshold_high: high, threshold_low: low })
+            }).catch(() => {});
+            const teleThres = document.getElementById('v6-tele-threshold');
+            if (teleThres) {
+                teleThres.textContent = `${high.toFixed(2)} / ${low.toFixed(2)}`;
+            }
+        }
+    }
+}
+
+async function setView(view) {
     const viewDict = i18n[currentLang]?.views || i18n.vi.views;
     if (!viewDict[view]) return;
     activeView = view;
@@ -598,9 +1460,78 @@ function setView(view) {
         button.classList.toggle('active', button.dataset.view === view);
     });
     document.getElementById('page-title').textContent = viewDict[view].title;
-    document.getElementById('chart-kicker').textContent = viewDict[view].kicker;
-    document.getElementById('chart-title').textContent = viewDict[view].chart;
-    document.getElementById('chain-control').hidden = view === 'overview' || view === 'chains' || view === 'breath';
+
+    const cfrPanel = document.getElementById('cfr-panel');
+    const proberPanel = document.getElementById('prober-panel');
+    const metricGrid = document.querySelector('.metric-grid');
+    const chartPanel = document.getElementById('chart-panel');
+    const gestureVPanel = document.getElementById('gesture-v-panel');
+
+    if (view === 'gesture_v') {
+        if (cfrPanel) { cfrPanel.hidden = true; cfrPanel.style.display = 'none'; }
+        if (proberPanel) { proberPanel.hidden = true; proberPanel.style.display = 'none'; }
+        if (metricGrid) { metricGrid.hidden = true; metricGrid.style.display = 'none'; }
+        if (chartPanel) { chartPanel.hidden = true; chartPanel.style.display = 'none'; }
+        if (gestureVPanel) { gestureVPanel.hidden = false; gestureVPanel.style.display = ''; }
+
+        // 1. Tự động tạm dừng phiên thu Overview (nếu đang chạy) để nhường relay cho Model V6
+        if (cfrState.running) {
+            await stopCfrCapture(false);
+        }
+
+        // 2. Tự động đồng bộ thiết bị từ Tab Tổng quan sang Model V6
+        const curMac = v6State.mac || cfrState.target_mac || cfrState.targetMac || '';
+        const curIp = v6State.ip || cfrState.target_ip || cfrState.targetIp || '';
+        await fetchV6Devices();
+        if (curMac) syncTargetDeviceToV6(curMac, curIp);
+
+        // 3. Nếu phiên master đang bật (do đã bấm Bắt đầu thu CSI ở Tổng quan), TỰ ĐỘNG BẮT ĐẦU V6 NGAY LẬP TỨC!
+        const targetMac = curMac || (domElements.v6DeviceSelect ? domElements.v6DeviceSelect.value : '');
+        if (v6State.masterActive && !v6State.running && targetMac) {
+            await startV6Capture();
+        } else {
+            // Kiểm tra trạng thái hiện tại của V6 Engine
+            try {
+                const r = await fetch('/api/v6/status');
+                const data = await r.json();
+                if (data && data.running) {
+                    v6State.running = true;
+                    updateV6UIControls(true);
+                    startV6Polling();
+                } else {
+                    updateV6UIControls(false);
+                }
+            } catch (_) {}
+        }
+    } else {
+        if (cfrPanel) { cfrPanel.hidden = false; cfrPanel.style.display = ''; }
+        if (proberPanel) { proberPanel.hidden = false; proberPanel.style.display = ''; }
+        if (metricGrid) { metricGrid.hidden = false; metricGrid.style.display = ''; }
+        if (chartPanel) { chartPanel.hidden = false; chartPanel.style.display = ''; }
+        if (gestureVPanel) { gestureVPanel.hidden = true; gestureVPanel.style.display = 'none'; }
+        document.getElementById('chart-kicker').textContent = viewDict[view].kicker;
+        document.getElementById('chart-title').textContent = viewDict[view].chart;
+
+        // Tự động tạm dừng Model V6 khi chuyển sang các tab khác để giải phóng relay phần cứng
+        if (v6State.running) {
+            await stopV6Capture(false);
+        }
+
+        // Nếu phiên master đang bật, tự động phục hồi luồng thu CFR ở Tab Tổng quan!
+        if (v6State.masterActive && !cfrState.running) {
+            const target = {
+                mac: v6State.mac || cfrState.target_mac || cfrState.targetMac,
+                ip: v6State.ip || cfrState.target_ip || cfrState.targetIp,
+                iface: cfrState.iface || ''
+            };
+            if (target.mac) {
+                await startCfrCapture(target);
+            }
+        }
+    }
+
+    const chainCtrl = document.getElementById('chain-control');
+    if (chainCtrl) chainCtrl.hidden = true;
     scheduleRender();
 }
 
@@ -610,6 +1541,97 @@ document.querySelectorAll('.tab-btn').forEach(button => {
 
 chainSelect.addEventListener('change', scheduleRender);
 calibrateButton.addEventListener('click', requestCalibration);
+
+if (domElements.distCalBtn) {
+    domElements.distCalBtn.addEventListener('click', async () => {
+        const promptMsg = currentLang === 'vi'
+            ? 'Nhập khoảng cách thực tế từ router tới thiết bị (mét):\n(Nhập 0 hoặc "reset" để đặt lại về mặc định)'
+            : 'Enter actual distance from router to device (meters):\n(Enter 0 or "reset" to reset to defaults)';
+        const input = window.prompt(promptMsg, '1.5');
+        if (!input) return;
+
+        let targetMac = cfrState.targetMac || cfrState.target_mac || '';
+        if (!targetMac && currentProberConfig && currentProberConfig.clients && currentProberConfig.clients.length > 0) {
+            const c5 = currentProberConfig.clients.find(c => c.is_5ghz) || currentProberConfig.clients[0];
+            if (c5) targetMac = c5.mac;
+        }
+        if (!targetMac) targetMac = 'auto';
+
+        const trimmed = input.trim().toLowerCase();
+        if (trimmed === '0' || trimmed === 'reset') {
+            try {
+                const res = await fetch('/api/distance/reset_cal', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ mac: targetMac })
+                });
+                if (res.ok) {
+                    alert(currentLang === 'vi' ? 'Đã đặt lại hiệu chuẩn khoảng cách về mặc định!' : 'Distance calibration reset to default!');
+                }
+            } catch (e) {
+                console.error(e);
+            }
+            return;
+        }
+
+        const distM = parseFloat(trimmed);
+        if (isNaN(distM) || distM < 0.2 || distM > 25.0) {
+            alert(currentLang === 'vi' ? 'Khoảng cách không hợp lệ! Vui lòng nhập từ 0.2 đến 25 mét.' : 'Invalid distance! Please enter between 0.2 and 25 meters.');
+            return;
+        }
+
+        try {
+            const res = await fetch('/api/distance/calibrate', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ distance_m: distM, mac: targetMac })
+            });
+            if (res.ok) {
+                const data = await res.json();
+                alert(currentLang === 'vi'
+                    ? `Hiệu chuẩn thành công tại ${distM} m!\nThiết bị: ${data.mac || targetMac}\nA1m = ${data.applied_a_1m} dBm (${data.band})`
+                    : `Calibrated successfully at ${distM} m!\nDevice: ${data.mac || targetMac}\nA1m = ${data.applied_a_1m} dBm (${data.band})`);
+            } else {
+                const err = await res.json();
+                alert(`Lỗi: ${err.error || 'Calibration failed'}`);
+            }
+        } catch (e) {
+            console.error(e);
+            alert(`Lỗi kết nối API: ${e.message}`);
+        }
+    });
+}
+
+if (domElements.gestureModelSelect) {
+    domElements.gestureModelSelect.addEventListener('change', async (e) => {
+        const chosen = e.target.value;
+        try {
+            const res = await fetch('/api/model/select', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ model: chosen })
+            });
+            const data = await res.json();
+            if (res.ok && data.status === 'ok') {
+                if (domElements.vTeleActiveModel) {
+                    domElements.vTeleActiveModel.textContent = chosen;
+                }
+                const msg = currentLang === 'vi'
+                    ? `Đã chuyển sang mô hình: ${chosen}`
+                    : `Switched to model: ${chosen}`;
+                if (typeof showToast === 'function') {
+                    showToast(msg, 'success');
+                } else {
+                    console.log(msg);
+                }
+            } else {
+                alert(currentLang === 'vi' ? 'Không thể chuyển đổi mô hình!' : 'Failed to switch model!');
+            }
+        } catch (err) {
+            console.error('Model switch request failed:', err);
+        }
+    });
+}
 
 async function requestCalibration() {
     calibrateButton.disabled = true;
@@ -622,10 +1644,14 @@ async function requestCalibration() {
             throw new Error(`Calibration request failed: ${details}`);
         }
         motionHistory = [];
-        document.getElementById('presence-value').textContent = t('presence_calibrating');
-        document.getElementById('presence-caption').textContent = t('caption_calibrating');
-        document.getElementById('motion-value').textContent = '—';
-        document.getElementById('motion-caption').textContent = currentLang === 'vi' ? 'Đang khởi tạo cửa sổ 30 frame' : 'Initializing 30-frame window';
+        const pv = document.getElementById('presence-value');
+        if (pv) pv.textContent = t('presence_calibrating');
+        const pc = document.getElementById('presence-caption');
+        if (pc) pc.textContent = t('caption_calibrating');
+        const mv = document.getElementById('motion-value');
+        if (mv) mv.textContent = '—';
+        const mc = document.getElementById('motion-caption');
+        if (mc) mc.textContent = currentLang === 'vi' ? 'Đang khởi tạo cửa sổ 30 frame' : 'Initializing 30-frame window';
         setStatus('waiting', t('status_calibrating'));
         scheduleRender();
     } catch (error) {
@@ -638,9 +1664,14 @@ async function requestCalibration() {
 }
 
 function updateChainOptions(frame) {
+    if (!chainSelect || !frame || !Array.isArray(frame.chains) || frame.chains.length === 0) return;
     const selected = Number(chainSelect.value) || 0;
     if (chainSelect.options.length === frame.chains.length) return;
-    chainSelect.replaceChildren();
+    if (typeof chainSelect.replaceChildren === 'function') {
+        chainSelect.replaceChildren();
+    } else {
+        chainSelect.innerHTML = '';
+    }
     frame.chains.forEach((_, index) => {
         const option = document.createElement('option');
         option.value = String(index);
@@ -652,13 +1683,17 @@ function updateChainOptions(frame) {
 
 function acceptFrame(frame) {
     if (!frame || !Array.isArray(frame.chains) || frame.chains.length === 0) {
-        setStatus('waiting', t('caption_waiting_csi'));
+        if (!latestFrame) {
+            setStatus('waiting', t('caption_waiting_csi'));
+        }
         return;
     }
     const isNewFrame = !latestFrame ||
         frame.timestamp_ns !== latestFrame.timestamp_ns ||
         frame.phy_ppdu_id !== latestFrame.phy_ppdu_id;
     latestFrame = frame;
+    captureStartedAt = 0;
+    autoWakeAttempts = 0;
     updateChainOptions(frame);
 
     const now = performance.now();
@@ -694,12 +1729,24 @@ function connectStream() {
         return;
     }
     const source = new EventSource('/events');
+    let consecutiveJsonErrors = 0;
     source.addEventListener('csi', event => {
+        let frame = null;
         try {
-            acceptFrame(JSON.parse(event.data));
+            frame = JSON.parse(event.data);
+            consecutiveJsonErrors = 0;
         } catch (error) {
-            console.error('Invalid CSI event payload', error);
-            setStatus('offline', 'Invalid payload');
+            consecutiveJsonErrors++;
+            console.warn(`[CSI] Frame JSON parse error (#${consecutiveJsonErrors}):`, error, event.data ? event.data.slice(0, 150) : '');
+            if (consecutiveJsonErrors > 10) {
+                setStatus('offline', 'Invalid payload format');
+            }
+            return;
+        }
+        try {
+            acceptFrame(frame);
+        } catch (err) {
+            console.error('Error rendering CSI frame in UI:', err);
         }
     });
     source.onopen = () => {
@@ -735,50 +1782,49 @@ function drawCurrent() {
     }
     emptyOverlay.hidden = true;
 
-    const chainIndex = Math.min(Number(chainSelect.value) || 0, latestFrame.chains.length - 1);
+    const chainIndex = Math.min(Number(chainSelect ? chainSelect.value : 0) || 0, latestFrame.chains.length - 1);
     const chain = latestFrame.chains[chainIndex] || latestFrame.chains[0];
 
     if (activeView === 'overview') {
         const values = motionHistory.map(entry => entry.score);
-        const thresHigh = Number(latestFrame.motion_threshold_high) || 0;
-        const thresLow = Number(latestFrame.motion_threshold_low) || 0;
         const isCalibrated = Boolean(latestFrame.motion_calibrated);
 
-        const refs = [];
-        if (thresHigh > 0) {
-            refs.push({
-                value: thresHigh,
-                color: '#ff7f9d',
-                label: currentLang === 'vi' ? 'Ngưỡng cao' : 'High thres',
-                dashed: true
-            });
+        if (values.length === 0) {
+            const ratio = Math.max(1, window.devicePixelRatio || 1);
+            const left = 62 * ratio;
+            const right = 16 * ratio;
+            const top = 20 * ratio;
+            const bottom = 34 * ratio;
+            const plotHeight = height - top - bottom;
+            context.strokeStyle = 'rgba(129, 150, 181, 0.16)';
+            context.lineWidth = 1 * ratio;
+            for (let i = 0; i <= 4; ++i) {
+                const y = top + (plotHeight * i) / 4;
+                context.beginPath();
+                context.moveTo(left, y);
+                context.lineTo(width - right, y);
+                context.stroke();
+            }
+            context.save();
+            context.fillStyle = 'rgba(143, 160, 183, 0.7)';
+            context.font = `${13 * ratio}px "DM Mono", monospace`;
+            context.textAlign = 'center';
+            context.textBaseline = 'middle';
+            context.fillText(
+                currentLang === 'vi'
+                    ? `Đang tích lũy tương quan (${latestFrame.motion_window_samples || 0}/30 frame)...`
+                    : `Buffering correlation (${latestFrame.motion_window_samples || 0}/30 frames)...`,
+                (left + width - right) / 2,
+                top + plotHeight / 2
+            );
+            context.restore();
+        } else {
+            drawLineChart(values, '#00e5ff', width, height, 'Motion score', false, []);
         }
-        if (thresLow > 0) {
-            refs.push({
-                value: thresLow,
-                color: '#4be2d0',
-                label: currentLang === 'vi' ? 'Ngưỡng thấp' : 'Low thres',
-                dashed: true
-            });
-        }
-
-        drawLineChart(values, '#ffb86b', width, height, 'Motion score', false, refs);
 
         const legend = [
-            { name: `Motion score: ${(Number(latestFrame.motion_score) || 0).toFixed(4)}`, color: '#ffb86b' }
+            { name: `Motion score: ${(Number(latestFrame.motion_score) || 0).toFixed(4)}`, color: '#00e5ff' }
         ];
-        if (thresHigh > 0) {
-            legend.push({
-                name: `${currentLang === 'vi' ? 'Ngưỡng cao' : 'High Thres'}: ${thresHigh.toFixed(4)}`,
-                color: '#ff7f9d'
-            });
-        }
-        if (thresLow > 0) {
-            legend.push({
-                name: `${currentLang === 'vi' ? 'Ngưỡng thấp' : 'Low Thres'}: ${thresLow.toFixed(4)}`,
-                color: '#4be2d0'
-            });
-        }
         if (!isCalibrated) {
             legend.push({
                 name: currentLang === 'vi' ? `Đang hiệu chuẩn (${latestFrame.motion_calibration_frames || 0}/40)` : `Calibrating (${latestFrame.motion_calibration_frames || 0}/40)`,
@@ -786,58 +1832,16 @@ function drawCurrent() {
             });
         }
         setLegend(legend);
-    } else if (activeView === 'breath') {
-        drawLineChart(
-            breathWaveHistory,
-            '#4be2d0',
-            width,
-            height,
-            'Breath phase residual (rad)',
-            false,
-            [{ value: 0, color: 'rgba(255, 255, 255, 0.15)' }]
-        );
-        const status = latestFrame.presence_status || 'idle';
-        const bpm = Number(latestFrame.breath_bpm || 0).toFixed(1);
-        const span = Number(latestFrame.breath_phase_span || 0).toFixed(2);
-        const reg = (Number(latestFrame.breath_regularity || 0) * 100).toFixed(0);
-        const sleepTag = latestFrame.is_sleeping ? (currentLang === 'vi' ? ' · Đang ngủ' : ' · Sleeping') : '';
-        setLegend([
-            { name: `${currentLang === 'vi' ? 'Sóng vi chuyển động pha' : 'Micro-motion phase wave'} [${status}${sleepTag}]`, color: '#4be2d0' },
-            { name: `${currentLang === 'vi' ? 'Nhịp thở' : 'Respiration'}: ${bpm} BPM`, color: '#ffb86b' },
-            { name: `Phase Span: ${span} rad · ${currentLang === 'vi' ? 'Độ đều' : 'Regularity'}: ${reg}%`, color: '#a98cff' }
-        ]);
-    } else if (activeView === 'amplitude' || activeView === 'packet') {
-        drawLineChart(chain?.amplitudes || [], colors[chainIndex % colors.length], width, height, 'Amplitude');
-        setLegend([{ name: `Chain ${chainIndex} · amplitude`, color: colors[chainIndex % colors.length] }]);
-    } else if (activeView === 'phase') {
-        drawLineChart(chain?.phases || [], colors[chainIndex % colors.length], width, height, 'Phase');
-        setLegend([{ name: `Chain ${chainIndex} · phase`, color: colors[chainIndex % colors.length] }]);
-    } else if (activeView === 'iq') {
-        drawConstellation(chain, width, height);
-        setLegend([{ name: `Chain ${chainIndex} · I/Q samples`, color: colors[chainIndex % colors.length] }]);
-    } else if (activeView === 'chains') {
-        drawChainsComparison(width, height);
     }
-}
-
-function drawChainsComparison(width, height) {
-    if (!latestFrame?.chains) return;
-    const legend = [];
-    latestFrame.chains.forEach((ch, index) => {
-        const color = colors[index % colors.length];
-        drawLineChart(ch.amplitudes, color, width, height, 'Amplitude', index > 0);
-        legend.push({ name: `Chain ${index}`, color });
-    });
-    setLegend(legend);
 }
 
 function drawLineChart(values, color, width, height, label, overlay = false, references = []) {
     if (!values || values.length === 0) return;
     const ratio = Math.max(1, window.devicePixelRatio || 1);
-    const left = 48 * ratio;
-    const right = 14 * ratio;
-    const top = 17 * ratio;
-    const bottom = 31 * ratio;
+    const left = 62 * ratio;
+    const right = 16 * ratio;
+    const top = 20 * ratio;
+    const bottom = 34 * ratio;
     const plotWidth = width - left - right;
     const plotHeight = height - top - bottom;
 
@@ -860,7 +1864,7 @@ function drawLineChart(values, color, width, height, label, overlay = false, ref
     max += range;
 
     if (!overlay) {
-        context.strokeStyle = 'rgba(129, 150, 181, 0.14)';
+        context.strokeStyle = 'rgba(129, 150, 181, 0.16)';
         context.lineWidth = 1 * ratio;
         for (let i = 0; i <= 4; ++i) {
             const y = top + (plotHeight * i) / 4;
@@ -877,9 +1881,9 @@ function drawLineChart(values, color, width, height, label, overlay = false, ref
                     const y = top + ((max - ref.value) / (max - min)) * plotHeight;
                     context.save();
                     context.strokeStyle = ref.color || 'rgba(255, 255, 255, 0.4)';
-                    context.lineWidth = (ref.lineWidth || 1.3) * ratio;
+                    context.lineWidth = (ref.lineWidth || 1.8) * ratio;
                     if (ref.dashed !== false) {
-                        context.setLineDash([7 * ratio, 5 * ratio]);
+                        context.setLineDash([8 * ratio, 6 * ratio]);
                     }
                     context.beginPath();
                     context.moveTo(left, y);
@@ -889,10 +1893,10 @@ function drawLineChart(values, color, width, height, label, overlay = false, ref
                     // Nhãn ngưỡng hiển thị trực quan ngay trên đường vẽ
                     if (ref.label) {
                         context.fillStyle = ref.color || '#fff';
-                        context.font = `bold ${8.5 * ratio}px "DM Mono", monospace`;
+                        context.font = `bold ${12 * ratio}px "DM Mono", monospace`;
                         context.textAlign = 'right';
                         context.textBaseline = 'bottom';
-                        context.fillText(`${ref.label}: ${ref.value.toFixed(4)}`, width - right, y - 2 * ratio);
+                        context.fillText(`${ref.label}: ${ref.value.toFixed(4)}`, width - right, y - 3 * ratio);
                     }
                     context.restore();
                 }
@@ -900,8 +1904,11 @@ function drawLineChart(values, color, width, height, label, overlay = false, ref
         }
     }
 
+    context.save();
     context.strokeStyle = color;
-    context.lineWidth = 1.8 * ratio;
+    context.lineWidth = 2.4 * ratio;
+    context.shadowColor = color;
+    context.shadowBlur = 6 * ratio;
     context.beginPath();
     values.forEach((value, index) => {
         const x = left + (values.length === 1 ? plotWidth / 2 : (index / (values.length - 1)) * plotWidth);
@@ -910,50 +1917,16 @@ function drawLineChart(values, color, width, height, label, overlay = false, ref
         else context.lineTo(x, y);
     });
     context.stroke();
+    context.restore();
 
     if (!overlay) {
-        context.fillStyle = '#8a98ad';
-        context.font = `${9 * ratio}px "DM Mono", monospace`;
+        context.fillStyle = '#9cb0c9';
+        context.font = `${12 * ratio}px "DM Mono", monospace`;
         context.textAlign = 'right';
         context.textBaseline = 'bottom';
-        context.fillText(max.toPrecision(4), left - 6 * ratio, top + 8 * ratio);
-        context.fillText(min.toPrecision(4), left - 6 * ratio, height - bottom);
+        context.fillText(max.toPrecision(4), left - 8 * ratio, top + 10 * ratio);
+        context.fillText(min.toPrecision(4), left - 8 * ratio, height - bottom);
     }
-}
-
-function drawConstellation(chain, width, height) {
-    if (!chain || !chain.i?.length || !chain.q?.length) return;
-    const ratio = Math.max(1, window.devicePixelRatio || 1);
-    const left = 48 * ratio;
-    const right = 14 * ratio;
-    const top = 17 * ratio;
-    const bottom = 31 * ratio;
-    const plotWidth = width - left - right;
-    const plotHeight = height - top - bottom;
-    const limit = Math.max(...chain.i.map(Math.abs), ...chain.q.map(Math.abs), 1) * 1.08;
-    const centerX = left + plotWidth / 2;
-    const centerY = top + plotHeight / 2;
-    const scale = Math.min(plotWidth, plotHeight) / (2 * limit);
-
-    context.strokeStyle = 'rgba(129, 150, 181, 0.22)';
-    context.beginPath();
-    context.moveTo(centerX, top);
-    context.lineTo(centerX, height - bottom);
-    context.moveTo(left, centerY);
-    context.lineTo(width - right, centerY);
-    context.stroke();
-
-    context.fillStyle = colors[Math.max(0, Number(chainSelect.value) || 0) % colors.length];
-    const stride = Math.max(1, Math.ceil(chain.i.length / 180));
-    for (let index = 0; index < chain.i.length; index += stride) {
-        const x = centerX + chain.i[index] * scale;
-        const y = centerY - chain.q[index] * scale;
-        context.globalAlpha = 0.75;
-        context.beginPath();
-        context.arc(x, y, 2.3 * ratio, 0, Math.PI * 2);
-        context.fill();
-    }
-    context.globalAlpha = 1;
 }
 
 function setLegend(items) {
@@ -1056,8 +2029,8 @@ function updateAvailableBandwidths(targetClient, targetCard) {
     }
 
     let currentVal = parseInt(cfrElements.bandwidthSelect.value, 10);
-    if (!supported.includes(currentVal)) {
-        currentVal = supported[supported.length - 1];
+    if (isNaN(currentVal) || !supported.includes(currentVal)) {
+        currentVal = supported[supported.length - 1] ?? 0;
         cfrElements.bandwidthSelect.value = String(currentVal);
         cfrState.bandwidth = currentVal;
     }
@@ -1119,11 +2092,13 @@ function renderCfrUI() {
         cfrElements.statusText.textContent = t('cfr_status_error');
         if (cfrElements.startBtn) cfrElements.startBtn.disabled = false;
         if (cfrElements.stopBtn) cfrElements.stopBtn.disabled = true;
+        updateGestureVUI({ gesture_stage: 'IDLE', gesture_reason: 'not_capturing' });
     } else {
         cfrElements.badge.className = 'badge-idle';
         cfrElements.statusText.textContent = t('cfr_status_idle');
         if (cfrElements.startBtn) cfrElements.startBtn.disabled = false;
         if (cfrElements.stopBtn) cfrElements.stopBtn.disabled = true;
+        updateGestureVUI({ gesture_stage: 'IDLE', gesture_reason: 'not_capturing' });
     }
 
     // Bandwidth display & select state
@@ -1181,7 +2156,7 @@ function renderCfrUI() {
                     cfrElements.targetDisplay.textContent = currentProberConfig.target_ip;
                 }
             } else {
-                cfrElements.targetDisplay.textContent = t('auto_select_wifi');
+                cfrElements.targetDisplay.textContent = t('unselected_device');
             }
         }
     }
@@ -1210,6 +2185,16 @@ function renderCfrUI() {
             cfrElements.errorBanner.hidden = true;
         }
     }
+
+    // Đồng bộ khối Cấu hình thu CSI của Model V6
+    updateV6UIControls(v6State.running);
+    if (domElements.v6SyncedTarget) {
+        const displayMac = cfrState.target_mac || cfrState.targetMac;
+        const displayIp = cfrState.target_ip || cfrState.targetIp;
+        if (displayMac) {
+            domElements.v6SyncedTarget.textContent = `${displayIp ? displayIp + ' · ' : ''}${displayMac}`;
+        }
+    }
 }
 
 async function fetchCfrStatus() {
@@ -1228,7 +2213,14 @@ async function fetchCfrStatus() {
         cfrState.pid = Number(data.pid) || -1;
         cfrState.uptime_sec = Number(data.uptime_sec) || 0;
         cfrState.last_error = data.last_error || '';
-        cfrState.bandwidth = Number(data.bandwidth) || 0;
+        if (cfrState.running) {
+            cfrState.bandwidth = Number(data.bandwidth) || 0;
+        } else if (cfrElements.bandwidthSelect) {
+            const userBw = parseInt(cfrElements.bandwidthSelect.value, 10);
+            if (!isNaN(userBw)) {
+                cfrState.bandwidth = userBw;
+            }
+        }
         cfrState.latest_file = data.latest_file || '';
         cfrState.latest_file_size = Number(data.latest_file_size) || 0;
         if (Array.isArray(data.available_bandwidths)) {
@@ -1249,7 +2241,7 @@ async function fetchCfrStatus() {
                 scheduleRender();
             }
             if (currentProberConfig.cards) {
-                renderCardsTables(currentProberConfig.cards, currentProberConfig.clients, currentProberConfig.mode, currentProberConfig.target_ip);
+                renderCardsTables(currentProberConfig.cards, currentProberConfig.clients, currentProberConfig.target_ip);
             }
         }
     } catch (e) {
@@ -1257,8 +2249,18 @@ async function fetchCfrStatus() {
     }
 }
 
+let captureStartedAt = 0;
+let autoWakeAttempts = 0;
+
 async function startCfrCapture(target = null) {
     if (cfrElements.startBtn) cfrElements.startBtn.disabled = true;
+
+    // Đảm bảo thông tin mạng & danh sách trạm đã được nạp ít nhất 1 lần
+    if (!currentProberConfig || !Array.isArray(currentProberConfig.clients) || currentProberConfig.clients.length === 0) {
+        try {
+            await loadProberStatus(false);
+        } catch (_) {}
+    }
 
     let mac = '';
     let ip = '';
@@ -1269,7 +2271,7 @@ async function startCfrCapture(target = null) {
         ip = target.ip || '';
         iface = target.iface || '';
     } else if (currentProberConfig.target_ip && currentProberConfig.target_ip !== 'auto') {
-        const matched = Array.isArray(currentProberConfig.clients) ? currentProberConfig.clients.find(c => c.ip === currentProberConfig.target_ip) : null;
+        const matched = Array.isArray(currentProberConfig.clients) ? currentProberConfig.clients.find(c => c.ip === currentProberConfig.target_ip || (c.mac && c.mac.toUpperCase() === currentProberConfig.target_ip.toUpperCase())) : null;
         if (matched) {
             mac = matched.mac;
             ip = matched.ip;
@@ -1277,32 +2279,77 @@ async function startCfrCapture(target = null) {
         } else {
             ip = currentProberConfig.target_ip;
         }
+    } else if (v6State.mac) {
+        mac = v6State.mac;
+        ip = v6State.ip;
     }
 
-    const autoProbe = true;
+    // Bắt buộc người dùng phải chọn một thiết bị cụ thể trước khi thu (Không tự ý chọn thiết bị ma hoặc tự động thu)
+    if (!mac) {
+        if (cfrElements.errorBanner) {
+            cfrElements.errorBanner.textContent = t('prompt_select_device');
+            cfrElements.errorBanner.hidden = false;
+        }
+        if (proberElements.selectionBadge) {
+            proberElements.selectionBadge.classList.add('pulse-warning');
+            setTimeout(() => proberElements.selectionBadge && proberElements.selectionBadge.classList.remove('pulse-warning'), 2500);
+        }
+        const panel = document.getElementById('prober-panel');
+        if (panel) {
+            panel.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+        if (cfrElements.startBtn) cfrElements.startBtn.disabled = false;
+        return;
+    }
+
+    // Kích hoạt chế độ master capture và đồng bộ sang Model V6
+    v6State.masterActive = true;
+    v6State.mac = mac;
+    v6State.ip = ip;
+    syncTargetDeviceToV6(mac, ip);
+
     let bandwidth = 0;
-    if (cfrElements.bandwidthSelect) {
+    if (target && target.bandwidth !== undefined) {
+        bandwidth = target.bandwidth;
+    } else if (cfrElements.bandwidthSelect) {
         bandwidth = parseInt(cfrElements.bandwidthSelect.value, 10) || 0;
     }
+    let period = 10;
+    if (target && target.period !== undefined) {
+        period = target.period;
+    } else if (activeView === 'gesture_v') {
+        period = 10;
+    } else if (proberElements.interval) {
+        period = Math.max(10, Math.min(parseInt(proberElements.interval.value, 10) || 10, 2000));
+    }
+    const autoProbe = proberElements.toggle ? proberElements.toggle.checked : true;
 
     try {
+        // Đảm bảo dừng Model V6 trước khi Daemon chiếm relay
+        await stopV6Capture(false);
+
         const res = await fetch('/api/cfr', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 action: 'start',
-                mac: mac || 'auto',
+                mac: mac,
                 ip: ip,
                 iface: iface,
                 bandwidth: bandwidth,
+                period: period,
                 auto_probe: autoProbe
             })
         });
         const data = await res.json();
         if (res.ok && data.status === 'ok') {
             cfrState.running = true;
+            captureStartedAt = performance.now();
+            autoWakeAttempts = 0;
             cfrState.target_mac = data.target_mac || mac;
             cfrState.target_ip = data.target_ip || ip;
+            cfrState.targetMac = cfrState.target_mac;
+            cfrState.targetIp = cfrState.target_ip;
             cfrState.iface = data.iface || iface;
             cfrState.hw = data.hw || '';
             cfrState.pid = data.pid || -1;
@@ -1323,14 +2370,20 @@ async function startCfrCapture(target = null) {
     } finally {
         if (cfrElements.startBtn) cfrElements.startBtn.disabled = cfrState.running;
         if (currentProberConfig.cards) {
-            renderCardsTables(currentProberConfig.cards, currentProberConfig.clients, currentProberConfig.mode, currentProberConfig.target_ip);
+            renderCardsTables(currentProberConfig.cards, currentProberConfig.clients, currentProberConfig.target_ip);
         }
     }
 }
 
-async function stopCfrCapture() {
+async function stopCfrCapture(clearMaster = true) {
+    if (clearMaster) {
+        v6State.masterActive = false;
+    }
     if (cfrElements.stopBtn) cfrElements.stopBtn.disabled = true;
     try {
+        // Đảm bảo dừng hoàn toàn Model V6 trước khi Daemon chiếm relay
+        await stopV6Capture(false);
+
         const res = await fetch('/api/cfr', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -1349,6 +2402,8 @@ async function stopCfrCapture() {
             scheduleRender();
             await fetchCfrStatus();
             renderCfrUI();
+            currentProberConfig.enabled = false;
+            renderProberUI(currentProberConfig);
         }
     } catch (err) {
         console.warn('Failed to stop CFR capture:', err);
@@ -1356,19 +2411,17 @@ async function stopCfrCapture() {
         if (cfrElements.stopBtn) cfrElements.stopBtn.disabled = !cfrState.running;
         if (cfrElements.startBtn) cfrElements.startBtn.disabled = cfrState.running;
         if (currentProberConfig.cards) {
-            renderCardsTables(currentProberConfig.cards, currentProberConfig.clients, currentProberConfig.mode, currentProberConfig.target_ip);
+            renderCardsTables(currentProberConfig.cards, currentProberConfig.clients, currentProberConfig.target_ip);
         }
     }
 }
 
 // ============================================================================
-// Active Prober Controller (Grouped by Wi-Fi Card, Single & Multi Mode)
+// Active Prober Controller (Grouped by Wi-Fi Card)
 // ============================================================================
 const proberElements = {
     toggle: document.getElementById('prober-toggle'),
     toggleLabel: document.getElementById('prober-toggle-label'),
-    singleBtn: document.getElementById('mode-single-btn'),
-    multiBtn: document.getElementById('mode-multi-btn'),
     interval: document.getElementById('prober-interval'),
     rateBadge: document.getElementById('prober-rate-badge'),
     applyBtn: document.getElementById('prober-apply-btn'),
@@ -1377,26 +2430,10 @@ const proberElements = {
     selectionBadge: document.getElementById('prober-selection-badge'),
     quickAutoBtn: document.getElementById('quick-auto-btn'),
     refreshBtn: document.getElementById('prober-refresh-btn'),
-    multiActionsBar: document.getElementById('multi-actions-bar'),
-    multiCount: document.getElementById('multi-count'),
-    selectAllBtn: document.getElementById('multi-select-all'),
-    deselectAllBtn: document.getElementById('multi-deselect-all'),
     cardsContainer: document.getElementById('prober-cards-container')
 };
 
-let currentProberConfig = {
-    enabled: false,
-    mode: 'single',
-    target_ip: '',
-    target_ips: [],
-    interval_ms: 50,
-    packets_sent: 0,
-    cards: [],
-    clients: []
-};
-
-let selectedMultiIps = new Set();
-let multiSelectionUserModified = false;
+// currentProberConfig is initialized at the top of file
 
 function updateRateBadge(ms) {
     const val = Number(ms) || 50;
@@ -1404,14 +2441,6 @@ function updateRateBadge(ms) {
     if (proberElements.rateBadge) {
         proberElements.rateBadge.textContent = `${hz} Hz`;
     }
-}
-
-function setProberMode(mode) {
-    currentProberConfig.mode = mode;
-    if (proberElements.singleBtn) proberElements.singleBtn.classList.toggle('active', mode === 'single');
-    if (proberElements.multiBtn) proberElements.multiBtn.classList.toggle('active', mode === 'multi');
-    if (proberElements.multiActionsBar) proberElements.multiActionsBar.hidden = (mode !== 'multi');
-    if (proberElements.quickAutoBtn) proberElements.quickAutoBtn.hidden = (mode !== 'single');
 }
 
 function getSignalClass(snrStr, signalStr) {
@@ -1438,9 +2467,6 @@ function renderProberUI(data, isFullRender = true) {
     proberElements.toggleLabel.textContent = data.enabled ? t('prober_on') : t('prober_off');
     proberElements.toggleLabel.classList.toggle('active', Boolean(data.enabled));
 
-    const mode = data.mode === 'multi' ? 'multi' : 'single';
-    setProberMode(mode);
-
     if (data.interval_ms && proberElements.interval && document.activeElement !== proberElements.interval) {
         proberElements.interval.value = data.interval_ms;
         updateRateBadge(data.interval_ms);
@@ -1462,48 +2488,35 @@ function renderProberUI(data, isFullRender = true) {
         }
     }
 
-    // Chỉ nạp multi-selection từ data.target_ips một lần duy nhất lúc khởi tạo
-    if (mode === 'multi' && !multiSelectionUserModified && data.target_ips && Array.isArray(data.target_ips) && data.target_ips.length > 0) {
-        data.target_ips.forEach(ip => {
-            if (ip && ip !== 'auto') selectedMultiIps.add(ip);
-        });
-        multiSelectionUserModified = true;
-    }
-
-    // Update selection summary badge & quick action pills in single mode
-    if (mode === 'single') {
-        const targetIp = data.target_ip || 'auto';
-        if (targetIp === 'auto' || !targetIp) {
-            if (proberElements.quickAutoBtn) proberElements.quickAutoBtn.classList.add('active');
-            if (proberElements.selectionBadge) proberElements.selectionBadge.textContent = t('selecting_auto');
-        } else {
-            if (proberElements.quickAutoBtn) proberElements.quickAutoBtn.classList.remove('active');
-            const matchedClient = Array.isArray(data.clients) ? data.clients.find(c => c.ip === targetIp) : null;
-            if (proberElements.selectionBadge) {
-                if (matchedClient) {
-                    const rssiPart = (matchedClient.signal_dbm && matchedClient.signal_dbm !== '—') ? ` · RSSI: ${matchedClient.signal_dbm}` : '';
-                    proberElements.selectionBadge.textContent = `${t('selecting_device')}${matchedClient.hostname || matchedClient.ip} (${matchedClient.ip})${rssiPart}`;
-                } else {
-                    proberElements.selectionBadge.textContent = `${t('selecting_device')}${targetIp}`;
-                }
-            }
+    // Update selection summary badge
+    const targetIp = (data.target_ip && data.target_ip !== 'auto') ? data.target_ip : '';
+    if (!targetIp) {
+        if (proberElements.selectionBadge) {
+            proberElements.selectionBadge.textContent = t('unselected_device');
+            proberElements.selectionBadge.classList.remove('selected');
         }
     } else {
-        updateMultiCount();
+        const matchedClient = Array.isArray(data.clients) ? data.clients.find(c => c.ip === targetIp || (c.mac && c.mac.toUpperCase() === targetIp.toUpperCase())) : null;
+        if (proberElements.selectionBadge) {
+            proberElements.selectionBadge.classList.add('selected');
+            if (matchedClient) {
+                const rssiPart = (matchedClient.signal_dbm && matchedClient.signal_dbm !== '—') ? ` · RSSI: ${matchedClient.signal_dbm}` : '';
+                proberElements.selectionBadge.textContent = `${t('selecting_device')}${matchedClient.hostname || matchedClient.ip} (${matchedClient.ip || matchedClient.mac})${rssiPart}`;
+            } else {
+                proberElements.selectionBadge.textContent = `${t('selecting_device')}${targetIp}`;
+            }
+        }
     }
 
     if (isFullRender) {
-        renderCardsTables(data.cards, data.clients, mode, data.target_ip);
+        renderCardsTables(data.cards, data.clients, targetIp);
     }
 
     let activeClient = null;
     let activeCard = null;
     if (Array.isArray(data.clients)) {
-        if (data.target_ip && data.target_ip !== 'auto') {
-            activeClient = data.clients.find(c => c.ip === data.target_ip || c.mac === data.target_ip);
-        }
-        if (!activeClient && data.clients.length > 0) {
-            activeClient = data.clients[0];
+        if (targetIp) {
+            activeClient = data.clients.find(c => c.ip === targetIp || (c.mac && c.mac.toUpperCase() === targetIp.toUpperCase()));
         }
     }
     if (activeClient && Array.isArray(data.cards)) {
@@ -1515,17 +2528,11 @@ function renderProberUI(data, isFullRender = true) {
     updateAvailableBandwidths(activeClient, activeCard);
 }
 
-function updateMultiCount() {
-    if (proberElements.multiCount) {
-        proberElements.multiCount.textContent = `${t('selected_count')}${selectedMultiIps.size}`;
-    }
-    if (proberElements.selectionBadge && currentProberConfig.mode === 'multi') {
-        proberElements.selectionBadge.textContent = `${t('selected_count')}${selectedMultiIps.size} ${t('devices_count')}`;
-    }
-}
-
-function renderCardsTables(cards, clients, mode, currentTargetIp) {
+function renderCardsTables(cards, clients, currentTargetIp) {
     if (!proberElements.cardsContainer) return;
+    if (!currentTargetIp && currentProberConfig) {
+        currentTargetIp = currentProberConfig.target_ip;
+    }
 
     // Group clients by interface name
     const clientsByCard = new Map();
@@ -1646,29 +2653,6 @@ function renderCardsTables(cards, clients, mode, currentTargetIp) {
             right.appendChild(cardRssiBadge);
         }
 
-        if (mode === 'multi' && cardStations.length > 0) {
-            const allSelectedInCard = cardStations.every(c => selectedMultiIps.has(c.ip || c.mac));
-            const cardBulkBtn = document.createElement('button');
-            cardBulkBtn.type = 'button';
-            cardBulkBtn.className = 'card-bulk-btn';
-            cardBulkBtn.textContent = allSelectedInCard ? t('deselect_card') : t('select_card');
-            cardBulkBtn.addEventListener('click', e => {
-                e.stopPropagation();
-                multiSelectionUserModified = true;
-                if (allSelectedInCard) {
-                    cardStations.forEach(c => selectedMultiIps.delete(c.ip || c.mac));
-                } else {
-                    cardStations.forEach(c => {
-                        const k = c.ip || c.mac;
-                        if (k) selectedMultiIps.add(k);
-                    });
-                }
-                updateMultiCount();
-                saveProberConfig();
-            });
-            right.appendChild(cardBulkBtn);
-        }
-
         header.append(left, right);
         panel.appendChild(header);
 
@@ -1682,14 +2666,13 @@ function renderCardsTables(cards, clients, mode, currentTargetIp) {
         const thead = document.createElement('thead');
         thead.innerHTML = `
             <tr>
-                <th style="width: 48px; text-align: center;">${t('col_select')}</th>
+                <th style="width: 44px; text-align: center;">${t('col_select')}</th>
                 <th>${t('col_device')}</th>
                 <th>${t('col_ip')}</th>
                 <th>${t('col_mac')}</th>
                 <th>${t('col_signal')}</th>
                 <th>${t('col_bitrate')}</th>
-                <th>${t('col_activity')}</th>
-                <th style="width: 80px; text-align: center;">${t('col_action')}</th>
+                <th style="text-align: center;">${t('col_activity')}</th>
             </tr>
         `;
         table.appendChild(thead);
@@ -1699,74 +2682,88 @@ function renderCardsTables(cards, clients, mode, currentTargetIp) {
         if (cardStations.length === 0) {
             const emptyTr = document.createElement('tr');
             emptyTr.className = 'card-empty-row';
-            emptyTr.innerHTML = `<td colspan="8" class="card-empty-cell">${t('no_card_stations')}</td>`;
+            emptyTr.innerHTML = `<td colspan="7" class="card-empty-cell">${t('no_card_stations')}</td>`;
             tbody.appendChild(emptyTr);
         } else {
             cardStations.forEach(c => {
                 const tr = document.createElement('tr');
                 tr.className = 'wifi-station-row';
-                const clientKey = c.ip || c.mac;
+                const clientTarget = c.ip || c.mac;
 
                 const isCapturingThis = cfrState.running && (
                     (cfrState.target_mac && c.mac && cfrState.target_mac.toUpperCase() === c.mac.toUpperCase()) ||
                     (cfrState.target_ip && c.ip && cfrState.target_ip === c.ip)
                 );
 
-                let isSelected = false;
-                if (mode === 'single') {
-                    isSelected = (currentTargetIp && currentTargetIp !== 'auto' && currentTargetIp === c.ip);
-                } else {
-                    isSelected = selectedMultiIps.has(clientKey);
-                }
+                const isSelected = Boolean(currentTargetIp && currentTargetIp !== 'auto' && (currentTargetIp === c.ip || currentTargetIp === c.mac));
 
                 if (isSelected) tr.classList.add('selected-row');
 
-                // 1. Selector input cell (hỗ trợ tích để chọn và tích lại để bỏ chọn)
+                // 1. Selector input cell (hỗ trợ click để chọn hoặc bỏ chọn về auto)
                 const tdSelect = document.createElement('td');
                 tdSelect.style.textAlign = 'center';
                 const input = document.createElement('input');
-                input.type = (mode === 'single') ? 'radio' : 'checkbox';
-                if (mode === 'single') {
-                    input.name = 'target-device-radio';
-                }
+                input.type = 'radio';
+                input.name = 'target-device-radio';
                 input.checked = isSelected;
 
                 const toggleSelection = () => {
-                    if (mode === 'single') {
-                        if (!c.ip) return;
-                        if (currentProberConfig.target_ip === c.ip) {
-                            // Đang chọn -> BỎ CHỌN (về tự động chọn sóng mạnh nhất)
-                            currentProberConfig.target_ip = 'auto';
-                            input.checked = false;
-                            document.querySelectorAll('.wifi-station-row').forEach(r => r.classList.remove('selected-row'));
-                            updateAvailableBandwidths(null, card);
-                        } else {
-                            // Chưa chọn -> CHỌN thiết bị này
-                            currentProberConfig.target_ip = c.ip;
-                            input.checked = true;
-                            document.querySelectorAll('.wifi-station-row').forEach(r => r.classList.remove('selected-row'));
-                            tr.classList.add('selected-row');
-                            updateAvailableBandwidths(c, card);
-                        }
-                        renderCfrUI();
-                        saveProberConfig();
+                    if (!clientTarget) return;
+                    if (currentProberConfig.target_ip === clientTarget) {
+                        // Đang chọn -> BỎ CHỌN (về trạng thái chưa chọn thiết bị nào)
+                        currentProberConfig.target_ip = '';
+                        input.checked = false;
+                        document.querySelectorAll('.wifi-station-row').forEach(r => r.classList.remove('selected-row'));
+                        updateAvailableBandwidths(null, card);
                     } else {
-                        // Multi mode: tích hoặc bỏ tích
-                        multiSelectionUserModified = true;
-                        if (selectedMultiIps.has(clientKey)) {
-                            // Đang chọn -> BỎ CHỌN
-                            selectedMultiIps.delete(clientKey);
-                            input.checked = false;
-                            tr.classList.remove('selected-row');
-                        } else {
-                            // Chưa chọn -> CHỌN
-                            selectedMultiIps.add(clientKey);
-                            input.checked = true;
-                            tr.classList.add('selected-row');
+                        // Chưa chọn -> CHỌN thiết bị này và thiết lập OPTION DEFAULTS
+                        currentProberConfig.target_ip = clientTarget;
+                        cfrState.targetMac = c.mac;
+                        cfrState.targetIp = c.ip;
+                        v6State.mac = c.mac;
+                        v6State.ip = c.ip;
+                        syncTargetDeviceToV6(c.mac, c.ip);
+                        input.checked = true;
+                        document.querySelectorAll('.wifi-station-row').forEach(r => r.classList.remove('selected-row'));
+                        tr.classList.add('selected-row');
+
+                        // 1. OPTION DEFAULT: Tự động gán Băng thông cao nhất thiết bị hỗ trợ
+                        let maxBw = 0;
+                        if (c.supported_bandwidths && c.supported_bandwidths.length > 0) {
+                            maxBw = c.supported_bandwidths[c.supported_bandwidths.length - 1];
+                        } else if (card && card.supported_bandwidths && card.supported_bandwidths.length > 0) {
+                            maxBw = card.supported_bandwidths[card.supported_bandwidths.length - 1];
                         }
-                        updateMultiCount();
-                        saveProberConfig();
+                        cfrState.bandwidth = maxBw;
+                        if (cfrElements.bandwidthSelect) {
+                            cfrElements.bandwidthSelect.value = String(maxBw);
+                        }
+
+                        // 2. OPTION DEFAULT: Chu kỳ gửi gói mặc định 10ms (100 Hz)
+                        if (proberElements.interval) {
+                            proberElements.interval.value = '10';
+                            updateRateBadge(10);
+                        }
+
+                        // 3. OPTION DEFAULT: Bật ping giữ nhịp thăm dò (Keep-alive)
+                        if (proberElements.toggle) {
+                            proberElements.toggle.checked = true;
+                        }
+
+                        updateAvailableBandwidths(c, card);
+
+                        // Tắt banner lỗi nếu trước đó đang cảnh báo nhắc chọn thiết bị
+                        if (cfrElements.errorBanner && cfrElements.errorBanner.textContent.includes(t('prompt_select_device'))) {
+                            cfrElements.errorBanner.hidden = true;
+                        }
+
+                        // Nếu CFR đang chạy, tự động chuyển đổi luồng thu phần cứng sang thiết bị này ngay lập tức
+                        if (cfrState.running) {
+                            startCfrCapture(c);
+                        }
                     }
+                    renderCfrUI();
+                    saveProberConfig();
                 };
 
                 input.addEventListener('click', e => {
@@ -1781,9 +2778,14 @@ function renderCardsTables(cards, clients, mode, currentTargetIp) {
 
                 tdSelect.appendChild(input);
 
-                // 2. Device Name cell (không dùng icon emoji trẻ con)
+                // 2. Device Name cell (hiển thị tag CSI Live nếu đang thu)
                 const tdDevice = document.createElement('td');
-                tdDevice.innerHTML = `<span class="device-name-cell"><span class="device-name-text">${escapeHtml(c.hostname || 'Device')}</span></span>`;
+                let capturingBadge = '';
+                if (isCapturingThis) {
+                    tr.classList.add('capturing-row');
+                    capturingBadge = `<span class="capturing-badge-inline"><span class="pulse-dot"></span>${t('badge_capturing')}</span>`;
+                }
+                tdDevice.innerHTML = `<span class="device-name-cell"><span class="device-name-text">${escapeHtml(c.hostname || 'Device')}</span>${capturingBadge}</span>`;
 
                 // 3. IP Address cell
                 const tdIp = document.createElement('td');
@@ -1797,17 +2799,35 @@ function renderCardsTables(cards, clients, mode, currentTargetIp) {
                 const tdMac = document.createElement('td');
                 tdMac.innerHTML = `<span class="mac-badge">${c.mac}</span>`;
 
-                // 5. RSSI cell (chỉ giữ lại RSSI, loại bỏ SNR và bỏ badge Live riêng)
+                // 5. RSSI cell (trích xuất mức công suất thu thực tế dBm cho mọi thiết bị)
                 const tdSignal = document.createElement('td');
                 let rssiText = '—';
+                let rssiVal = null;
                 if (isCapturingThis && latestFrame && latestFrame.rssi_comb_db !== undefined && latestFrame.rssi_comb_db !== 0) {
-                    rssiText = `${latestFrame.rssi_comb_db} dBm`;
-                } else if (c.signal_dbm && c.signal_dbm !== '—') {
+                    rssiVal = latestFrame.rssi_comb_db;
+                    rssiText = `${rssiVal} dBm`;
+                } else if (c.signal_dbm && c.signal_dbm !== '—' && c.signal_dbm !== 'Online') {
                     const m = c.signal_dbm.match(/-?\d+/);
                     if (m) {
-                        rssiText = `${m[0]} dBm`;
-                    } else if (!c.signal_dbm.startsWith('SNR')) {
-                        rssiText = c.signal_dbm;
+                        const parsed = parseInt(m[0], 10);
+                        if (parsed < 0) {
+                            rssiVal = parsed;
+                            rssiText = `${parsed} dBm`;
+                        } else if (parsed > 0) {
+                            rssiVal = parsed - 95;
+                            rssiText = `${rssiVal} dBm`;
+                        }
+                    }
+                }
+
+                if (rssiVal === null && c.snr && c.snr !== '—' && c.snr !== 'Online') {
+                    const m = c.snr.match(/\d+/);
+                    if (m) {
+                        const snr = parseInt(m[0], 10);
+                        if (snr > 0) {
+                            rssiVal = snr - 95;
+                            rssiText = `${rssiVal} dBm`;
+                        }
                     }
                 }
 
@@ -1822,42 +2842,15 @@ function renderCardsTables(cards, clients, mode, currentTargetIp) {
 
                 // 7. Activity / Last Seen cell
                 const tdActive = document.createElement('td');
+                tdActive.style.textAlign = 'center';
                 const rawAct = (c.inactive_ms && c.inactive_ms !== '—') ? c.inactive_ms : 'Active';
                 if (rawAct === '0 ms' || rawAct === '0ms' || rawAct === 'Active') {
-                    tdActive.innerHTML = `<span style="color:#4be2d0" title="Vừa truyền nhận dữ liệu (${rawAct})">${currentLang === 'vi' ? 'Vừa xong (0ms)' : 'Just now (0ms)'}</span>`;
+                    tdActive.innerHTML = `<span style="color:#60a5fa" title="Vừa truyền nhận dữ liệu (${rawAct})">${currentLang === 'vi' ? 'Vừa xong' : 'Just now'}</span>`;
                 } else {
                     tdActive.textContent = rawAct;
                 }
 
-                // 8. Quick Action (CFR Capture) cell
-                const tdAction = document.createElement('td');
-                tdAction.style.textAlign = 'center';
-                if (isCapturingThis) {
-                    tr.classList.add('capturing-row');
-                    const pill = document.createElement('span');
-                    pill.className = 'capturing-pill';
-                    pill.textContent = t('pill_capturing');
-                    tdAction.appendChild(pill);
-                } else {
-                    const btnCapture = document.createElement('button');
-                    btnCapture.type = 'button';
-                    btnCapture.className = 'quick-capture-btn';
-                    btnCapture.textContent = t('btn_quick_capture');
-                    btnCapture.title = t('cfr_btn_start');
-                    btnCapture.addEventListener('click', e => {
-                        e.stopPropagation();
-                        updateAvailableBandwidths(c, card);
-                        startCfrCapture({
-                            mac: c.mac,
-                            ip: c.ip,
-                            iface: c.iface || card.iface,
-                            name: c.hostname
-                        });
-                    });
-                    tdAction.appendChild(btnCapture);
-                }
-
-                tr.append(tdSelect, tdDevice, tdIp, tdMac, tdSignal, tdRate, tdActive, tdAction);
+                tr.append(tdSelect, tdDevice, tdIp, tdMac, tdSignal, tdRate, tdActive);
                 tbody.appendChild(tr);
             });
         }
@@ -1934,16 +2927,9 @@ async function saveProberConfig() {
 
     try {
         const enabled = proberElements.toggle ? proberElements.toggle.checked : false;
-        const mode = currentProberConfig.mode;
-        let target_ip = currentProberConfig.target_ip || 'auto';
-        let target_ips = [];
-
-        if (mode === 'single') {
-            target_ips = (target_ip && target_ip !== 'auto') ? [target_ip] : [];
-        } else {
-            target_ips = Array.from(selectedMultiIps);
-            target_ip = target_ips.length > 0 ? target_ips[0] : '';
-        }
+        const mode = 'single';
+        const target_ip = currentProberConfig.target_ip || 'auto';
+        const target_ips = (target_ip && target_ip !== 'auto') ? [target_ip] : [];
 
         const interval_ms = Math.max(10, Math.min(Number(proberElements.interval?.value) || 50, 2000));
 
@@ -1979,20 +2965,6 @@ async function saveProberConfig() {
     }
 }
 
-// Mode chip listeners
-if (proberElements.singleBtn) {
-    proberElements.singleBtn.addEventListener('click', () => {
-        setProberMode('single');
-        saveProberConfig();
-    });
-}
-if (proberElements.multiBtn) {
-    proberElements.multiBtn.addEventListener('click', () => {
-        setProberMode('multi');
-        saveProberConfig();
-    });
-}
-
 // Quick Auto Strongest button listener
 if (proberElements.quickAutoBtn) {
     proberElements.quickAutoBtn.addEventListener('click', () => {
@@ -2001,31 +2973,6 @@ if (proberElements.quickAutoBtn) {
         document.querySelectorAll('input[name="target-device-radio"]').forEach(r => r.checked = false);
         updateAvailableBandwidths();
         renderCfrUI();
-        saveProberConfig();
-    });
-}
-
-// Multi select actions
-if (proberElements.selectAllBtn) {
-    proberElements.selectAllBtn.addEventListener('click', () => {
-        multiSelectionUserModified = true;
-        if (Array.isArray(currentProberConfig.clients)) {
-            currentProberConfig.clients.forEach(c => {
-                const key = c.ip || c.mac;
-                if (key) selectedMultiIps.add(key);
-            });
-            updateMultiCount();
-            renderCardsTables(currentProberConfig.cards, currentProberConfig.clients, 'multi', '');
-            saveProberConfig();
-        }
-    });
-}
-if (proberElements.deselectAllBtn) {
-    proberElements.deselectAllBtn.addEventListener('click', () => {
-        multiSelectionUserModified = true;
-        selectedMultiIps.clear();
-        updateMultiCount();
-        renderCardsTables(currentProberConfig.cards, currentProberConfig.clients, 'multi', '');
         saveProberConfig();
     });
 }
@@ -2117,11 +3064,12 @@ resizeCanvas();
 connectStream();
 loadProberStatus(false);
 fetchCfrStatus();
+initV6Controls();
 
-// Định kỳ tự động cập nhật danh sách thiết bị kết nối & trạng thái an toàn (giãn cách 15s)
+// Định kỳ tự động cập nhật danh sách thiết bị kết nối & trạng thái an toàn (chu kỳ 6s nhẹ CPU, an toàn tuyệt đối với hostapd IPC)
 window.setInterval(() => {
     loadProberStatus(false);
-}, 15000);
+}, 6000);
 
 window.setInterval(() => {
     if (cfrState.running) {
@@ -2132,5 +3080,23 @@ window.setInterval(() => {
 window.setInterval(() => {
     if (lastFrameAt && performance.now() - lastFrameAt > 6000) {
         setStatus('waiting', t('status_packet_wait'));
+    }
+    // Auto-wake watchdog: Nếu đã ấn thu nhưng sau 2s chưa có frame đầu tiên (do trạm ngủ sâu),
+    // tự động kích hoạt thêm 1 đợt probe burst để đánh thức trạm, người dùng không cần bấm huỷ rồi thu lại
+    if (cfrState.running && !latestFrame && captureStartedAt && (performance.now() - captureStartedAt > 2000) && autoWakeAttempts < 2) {
+        autoWakeAttempts++;
+        console.log('[CSI] Auto-wake triggering extra probe burst for sleeping station...');
+        fetch('/api/cfr', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                action: 'start',
+                mac: cfrState.target_mac || 'auto',
+                ip: cfrState.target_ip || '',
+                iface: cfrState.iface || '',
+                bandwidth: cfrState.bandwidth || 0,
+                auto_probe: true
+            })
+        }).catch(() => {});
     }
 }, 1000);

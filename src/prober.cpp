@@ -1,4 +1,5 @@
 #include "prober.hpp"
+#include "driver_audit_logger.hpp"
 
 #include <algorithm>
 #include <cstdio>
@@ -113,20 +114,88 @@ void ActiveProber::stop() {
     closeSockets();
 }
 
-void ActiveProber::setConfig(bool enabled, const std::string &mode,
-                             const std::vector<std::string> &target_ips,
-                             int interval_ms) {
+void ActiveProber::setEnabled(bool enabled) {
     std::lock_guard<std::mutex> lock(mutex_);
     enabled_ = enabled;
-    mode_ = (mode == "multi") ? "multi" : "single";
-    target_ips_ = target_ips;
+    if (!enabled_) {
+        warmup_counter_ = 0;
+    }
+    std::cout << "[Prober] State updated: " << (enabled_ ? "ENABLED" : "DISABLED (stopped completely)") << '\n';
+    cv_.notify_all();
+}
+
+void ActiveProber::setConfig(bool enabled, const std::string &target_ip,
+                             int interval_ms,
+                             const std::string &target_mac_hint) {
+    std::lock_guard<std::mutex> lock(mutex_);
+    bool was_enabled = enabled_;
+    bool target_changed = (target_ip_ != target_ip);
+    enabled_ = enabled;
+    target_ip_ = target_ip;
+    if (!target_mac_hint.empty()) {
+        target_mac_hint_ = target_mac_hint;
+    }
     interval_ms_ = std::max(10, std::min(interval_ms, 2000));
 
+    // Kích hoạt chu kỳ nạp nhanh (Fast Warmup Burst) khi bật thu hoặc đổi mục tiêu
+    if (enabled_ && (!was_enabled || target_changed)) {
+        warmup_counter_ = 10; // 10 gói đầu gửi siêu tốc 15ms để nạp nhanh cửa sổ 40 gói
+    }
+
+    DriverAuditLogger::instance().log("PROBER", enabled_ ? "ENABLE" : "DISABLE", target_ip_,
+        "interval_ms=" + std::to_string(interval_ms_) + " hint_mac=" + target_mac_hint_);
+
     std::cout << "[Prober] Updated: " << (enabled_ ? "ENABLED" : "DISABLED")
-              << " | Mode: " << mode_ << " | Targets: " << target_ips_.size()
+              << " | Target: " << (target_ip_.empty() ? "auto" : target_ip_)
+              << " | Hint MAC: " << (target_mac_hint_.empty() ? "N/A" : target_mac_hint_)
+              << " | Fast Warmup: " << warmup_counter_.load()
               << " | Interval: " << interval_ms_ << " ms ("
               << (1000 / interval_ms_) << " Hz)\n";
     cv_.notify_all();
+}
+
+void ActiveProber::setConfig(bool enabled, const std::string &/*mode*/,
+                             const std::vector<std::string> &target_ips,
+                             int interval_ms,
+                             const std::string &target_mac_hint) {
+    std::string ip = target_ips.empty() ? "" : target_ips.front();
+    setConfig(enabled, ip, interval_ms, target_mac_hint);
+}
+
+void ActiveProber::triggerBurst(const std::string &ip, const std::string &target_mac_hint, int count) {
+    if (ip.empty() || count <= 0) return;
+    if (udp_fd_ < 0 && raw_arp_fd_ < 0) {
+        initSockets();
+    }
+    std::string hint = target_mac_hint;
+    if (hint.empty()) {
+        std::lock_guard<std::mutex> lock(mutex_);
+        hint = target_mac_hint_;
+    }
+    uint64_t sent_count = 0;
+    for (int i = 0; i < count; ++i) {
+        bool sent_arp = sendArpProbe(ip, hint);
+        if (sent_arp) {
+            ++sent_count;
+        }
+        // Gửi xen kẽ gói UDP 512 bytes để kích thích thuật toán rate adaptation nâng băng thông lên 80MHz
+        if (udp_fd_ >= 0 && (i % 2 == 1 || !sent_arp)) {
+            if (sendUdpProbe(ip)) {
+                ++sent_count;
+            }
+        }
+        if (i + 1 < count) {
+            std::this_thread::sleep_for(std::chrono::milliseconds(10));
+        }
+    }
+    if (sent_count > 0) {
+        std::lock_guard<std::mutex> lock(mutex_);
+        packets_sent_ += sent_count;
+    }
+    DriverAuditLogger::instance().log("PROBER", "BURST", ip,
+        "sent=" + std::to_string(sent_count) + "/" + std::to_string(count) + " hint_mac=" + hint);
+    std::cout << "[Prober] Burst pre-warm sent " << sent_count << "/" << count
+              << " packets to " << ip << " (MAC: " << (hint.empty() ? "N/A" : hint) << ")\n";
 }
 
 ProberStatus ActiveProber::getStatus(bool scan_network) {
@@ -134,9 +203,11 @@ ProberStatus ActiveProber::getStatus(bool scan_network) {
     {
         std::lock_guard<std::mutex> lock(mutex_);
         status.enabled = enabled_;
-        status.mode = mode_;
-        status.target_ips = target_ips_;
-        status.target_ip = target_ips_.empty() ? "" : target_ips_.front();
+        status.mode = "single";
+        status.target_ip = target_ip_;
+        if (!target_ip_.empty()) {
+            status.target_ips = {target_ip_};
+        }
         status.interval_ms = interval_ms_;
         status.interface_name = interface_name_;
         status.packets_sent = packets_sent_;
@@ -147,7 +218,7 @@ ProberStatus ActiveProber::getStatus(bool scan_network) {
     if (!scan_network) {
         std::lock_guard<std::mutex> lock(scan_cache_mutex_);
         if (!cached_cards_.empty() &&
-            std::chrono::duration_cast<std::chrono::milliseconds>(now - last_scan_time_).count() < 15000) {
+            std::chrono::duration_cast<std::chrono::milliseconds>(now - last_scan_time_).count() < 6000) {
             status.cards = cached_cards_;
             status.clients = cached_clients_;
             return status;
@@ -219,20 +290,21 @@ void ActiveProber::scanNetwork(std::vector<WifiCardInfo> &cards,
         }
     }
 
-    // 3. Quét các Card Wi-Fi và Station kết nối qua hostapd ubus (Userspace AP daemon)
-    // An toàn tuyệt đối: Không truy vấn Netlink nl80211 vào driver ath12k, không chạm vào debugfs dentry
+    // 3. Quét các Card Wi-Fi và Station kết nối qua hostapd_cli & hostapd ubus (Userspace AP daemon)
+    // An toàn tuyệt đối: 100% userspace IPC qua Unix domain socket, KHÔNG truy vấn Netlink nl80211 vào driver ath12k,
+    // KHÔNG chạm vào debugfs dentry nên TUYỆT ĐỐI không gây lock contention hay kernel panic.
     std::string cmd =
-        "for iface in $(ubus list 'hostapd.*' 2>/dev/null); do "
-        "  echo \"===HOSTAPD:$iface===\"; "
-        "  ubus call \"$iface\" get_status 2>/dev/null; "
-        "  echo \"===CLIENTS===\"; "
-        "  ubus call \"$iface\" get_clients 2>/dev/null; "
+        "for h in $(ubus list 'hostapd.*' 2>/dev/null); do "
+        "  dev=$(echo \"$h\" | sed 's/^hostapd\\.//'); "
+        "  echo \"===AP:$dev===\"; "
+        "  ubus -t 2 call \"$h\" get_status 2>/dev/null; "
+        "  echo \"===STA:$dev===\"; "
+        "  hostapd_cli -p /var/run/hostapd -i \"$dev\" all_sta 2>/dev/null; "
         "done";
 
     FILE *pipe = popen(cmd.c_str(), "r");
     if (pipe) {
         char buffer[1024];
-        std::string cur_hostapd_iface;
         std::string cur_card;
         std::string cur_ssid = "Wi-Fi Network";
         std::string cur_band = "5GHz";
@@ -241,6 +313,11 @@ void ActiveProber::scanNetwork(std::vector<WifiCardInfo> &cards,
         std::vector<int> cur_supp_bw = {0, 1, 2};
         bool in_clients_section = false;
         ClientInfo cur_client;
+
+        int cur_ack_sig = 0;
+        int cur_max_rssi = 0;
+        int cur_min_rssi = 0;
+        int cur_mgmt_sig = 0;
 
         auto flushCurrentClient = [&]() {
             if (!cur_client.mac.empty()) {
@@ -262,12 +339,27 @@ void ActiveProber::scanNetwork(std::vector<WifiCardInfo> &cards,
                         cur_client.hostname = "Wi-Fi Station";
                     }
 
-                    if (cur_client.signal_dbm.empty()) {
-                        cur_client.signal_dbm = "Online";
+                    // Xác định mức RSSI thực tế (dBm) chính xác nhất từ hostapd
+                    // Ưu tiên cur_max_rssi từ anten thu tốt nhất (tránh suy hao do lệch phân cực anten)
+                    int best_rssi = 0;
+                    if (cur_max_rssi < 0) {
+                        best_rssi = cur_max_rssi;
+                    } else if (cur_ack_sig < 0 && cur_ack_sig > -100) {
+                        best_rssi = cur_ack_sig;
+                    } else if (cur_min_rssi < 0) {
+                        best_rssi = cur_min_rssi;
+                    } else if (cur_mgmt_sig < 0) {
+                        best_rssi = cur_mgmt_sig;
                     }
-                    if (cur_client.snr.empty()) {
+
+                    if (best_rssi < 0) {
+                        cur_client.signal_dbm = std::to_string(best_rssi) + " dBm";
+                        cur_client.snr = std::to_string(std::max(1, 95 + best_rssi));
+                    } else if (cur_client.signal_dbm.empty()) {
+                        cur_client.signal_dbm = "Online";
                         cur_client.snr = "Online";
                     }
+
                     if (cur_client.bitrate.empty()) {
                         cur_client.bitrate = "Active";
                     }
@@ -283,6 +375,10 @@ void ActiveProber::scanNetwork(std::vector<WifiCardInfo> &cards,
                 }
             }
             cur_client = ClientInfo{};
+            cur_ack_sig = 0;
+            cur_max_rssi = 0;
+            cur_min_rssi = 0;
+            cur_mgmt_sig = 0;
         };
 
         auto flushCurrentCard = [&]() {
@@ -308,30 +404,28 @@ void ActiveProber::scanNetwork(std::vector<WifiCardInfo> &cards,
             while (!line.empty() && (line.back() == '\n' || line.back() == '\r'))
                 line.pop_back();
 
-            if (line.compare(0, 11, "===HOSTAPD:") == 0) {
+            if (line.rfind("===AP:", 0) == 0) {
                 flushCurrentCard();
                 in_clients_section = false;
                 size_t end = line.rfind("===");
-                if (end != std::string::npos && end > 11) {
-                    cur_hostapd_iface = line.substr(11, end - 11);
-                    size_t dot = cur_hostapd_iface.find('.');
-                    cur_card = (dot != std::string::npos) ? cur_hostapd_iface.substr(dot + 1) : cur_hostapd_iface;
+                if (end != std::string::npos && end > 6) {
+                    cur_card = line.substr(6, end - 6);
                 } else {
-                    cur_card = "phy00";
+                    cur_card = "phy00.0-0";
                 }
                 cur_ssid = "Wi-Fi Network";
-                if (cur_card.find(".0-") != std::string::npos || cur_card.find("5g") != std::string::npos) {
-                    cur_band = "5GHz";
-                    cur_max_bw = 2; // 80 MHz
-                    cur_width_str = "80 MHz";
-                    cur_supp_bw = {0, 1, 2};
-                } else {
+                if (cur_card.find(".1-") != std::string::npos || cur_card.find("2g") != std::string::npos) {
                     cur_band = "2.4GHz";
-                    cur_max_bw = 0; // 20 MHz
+                    cur_max_bw = 0;
                     cur_width_str = "20 MHz";
                     cur_supp_bw = {0};
+                } else {
+                    cur_band = "5GHz";
+                    cur_max_bw = 2;
+                    cur_width_str = "80 MHz";
+                    cur_supp_bw = {0, 1, 2};
                 }
-            } else if (line == "===CLIENTS===") {
+            } else if (line.rfind("===STA:", 0) == 0) {
                 in_clients_section = true;
             } else if (!in_clients_section) {
                 size_t ssid_pos = line.find("\"ssid\": \"");
@@ -346,7 +440,12 @@ void ActiveProber::scanNetwork(std::vector<WifiCardInfo> &cards,
                 if (freq_pos != std::string::npos) {
                     try {
                         int freq = std::stoi(line.substr(freq_pos + 8));
-                        if (freq > 4000) {
+                        if (freq >= 5925) {
+                            cur_band = "6GHz";
+                            cur_max_bw = 4;
+                            cur_width_str = "320 MHz";
+                            cur_supp_bw = {0, 1, 2, 3, 4};
+                        } else if (freq >= 4900) {
                             cur_band = "5GHz";
                             cur_max_bw = 2;
                             cur_width_str = "80 MHz";
@@ -360,40 +459,65 @@ void ActiveProber::scanNetwork(std::vector<WifiCardInfo> &cards,
                     } catch (...) {}
                 }
             } else {
-                size_t quote1 = line.find('\"');
-                if (quote1 != std::string::npos && line.size() >= quote1 + 19) {
-                    std::string potential_mac = line.substr(quote1 + 1, 17);
-                    if (isValidMac(potential_mac) && line.find('{', quote1 + 18) != std::string::npos) {
-                        flushCurrentClient();
-                        cur_client.mac = potential_mac;
-                        cur_client.max_bandwidth = cur_max_bw;
-                        cur_client.width_str = cur_width_str;
-                        cur_client.supported_bandwidths = cur_supp_bw;
-                        continue;
-                    }
+                if (isValidMac(line)) {
+                    flushCurrentClient();
+                    cur_client.mac = line;
+                    cur_client.max_bandwidth = cur_max_bw;
+                    cur_client.width_str = cur_width_str;
+                    cur_client.supported_bandwidths = cur_supp_bw;
+                    continue;
                 }
 
                 if (!cur_client.mac.empty()) {
-                    if (line.find("\"he\": true") != std::string::npos) {
-                        cur_client.max_bandwidth = cur_max_bw;
-                        cur_client.width_str = cur_width_str;
-                        cur_client.supported_bandwidths = cur_supp_bw;
-                    } else if (line.find("\"vht\": true") != std::string::npos && cur_max_bw >= 2) {
-                        cur_client.max_bandwidth = 2;
-                        cur_client.width_str = "80 MHz";
-                        cur_client.supported_bandwidths = {0, 1, 2};
-                    } else if (line.find("\"ht\": true") != std::string::npos && cur_client.max_bandwidth == 0) {
-                        cur_client.max_bandwidth = (cur_band == "5GHz") ? 1 : 0;
-                        cur_client.width_str = (cur_band == "5GHz") ? "40 MHz" : "20 MHz";
-                        cur_client.supported_bandwidths = (cur_band == "5GHz") ? std::vector<int>{0, 1} : std::vector<int>{0};
-                    }
-
-                    if (line.find("\"tx\": ") != std::string::npos && cur_client.bitrate.empty()) {
-                        size_t pos = line.find("\"tx\": ");
+                    if (line.rfind("flags=", 0) == 0) {
+                        if (line.find("[EHT]") != std::string::npos) {
+                            cur_client.max_bandwidth = cur_max_bw;
+                            cur_client.width_str = cur_width_str;
+                            cur_client.supported_bandwidths = cur_supp_bw;
+                        } else if (line.find("[HE]") != std::string::npos) {
+                            cur_client.max_bandwidth = cur_max_bw;
+                            cur_client.width_str = cur_width_str;
+                            cur_client.supported_bandwidths = cur_supp_bw;
+                        } else if (line.find("[VHT]") != std::string::npos && cur_max_bw >= 2) {
+                            cur_client.max_bandwidth = 2;
+                            cur_client.width_str = "80 MHz";
+                            cur_client.supported_bandwidths = {0, 1, 2};
+                        } else if (line.find("[HT]") != std::string::npos && cur_client.max_bandwidth == 0) {
+                            cur_client.max_bandwidth = (cur_band == "5GHz") ? 1 : 0;
+                            cur_client.width_str = (cur_band == "5GHz") ? "40 MHz" : "20 MHz";
+                            cur_client.supported_bandwidths = (cur_band == "5GHz") ? std::vector<int>{0, 1} : std::vector<int>{0};
+                        }
+                    } else if (line.rfind("last_ack_signal=", 0) == 0) {
+                        try { cur_ack_sig = std::stoi(line.substr(16)); } catch (...) {}
+                    } else if (line.rfind("max_rssi=", 0) == 0) {
+                        try { cur_max_rssi = std::stoi(line.substr(9)); } catch (...) {}
+                    } else if (line.rfind("min_rssi=", 0) == 0) {
+                        try { cur_min_rssi = std::stoi(line.substr(9)); } catch (...) {}
+                    } else if (line.rfind("mgmt_signal=", 0) == 0) {
+                        try { cur_mgmt_sig = std::stoi(line.substr(12)); } catch (...) {}
+                    } else if (line.rfind("inactive_msec=", 0) == 0) {
                         try {
-                            uint64_t rate_bps = std::stoull(line.substr(pos + 6));
-                            if (rate_bps > 0) {
-                                float mbps = static_cast<float>(rate_bps) / 1000000.0f;
+                            uint64_t ms = std::stoull(line.substr(14));
+                            cur_client.inactive_ms = (ms < 1000) ? "0 ms" : std::to_string(ms / 1000) + "s";
+                        } catch (...) {}
+                    } else if (line.rfind("tx_rate_info=", 0) == 0 && cur_client.bitrate.empty()) {
+                        std::string raw = line.substr(13);
+                        size_t sp = raw.find(' ');
+                        std::string num_str = (sp != std::string::npos) ? raw.substr(0, sp) : raw;
+                        try {
+                            int r = std::stoi(num_str);
+                            if (r > 0) {
+                                float mbps = static_cast<float>(r) / 10.0f;
+                                std::ostringstream oss;
+                                oss << std::fixed << std::setprecision(1) << mbps << " MBit/s";
+                                cur_client.bitrate = oss.str();
+                            }
+                        } catch (...) {}
+                    } else if (line.rfind("maxphyrate=", 0) == 0 && cur_client.bitrate.empty()) {
+                        try {
+                            uint64_t kbps = std::stoull(line.substr(11));
+                            if (kbps > 0) {
+                                float mbps = static_cast<float>(kbps) / 1000.0f;
                                 std::ostringstream oss;
                                 oss << std::fixed << std::setprecision(1) << mbps << " MBit/s";
                                 cur_client.bitrate = oss.str();
@@ -407,44 +531,9 @@ void ActiveProber::scanNetwork(std::vector<WifiCardInfo> &cards,
         pclose(pipe);
     }
 
-    // 4. Fallback cho máy dev test (không có card Wi-Fi), hiển thị từ DHCP/ARP để test UI
-    if (cards.empty() && !dhcp_map.empty()) {
-        WifiCardInfo test_card;
-        test_card.iface = "br-lan";
-        test_card.ssid = "LAN / WLAN Devices";
-        test_card.band = "LAN";
-        test_card.max_bandwidth = 0;
-        test_card.width_str = "20 MHz";
-        test_card.supported_bandwidths = {0};
-        test_card.station_count = 0;
-
-        for (const auto &pair : dhcp_map) {
-            std::string upper_mac = normalizeMacUpper(pair.first);
-            if (seen_macs.find(upper_mac) == seen_macs.end() && seen_ips.find(pair.second.first) == seen_ips.end()) {
-                ClientInfo info;
-                info.mac = upper_mac;
-                info.ip = pair.second.first;
-                info.hostname = pair.second.second;
-                info.iface = "br-lan";
-                info.ssid = "LAN / WLAN Devices";
-                info.band = "LAN";
-                info.signal_dbm = "Online";
-                info.snr = "Online";
-                info.bitrate = "Active";
-                info.inactive_ms = "LAN";
-                info.is_wireless = false;
-                info.max_bandwidth = 0;
-                info.width_str = "20 MHz";
-                info.supported_bandwidths = {0};
-
-                seen_macs.insert(upper_mac);
-                seen_ips.insert(info.ip);
-                clients.push_back(info);
-                test_card.station_count++;
-            }
-        }
-        cards.push_back(test_card);
-    }
+    // 4. Nếu không phát hiện card hoặc trạm nào từ hostapd (ví dụ khi khởi động hoặc chạy kiểm thử):
+    // Giữ danh sách cards và clients rỗng, tuyệt đối KHÔNG tự ý giả lập trạm ma từ lease cũ
+    // để tránh 100% tình trạng chọn nhầm thiết bị offline làm tê liệt thu thập CFR.
 }
 
 std::vector<ClientInfo> ActiveProber::scanClients() {
@@ -457,62 +546,50 @@ std::vector<ClientInfo> ActiveProber::scanClients() {
 std::vector<std::string> ActiveProber::getActiveTargets() {
     std::vector<std::string> targets;
 
-    if (mode_ == "single") {
-        if (!target_ips_.empty() && !target_ips_.front().empty() && target_ips_.front() != "auto") {
-            targets.push_back(target_ips_.front());
-            return targets;
+    if (!target_ip_.empty() && target_ip_ != "auto") {
+        targets.push_back(target_ip_);
+        return targets;
+    }
+
+    // Tự động tìm thiết bị Wi-Fi có tín hiệu tốt nhất: CHỈ lấy từ cached_clients_
+    std::vector<ClientInfo> clients;
+    {
+        std::lock_guard<std::mutex> lock(scan_cache_mutex_);
+        clients = cached_clients_;
+    }
+
+    std::string best_ip;
+    int best_score = -999;
+    for (const auto &c : clients) {
+        if (c.ip.empty() || c.ip == "127.0.0.1" || c.ip == "N/A") continue;
+        if (!c.is_wireless) continue;
+
+        int score = -100;
+        if (!c.snr.empty() && c.snr != "—") {
+            try {
+                score = std::stoi(c.snr);
+            } catch (...) {}
+        } else if (!c.signal_dbm.empty() && c.signal_dbm != "—") {
+            try {
+                score = std::stoi(c.signal_dbm);
+            } catch (...) {}
+        }
+        // Ưu tiên trạm 5GHz hoặc 6GHz vì hỗ trợ băng thông lớn và model cử chỉ
+        if (c.band == "5GHz" || c.band == "6GHz" || c.iface.find(".0-") != std::string::npos || c.iface.find(".2-") != std::string::npos) {
+            score += 50;
+        }
+        // Ưu tiên trạm vừa có hoạt động
+        if (c.inactive_ms == "0 ms" || c.inactive_ms == "Active") {
+            score += 20;
         }
 
-        // Tự động tìm thiết bị Wi-Fi có tín hiệu tốt nhất: CHỈ lấy từ cached_clients_
-        std::vector<ClientInfo> clients;
-        {
-            std::lock_guard<std::mutex> lock(scan_cache_mutex_);
-            clients = cached_clients_;
+        if (score > best_score || best_ip.empty()) {
+            best_score = score;
+            best_ip = c.ip;
         }
-
-        std::string best_ip;
-        int best_score = -999;
-        for (const auto &c : clients) {
-            if (c.ip.empty() || c.ip == "127.0.0.1") continue;
-            int score = -100;
-            if (!c.snr.empty()) {
-                try {
-                    score = std::stoi(c.snr);
-                } catch (...) {}
-            } else if (!c.signal_dbm.empty()) {
-                try {
-                    score = std::stoi(c.signal_dbm);
-                } catch (...) {}
-            }
-            if (score > best_score || best_ip.empty()) {
-                best_score = score;
-                best_ip = c.ip;
-            }
-        }
-        if (!best_ip.empty()) {
-            targets.push_back(best_ip);
-        }
-    } else { // Multi mode
-        if (!target_ips_.empty()) {
-            for (const auto &ip : target_ips_) {
-                if (!ip.empty() && ip != "auto")
-                    targets.push_back(ip);
-            }
-            return targets;
-        }
-
-        // Nếu danh sách rỗng ở multi mode: lấy từ cached_clients_
-        std::vector<ClientInfo> clients;
-        {
-            std::lock_guard<std::mutex> lock(scan_cache_mutex_);
-            clients = cached_clients_;
-        }
-
-        for (const auto &c : clients) {
-            if (!c.ip.empty() && c.ip != "127.0.0.1") {
-                targets.push_back(c.ip);
-            }
-        }
+    }
+    if (!best_ip.empty()) {
+        targets.push_back(best_ip);
     }
     return targets;
 }
@@ -571,13 +648,104 @@ bool ActiveProber::sendUdpProbe(const std::string &ip) {
     if (inet_pton(AF_INET, ip.c_str(), &target.sin_addr) <= 0)
         return false;
 
-    static const char payload[] = "CSI_PING_PROBE";
-    ssize_t sent = sendto(udp_fd_, payload, sizeof(payload) - 1, 0,
+    static char payload[512];
+    static bool payload_init = false;
+    if (!payload_init) {
+        std::memset(payload, 'X', sizeof(payload));
+        std::memcpy(payload, "CSI_PING_PROBE_RATE_WAKEUP", 26);
+        payload_init = true;
+    }
+    ssize_t sent = sendto(udp_fd_, payload, sizeof(payload), 0,
                           reinterpret_cast<sockaddr *>(&target), sizeof(target));
     return (sent > 0);
 }
 
-bool ActiveProber::sendArpProbe(const std::string &ip) {
+std::string ActiveProber::findMacForIp(const std::string &ip) {
+    if (ip.empty())
+        return "";
+
+    // 1. Tìm trong cached_clients_
+    {
+        std::lock_guard<std::mutex> lock(scan_cache_mutex_);
+        for (const auto &c : cached_clients_) {
+            if (c.ip == ip && !c.mac.empty()) {
+                return c.mac;
+            }
+        }
+    }
+
+    // 2. Tra cứu từ /proc/net/arp
+    std::ifstream arp_file("/proc/net/arp");
+    if (arp_file.is_open()) {
+        std::string line;
+        std::getline(arp_file, line); // Bỏ qua dòng tiêu đề
+        while (std::getline(arp_file, line)) {
+            std::istringstream iss(line);
+            std::string entry_ip, hw_type, flags, mac;
+            if (iss >> entry_ip >> hw_type >> flags >> mac) {
+                if (entry_ip == ip && isValidMac(mac)) {
+                    return mac;
+                }
+            }
+        }
+    }
+    return "";
+}
+
+std::string ActiveProber::findIpForMac(const std::string &mac) {
+    if (mac.empty())
+        return "";
+    const std::string lower = normalizeMacLower(mac);
+    const std::string upper = normalizeMacUpper(mac);
+
+    // 1. Tìm trong cached_clients_
+    {
+        std::lock_guard<std::mutex> lock(scan_cache_mutex_);
+        for (const auto &c : cached_clients_) {
+            if ((c.mac == upper || c.mac == lower) && !c.ip.empty() && c.ip != "N/A") {
+                return c.ip;
+            }
+        }
+    }
+
+    // 2. Tra cứu từ /proc/net/arp
+    std::ifstream arp_file("/proc/net/arp");
+    if (arp_file.is_open()) {
+        std::string line;
+        std::getline(arp_file, line);
+        while (std::getline(arp_file, line)) {
+            std::istringstream iss(line);
+            std::string entry_ip, hw_type, flags, entry_mac;
+            if (iss >> entry_ip >> hw_type >> flags >> entry_mac) {
+                if ((normalizeMacLower(entry_mac) == lower) && isValidIpv4(entry_ip)) {
+                    return entry_ip;
+                }
+            }
+        }
+    }
+
+    // 3. Tra cứu từ /tmp/dhcp.leases
+    std::ifstream dhcp_leases("/tmp/dhcp.leases");
+    if (!dhcp_leases.is_open()) {
+        dhcp_leases.open("/var/lib/misc/dnsmasq.leases");
+    }
+    if (dhcp_leases.is_open()) {
+        std::string line;
+        while (std::getline(dhcp_leases, line)) {
+            std::istringstream iss(line);
+            std::string expiry, entry_mac, entry_ip;
+            if (iss >> expiry >> entry_mac >> entry_ip) {
+                if (normalizeMacLower(entry_mac) == lower && isValidIpv4(entry_ip)) {
+                    return entry_ip;
+                }
+            }
+        }
+    }
+
+    return "";
+}
+
+bool ActiveProber::sendArpProbe(const std::string &ip, const std::string &hint_mac) {
 #ifdef __linux__
     if (raw_arp_fd_ < 0 || ifindex_ <= 0 || ip.empty())
         return false;
@@ -586,8 +754,35 @@ bool ActiveProber::sendArpProbe(const std::string &ip) {
     if (inet_pton(AF_INET, ip.c_str(), &target_ip) <= 0)
         return false;
 
+    std::string mac_str = hint_mac;
+    if (mac_str.empty()) {
+        std::lock_guard<std::mutex> lock(mutex_);
+        if (!target_mac_hint_.empty() && (target_ip_ == ip || target_ip_.empty())) {
+            mac_str = target_mac_hint_;
+        }
+    }
+    if (mac_str.empty()) {
+        mac_str = findMacForIp(ip);
+    }
+
+    uint8_t dst_mac[6];
+    bool is_unicast = false;
+    if (!mac_str.empty()) {
+        unsigned int b[6];
+        if (std::sscanf(mac_str.c_str(), "%x:%x:%x:%x:%x:%x",
+                        &b[0], &b[1], &b[2], &b[3], &b[4], &b[5]) == 6) {
+            for (int i = 0; i < 6; ++i) {
+                dst_mac[i] = static_cast<uint8_t>(b[i]);
+            }
+            is_unicast = true;
+        }
+    }
+    if (!is_unicast) {
+        std::memset(dst_mac, 0xFF, 6);
+    }
+
     ArpPacket packet{};
-    std::memset(packet.dst_mac, 0xFF, 6);
+    std::memcpy(packet.dst_mac, dst_mac, 6);
     std::memcpy(packet.src_mac, src_mac_, 6);
     packet.ethertype = htons(ETH_P_ARP);
 
@@ -598,7 +793,11 @@ bool ActiveProber::sendArpProbe(const std::string &ip) {
     packet.opcode = htons(ARPOP_REQUEST);
     std::memcpy(packet.sender_mac, src_mac_, 6);
     packet.sender_ip = src_ip_;
-    std::memset(packet.target_mac, 0x00, 6);
+    if (is_unicast) {
+        std::memcpy(packet.target_mac, dst_mac, 6);
+    } else {
+        std::memset(packet.target_mac, 0x00, 6);
+    }
     packet.target_ip = target_ip;
 
     sockaddr_ll sll{};
@@ -606,13 +805,14 @@ bool ActiveProber::sendArpProbe(const std::string &ip) {
     sll.sll_ifindex = ifindex_;
     sll.sll_protocol = htons(ETH_P_ARP);
     sll.sll_halen = 6;
-    std::memset(sll.sll_addr, 0xFF, 6);
+    std::memcpy(sll.sll_addr, dst_mac, 6);
 
     ssize_t sent = sendto(raw_arp_fd_, &packet, sizeof(packet), 0,
                           reinterpret_cast<sockaddr *>(&sll), sizeof(sll));
     return (sent > 0);
 #else
     (void)ip;
+    (void)hint_mac;
     return false;
 #endif
 }
@@ -624,6 +824,7 @@ void ActiveProber::run() {
         std::vector<std::string> targets;
         int interval = 50;
         bool should_probe = false;
+        std::string target_mac_hint;
 
         {
             std::unique_lock<std::mutex> lock(mutex_);
@@ -636,16 +837,34 @@ void ActiveProber::run() {
             }
 
             targets = getActiveTargets();
+            target_mac_hint = target_mac_hint_;
             interval = std::max(10, std::min(interval_ms_, 2000));
             should_probe = enabled_ && !targets.empty();
         }
 
+        int sleep_ms = interval;
+        int cur_warmup = warmup_counter_.load();
+        if (cur_warmup > 0) {
+            // Tăng tốc độ khởi động để nạp đầy 40 gói trong < 0.4s (10ms/gói)
+            sleep_ms = std::min(sleep_ms, 10);
+            warmup_counter_.fetch_sub(1);
+        }
+
+        static uint32_t probe_cycle = 0;
         if (should_probe) {
+            ++probe_cycle;
             uint64_t sent_count = 0;
             for (const auto &target : targets) {
                 bool sent = false;
-                sent |= sendArpProbe(target);
-                sent |= sendUdpProbe(target);
+                // Ưu tiên thăm dò bằng Unicast ARP chuẩn L2/L3
+                sent = sendArpProbe(target, (targets.size() == 1 ? target_mac_hint : ""));
+                // Chống kickout trạm ngủ sâu (iOS/Android): Cứ mỗi ~1 giây (20 chu kỳ tại 50ms) hoặc khi ARP thất bại,
+                // gửi thêm 1 gói UDP 512 bytes để kích thích hàng đợi QoS Data của driver ath12k, duy trì cờ TIM và ép trạm gửi ACK
+                if (udp_fd_ >= 0 && (probe_cycle % 20 == 0 || !sent)) {
+                    if (sendUdpProbe(target)) {
+                        sent = true;
+                    }
+                }
                 if (sent)
                     ++sent_count;
             }
@@ -657,7 +876,7 @@ void ActiveProber::run() {
 
         {
             std::unique_lock<std::mutex> lock(mutex_);
-            cv_.wait_for(lock, std::chrono::milliseconds(interval),
+            cv_.wait_for(lock, std::chrono::milliseconds(sleep_ms),
                          [this] { return !is_running_; });
         }
     }

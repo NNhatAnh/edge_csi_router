@@ -11,7 +11,7 @@ class MotionDetector {
     void reset();
 
   private:
-    std::vector<float> previous_amplitudes_;
+    std::vector<std::vector<float>> previous_chains_;
     std::deque<float> motion_window_;
     std::deque<float> calibration_candidate_;
     size_t low_motion_frames_ = 0;

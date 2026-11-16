@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Giải Thích Chỉ Số Độ Ổn Định & Chất Lượng (57/100) - Edge CSI Dashboard</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background: #070d18;
+            color: #d1d5db;
+            line-height: 1.6;
+            margin: 0;
+            padding: 24px;
+        }
+        .container {
+            max-width: 920px;
+            margin: 0 auto;
+            background: rgba(11, 20, 36, 0.95);
+            border: 1px solid rgba(0, 229, 255, 0.25);
+            border-radius: 14px;
+            padding: 32px 36px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6);
+        }
+        h1 {
+            color: #00e5ff;
+            border-bottom: 2px solid rgba(0, 229, 255, 0.3);
+            padding-bottom: 12px;
+            font-size: 25px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        h2 {
+            color: #5ce3bd;
+            margin-top: 30px;
+            font-size: 19px;
+            border-left: 4px solid #5ce3bd;
+            padding-left: 10px;
+        }
+        h3 {
+            color: #93c5fd;
+            font-size: 16px;
+            margin-top: 20px;
+        }
+        .score-hero {
+            display: flex;
+            align-items: center;
+            gap: 24px;
+            background: linear-gradient(135deg, rgba(245, 158, 11, 0.15), rgba(2, 132, 199, 0.15));
+            border: 1px solid rgba(245, 158, 11, 0.4);
+            border-radius: 12px;
+            padding: 20px 24px;
+            margin: 20px 0;
+        }
+        .score-circle {
+            width: 90px;
+            height: 90px;
+            border-radius: 50%;
+            background: rgba(245, 158, 11, 0.2);
+            border: 3px solid #f59e0b;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 32px;
+            font-weight: 800;
+            color: #fbbf24;
+            font-family: "Courier New", monospace;
+            box-shadow: 0 0 20px rgba(245, 158, 11, 0.35);
+        }
+        .score-info strong {
+            font-size: 18px;
+            color: #ffffff;
+            display: block;
+            margin-bottom: 6px;
+        }
+        .score-info p {
+            margin: 0;
+            font-size: 14px;
+            color: #cbd5e1;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 16px 0;
+            background: #060b13;
+            border-radius: 8px;
+            overflow: hidden;
+            border: 1px solid rgba(131, 152, 185, 0.15);
+        }
+        th, td {
+            padding: 12px 14px;
+            text-align: left;
+            border-bottom: 1px solid rgba(131, 152, 185, 0.12);
+            font-size: 13.5px;
+        }
+        th {
+            background: rgba(0, 114, 206, 0.2);
+            color: #38bdf8;
+            font-weight: 600;
+        }
+        .formula-box {
+            background: #040810;
+            border: 1px solid rgba(0, 229, 255, 0.3);
+            border-radius: 8px;
+            padding: 16px 20px;
+            font-family: "Courier New", monospace;
+            font-size: 14px;
+            color: #00e5ff;
+            margin: 14px 0;
+        }
+        .pill-tag {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 4px;
+            font-size: 11.5px;
+            font-weight: 700;
+            margin-right: 6px;
+            font-family: monospace;
+        }
+        .pill-gold { background: rgba(245, 158, 11, 0.2); border: 1px solid #f59e0b; color: #fbbf24; }
+        .pill-cyan { background: rgba(0, 229, 255, 0.2); border: 1px solid #00e5ff; color: #00e5ff; }
+        .pill-green { background: rgba(16, 185, 129, 0.2); border: 1px solid #10b981; color: #34d399; }
+        .tips-card {
+            background: rgba(0, 102, 204, 0.12);
+            border-left: 4px solid #0088ff;
+            border-radius: 4px;
+            padding: 14px 18px;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>◈ Giải Thích Chỉ Số: Độ Ổn Định & Chất Lượng (Link Stability & Quality)</h1>
+        
+        <div class="score-hero">
+            <div class="score-circle">57</div>
+            <div class="score-info">
+                <strong>Ý NGHĨA ĐIỂM SỐ 57/100: KẾT NỐI KHẢ DỤNG · ĐANG CẦM TAY HOẶC CÓ BIẾN ĐỘNG NHẸ</strong>
+                <p>Điện thoại đang kết nối tốt, lướt web và thu nhận CSI hoàn toàn bình thường. Mức 57 điểm phản ánh chính xác thực tế điện thoại đang được cầm trên tay (không phải đặt tĩnh tuyệt đối trên giá đỡ), chịu tác động tán xạ sóng từ cơ thể và phản xạ phòng.</p>
+            </div>
+        </div>
+
+        <h2>1. Chỉ Số Này Khác Gì So Với "Cột Sóng Wi-Fi" (RSSI)?</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Tiêu chí</th>
+                    <th>Cột sóng Wi-Fi thông thường (RSSI tầng MAC)</th>
+                    <th>Chỉ số Độ Ổn Định & Chất Lượng (CSI Fusion tầng PHY)</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>Đo cái gì?</strong></td>
+                    <td>Chỉ đo tổng công suất thu (dBm) ở tầng MAC.</td>
+                    <td>Đo chi tiết <strong>từng sóng mang con (Subcarriers)</strong> ở tầng vật lý PHY.</td>
+                </tr>
+                <tr>
+                    <td><strong>Bẫy AGC</strong></td>
+                    <td>Mạch khuếch đại tự động nhảy nấc &rarr; Cột sóng sụt ảo &rarr; Báo sai.</td>
+                    <td><strong>Bóc tách tương quan Pearson</strong> ($r \ge 0.90$) &rarr; Giữ nguyên điểm số ổn định.</td>
+                </tr>
+                <tr>
+                    <td><strong>Vết lõm tần số (Deep Fade)</strong></td>
+                    <td>Vẫn báo full vạch sóng nhưng thực tế rớt gói nặng ở MCS cao.</td>
+                    <td><strong>Phát hiện ngay lập tức</strong> tỷ số $A_{\text{mean}} / A_{\text{min}} > 4.5\text{x}$ để cảnh báo điểm chết giao thoa.</td>
+                </tr>
+                <tr>
+                    <td><strong>Phát hiện người chuyển động</strong></td>
+                    <td>Không phát hiện được.</td>
+                    <td><strong>Phát hiện chuẩn xác</strong> qua phương sai biến thiên biên độ theo thời gian ($\sigma^2_t$).</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <h2>2. Công Thức Tính Điểm 57/100</h2>
+        <div class="formula-box">
+            Điểm = 30% · Điểm_RSSI + 25% · Điểm_LoS + 20% · Điểm_Rician_K + 25% · Điểm_Stillness - Phạt_DeepFade
+        </div>
+        <ul>
+            <li><strong>Điểm_RSSI (30%):</strong> Chuẩn hóa từ -85 dBm (0đ) đến -40 dBm (100đ). Với mức sóng thực tế tầm -60 dBm &rarr; Đạt ~55 điểm.</li>
+            <li><strong>Điểm_LoS (25%):</strong> Tỷ lệ sóng truyền thẳng trực tiếp so với toàn bộ sóng dội tường. Đạt ~50 - 60 điểm khi ở trong phòng có bàn ghế.</li>
+            <li><strong>Điểm_Rician_K (20%):</strong> Hệ số năng lượng sóng trực tiếp/tán xạ ($K \approx 1.5 - 2.0$) &rarr; Đạt ~60 điểm.</li>
+            <li><strong>Điểm_Stillness (25%):</strong> Đo độ tĩnh không gian qua phương sai $\sigma^2_t$. Khi cầm tay, các vi rung động của cơ tay và lồng ngực làm $\sigma^2_t > 0$ &rarr; Điểm độ tĩnh đạt ~50 - 60 điểm thay vì 100 điểm.</li>
+        </ul>
+
+        <h2>3. 4 Phân Vùng Màu Sắc Trên Đồng Hồ Bán Nguyệt</h2>
+        <p>
+            <span class="pill-tag pill-green">85 - 100 · XANH NGỌC</span> <strong>Xuất sắc (Clean LoS):</strong> Sóng thẳng sạch, điện thoại đặt cố định trên giá đỡ sát router, phòng tĩnh tuyệt đối.<br>
+            <span class="pill-tag pill-cyan">70 - 84 · XANH DƯƠNG</span> <strong>Tốt (Multipath Stable):</strong> Điện thoại đặt cố định trên bàn, có phản xạ tường nhưng kênh truyền ổn định.<br>
+            <span class="pill-tag pill-gold">50 - 69 · VÀNG HỔ PHÁCH</span> <strong>Trung bình (Dynamic / Handheld):</strong> <strong style="color:#fbbf24;">&larr; ĐIỂM 57 NẰM TẠI ĐÂY!</strong> Đang cầm tay, có người đi lại hoặc có góc che chắn nhẹ.<br>
+            <span class="pill-tag" style="background:rgba(239,68,68,0.2);border:1px solid #ef4444;color:#f87171;">0 - 49 · ĐỎ HỒNG</span> <strong>Kém (Weak / Deep Fade):</strong> Bị chắn tường dày, suy hao quá lớn hoặc trúng vết lõm giao thoa triệt tiêu sóng.
+        </p>
+
+        <h2>4. Cách Đọc 3 Viên Thuốc (Pill Badges) Dưới Đồng Hồ</h2>
+        <ul>
+            <li><strong>AGC Ổn định:</strong> Mạch khuếch đại tự động của router đang ở trạng thái cân bằng, không bị sốc tín hiệu.</li>
+            <li><strong>Fade: 1.2x (hoặc &lt; 2.5x):</strong> Kênh truyền phẳng, các tần số đều nhận tốt, không bị hiện tượng triệt tiêu sóng.</li>
+            <li><strong>K: 1.8 · LoS: 45%:</strong> 45% năng lượng là sóng truyền thẳng trực diện, 55% là sóng phản xạ xung quanh phòng.</li>
+        </ul>
+
+        <div class="tips-card">
+            <strong style="color:#60a5fa;">💡 Muốn thử nghiệm đưa điểm số lên 90 - 100 (Xanh Ngọc)?</strong><br>
+            Đặt điện thoại cố định lên bàn (không cầm tay), quay lưng máy trực diện router ở cự ly khoảng 1 mét, người lùi lại 2 mét. Lúc này phương sai thời gian $\sigma^2_t \rightarrow 0$, kim đồng hồ sẽ đầm chắc lướt ngay lên <strong>88 ~ 95 điểm</strong>!
+        </div>
+    </div>
+</body>
+</html>

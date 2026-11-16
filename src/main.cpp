@@ -1,5 +1,6 @@
 #include "cfr_controller.hpp"
 #include "csi_parser.hpp"
+#include "driver_audit_logger.hpp"
 #include "prober.hpp"
 #include "web_server.hpp"
 
@@ -32,6 +33,9 @@ struct Options {
     int probe_interval = 50;
     bool probe_enabled = false;
     std::string probe_iface = "br-lan";
+    std::string audit_ip;
+    int audit_port = 5140;
+    std::string audit_file = "/root/edge_csi_audit.log";
 };
 
 void printUsage(const char *program) {
@@ -49,7 +53,10 @@ void printUsage(const char *program) {
         << "  --probe-ip IP         Target client IP for active probing (keep-alive)\n"
         << "  --probe-interval MS   Interval in ms between active probes (default: 50)\n"
         << "  --probe-iface IFACE   Network interface for ARP probing (default: br-lan)\n"
-        << "  --probe-enable        Enable active probing on startup\n";
+        << "  --probe-enable        Enable active probing on startup\n"
+        << "  --audit-ip IP         Remote UDP IP for microsecond driver audit logs\n"
+        << "  --audit-port PORT     Remote UDP port for audit logs (default: 5140)\n"
+        << "  --audit-file PATH     Local rotating audit log path (default: /root/edge_csi_audit.log)\n";
 }
 
 bool parseOptions(int argc, char **argv, Options &options) {
@@ -71,11 +78,11 @@ bool parseOptions(int argc, char **argv, Options &options) {
 
         const std::string value = argv[++i];
         try {
-            if (argument == "--web-port")
+            if (argument == "--web-port" || argument == "-p")
                 options.web_port = std::stoi(value);
             else if (argument == "--ingest-port")
                 options.ingest_port = std::stoi(value);
-            else if (argument == "--web-root")
+            else if (argument == "--web-root" || argument == "-w")
                 options.web_root = value;
             else if (argument == "--watch-dir") {
                 options.watch_directory = value;
@@ -91,6 +98,12 @@ bool parseOptions(int argc, char **argv, Options &options) {
                 options.probe_interval = std::stoi(value);
             else if (argument == "--probe-iface")
                 options.probe_iface = value;
+            else if (argument == "--audit-ip")
+                options.audit_ip = value;
+            else if (argument == "--audit-port")
+                options.audit_port = std::stoi(value);
+            else if (argument == "--audit-file")
+                options.audit_file = value;
             else {
                 std::cerr << "Unknown option: " << argument << '\n';
                 return false;
@@ -200,6 +213,42 @@ std::filesystem::path findRelayWriter(const std::filesystem::path &relay_file) {
     return {};
 }
 
+bool findWriterFromPid(int pid, std::filesystem::path &out_file,
+                       std::filesystem::path &out_fdinfo) {
+    if (pid <= 0)
+        return false;
+    namespace fs = std::filesystem;
+    std::error_code error;
+    const fs::path fd_dir = "/proc/" + std::to_string(pid) + "/fd";
+    if (!fs::is_directory(fd_dir, error))
+        return false;
+
+    fs::directory_iterator descriptors(
+        fd_dir, fs::directory_options::skip_permission_denied, error);
+    if (error)
+        return false;
+
+    for (const fs::directory_entry &descriptor : descriptors) {
+        const fs::path link = fs::read_symlink(descriptor.path(), error);
+        if (error) {
+            error.clear();
+            continue;
+        }
+        const std::string fname = link.filename().string();
+        if (fname.find("cfr_dump_phy00_") == 0 && link.extension() == ".bin") {
+            const fs::path fdinfo =
+                "/proc/" + std::to_string(pid) + "/fdinfo/" + descriptor.path().filename().string();
+            uintmax_t position = 0;
+            if (readWriterPosition(fdinfo, position)) {
+                out_file = link;
+                out_fdinfo = fdinfo;
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
 bool replayFile(const std::string &path, WebServer &server) {
     std::ifstream file(path, std::ios::binary);
     if (!file) {
@@ -243,8 +292,9 @@ void followRelayDirectory(const Options &options, WebServer &server, CFRControll
     fs::path active_file;
     fs::path writer_fdinfo;
     uintmax_t offset = 0;
+    pid_t attached_pid = -1;
     CSIParser parser;
-    std::vector<uint8_t> buffer(65536);
+    std::vector<uint8_t> buffer(16384);
     auto last_writer_search = std::chrono::steady_clock::now();
     auto last_dir_scan = std::chrono::steady_clock::time_point{};
     int fdinfo_fail_count = 0;
@@ -253,20 +303,56 @@ void followRelayDirectory(const Options &options, WebServer &server, CFRControll
               << '\n';
 
     while (!stop_requested) {
-        // Chỉ đọc và phát tán dữ liệu khi CFRController đang thu (hoặc đang replay file)
-        if (!cfr_controller.isRunning() && options.replay_file.empty()) {
-            if (!active_file.empty()) {
+        bool had_data = false;
+        // Giảm tải truy vấn trạng thái xuống tối đa 2 lần/giây để không chiếm dụng CPU
+        static auto last_status_query = std::chrono::steady_clock::time_point{};
+        static CFRCaptureStatus cstat;
+        const auto now_loop = std::chrono::steady_clock::now();
+        if (writer_fdinfo.empty() || now_loop - last_status_query > std::chrono::milliseconds(500)) {
+            last_status_query = now_loop;
+            cstat = cfr_controller.getStatus();
+        }
+        if (!cstat.running && options.replay_file.empty()) {
+            if (!active_file.empty() || attached_pid > 0) {
                 active_file.clear();
                 writer_fdinfo.clear();
                 offset = 0;
+                attached_pid = -1;
                 parser.reset();
             }
-            std::this_thread::sleep_for(std::chrono::milliseconds(200));
+            std::this_thread::sleep_for(std::chrono::milliseconds(250));
             continue;
         }
 
+        // Ưu tiên 1: Gắn trực tiếp vào file dump của tiến trình cfr_test_app đang chạy qua PID
+        // Chuyển giao tức thì khi PID thay đổi (File Rotation) mà không cần chờ timeout fdinfo
+        if (cstat.running && cstat.pid > 0 && (writer_fdinfo.empty() || cstat.pid != attached_pid)) {
+            fs::path live_file;
+            fs::path live_fdinfo;
+            for (int retry = 0; retry < 20 && !stop_requested; ++retry) {
+                if (findWriterFromPid(cstat.pid, live_file, live_fdinfo)) {
+                    active_file = live_file;
+                    writer_fdinfo = live_fdinfo;
+                    attached_pid = cstat.pid;
+                    fdinfo_fail_count = 0;
+                    uintmax_t wpos = 0;
+                    readWriterPosition(writer_fdinfo, wpos);
+                    // Nếu là file mới (wpos nhỏ < 64KB), đọc từ byte 0 để nhận ngay frame đầu tiên
+                    // Nếu file đã lớn do xoay vòng, lùi tối đa 64KB để bắt nhịp
+                    offset = (wpos > 65536) ? (wpos - 65536) : 0;
+                    parser.reset();
+                    std::cerr << "[Relay] Attached directly to live cfr_test_app (PID " << cstat.pid
+                              << ") on " << active_file.string() << " from offset " << offset
+                              << " (writer pos " << wpos << ")\n";
+                    break;
+                }
+                std::this_thread::sleep_for(std::chrono::milliseconds(25));
+            }
+        }
+
+        // Ưu tiên 2: Fallback quét thư mục nếu đang phát lại file (replay) hoặc daemon chạy thụ động (không quản lý capture trực tiếp)
         const auto now = std::chrono::steady_clock::now();
-        if (active_file.empty() || (now - last_dir_scan > std::chrono::seconds(2))) {
+        if (active_file.empty() && (!options.replay_file.empty() || (!cstat.running && now - last_dir_scan > std::chrono::seconds(2)))) {
             last_dir_scan = now;
             fs::path newest_file;
             fs::file_time_type newest_time{};
@@ -332,7 +418,16 @@ void followRelayDirectory(const Options &options, WebServer &server, CFRControll
             const auto now = std::chrono::steady_clock::now();
             if (writer_fdinfo.empty() && (now - last_writer_search > std::chrono::seconds(1))) {
                 last_writer_search = now;
-                writer_fdinfo = findRelayWriter(active_file);
+                if (cstat.running && cstat.pid > 0) {
+                    fs::path live_file;
+                    fs::path live_fdinfo;
+                    if (findWriterFromPid(cstat.pid, live_file, live_fdinfo)) {
+                        writer_fdinfo = live_fdinfo;
+                    }
+                }
+                if (writer_fdinfo.empty() && options.replay_file.empty()) {
+                    writer_fdinfo = findRelayWriter(active_file);
+                }
                 if (!writer_fdinfo.empty()) {
                     uintmax_t pos = 0;
                     if (readWriterPosition(writer_fdinfo, pos)) {
@@ -393,7 +488,7 @@ void followRelayDirectory(const Options &options, WebServer &server, CFRControll
                     offset = file_size;
                     parser.reset();
                 } else {
-                    constexpr uintmax_t kMaxBacklog = 65536;
+                    constexpr uintmax_t kMaxBacklog = 32768; // 32 KB (~25 frames) - giới hạn chặt để không nghẽn CPU
                     uintmax_t backlog = 0;
                     if (available_size >= offset) {
                         backlog = available_size - offset;
@@ -402,18 +497,23 @@ void followRelayDirectory(const Options &options, WebServer &server, CFRControll
                     }
 
                     if (backlog > kMaxBacklog) {
-                        offset = (available_size > 32768) ? (available_size - 32768) : 0;
+                        // Tồn đọng quá lớn: bỏ qua frame cũ, nhảy đến vị trí hiện tại để đảm bảo độ trễ real-time < 50ms
                         parser.reset();
+                        offset = (available_size > 16384) ? (available_size - 16384) : 0;
                     }
 
                     if (available_size < offset) {
-                        readRange(offset, file_size);
-                        offset = 0;
+                        // Trình ghi đã wrap-around vòng tròn hoặc file bị thu nhỏ:
+                        // Reset parser để tránh ghép dính frame dở dang ở ranh giới vòng lặp
+                        parser.reset();
+                        offset = (available_size > 16384) ? (available_size - 16384) : 0;
                         readRange(offset, available_size);
                         offset = available_size;
+                        had_data = true;
                     } else if (available_size > offset) {
                         readRange(offset, available_size);
                         offset = available_size;
+                        had_data = true;
                     }
                 }
             } else {
@@ -423,7 +523,13 @@ void followRelayDirectory(const Options &options, WebServer &server, CFRControll
                 parser.reset();
             }
         }
-        std::this_thread::sleep_for(std::chrono::milliseconds(50));
+        // Giảm tối đa độ trễ relay: Nếu vừa có dữ liệu mới, yield ngắn (2ms) để gửi ngay lập tức tới web
+        // Nếu không có dữ liệu mới, thăm dò lại sau 10ms (100 Hz)
+        if (had_data) {
+            std::this_thread::sleep_for(std::chrono::milliseconds(2));
+        } else {
+            std::this_thread::sleep_for(std::chrono::milliseconds(10));
+        }
     }
 }
 } // namespace
@@ -442,6 +548,11 @@ int main(int argc, char **argv) {
 
     std::signal(SIGINT, handleSignal);
     std::signal(SIGTERM, handleSignal);
+    std::signal(SIGHUP, SIG_IGN);
+
+    // Khởi tạo DriverAuditLogger: /dev/kmsg, file quay vòng, và UDP (nếu chỉ định)
+    DriverAuditLogger::instance().init(options.audit_ip, options.audit_port, options.audit_file);
+    DriverAuditLogger::instance().log("DAEMON", "START", "edge_csi_daemon", "Daemon initializing subsystems");
 
     ActiveProber prober(options.probe_iface);
     if (options.probe_enabled || !options.probe_ip.empty()) {
@@ -472,6 +583,8 @@ int main(int argc, char **argv) {
     }
 
     auto last_target_check = std::chrono::steady_clock::now();
+    auto last_stats_log = std::chrono::steady_clock::now();
+    bool was_capturing_active = false;
     while (!stop_requested) {
         std::this_thread::sleep_for(std::chrono::milliseconds(200));
 
@@ -479,17 +592,24 @@ int main(int argc, char **argv) {
         const auto now = std::chrono::steady_clock::now();
         if (now - last_target_check >= std::chrono::milliseconds(1000)) {
             last_target_check = now;
-            if (cfr_controller.isRunning()) {
+            bool is_capturing = cfr_controller.isRunning();
+            if (was_capturing_active && !is_capturing) {
+                // Chuyển từ RUNNING sang STOPPED: Đồng bộ dừng prober và reset hiệu chuẩn
+                server.resetMotionCalibration();
+                prober.setEnabled(false);
                 CFRCaptureStatus cstat = cfr_controller.getStatus();
-                if (!cstat.running) {
-                    server.resetMotionCalibration();
-                    if (options.probe_enabled) {
-                        prober.setConfig(false, "single", {}, options.probe_interval);
-                    }
-                    std::cerr << "[Main] Capture stopped automatically: "
-                              << cstat.last_error << '\n';
-                }
+                std::cerr << "[Main] Capture stopped: "
+                          << (cstat.last_error.empty() ? "Capture ended" : cstat.last_error) << '\n';
             }
+            was_capturing_active = is_capturing;
+        }
+
+        // In log nhịp hoạt động 60s một lần để người dùng dễ theo dõi qua logread -e edge_csi
+        if (now - last_stats_log >= std::chrono::seconds(60)) {
+            last_stats_log = now;
+            std::cout << "[Edge CSI] Heartbeat: prober=" << (prober.isEnabled() ? "ON" : "OFF")
+                      << ", capture=" << (cfr_controller.isRunning() ? "RUNNING" : "IDLE")
+                      << '\n';
         }
     }
 
@@ -498,5 +618,8 @@ int main(int argc, char **argv) {
     prober.stop();
     if (watcher.joinable())
         watcher.join();
+
+    DriverAuditLogger::instance().log("DAEMON", "STOP", "edge_csi_daemon", "Daemon shutdown completed");
+    DriverAuditLogger::instance().close();
     return 0;
 }

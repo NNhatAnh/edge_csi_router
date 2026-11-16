@@ -48,16 +48,23 @@ size_t findMagic(const std::vector<uint8_t> &data, const uint8_t *magic,
     return std::string::npos;
 }
 
+inline float safeFloat(float val, float default_val = 0.0f) {
+    return std::isfinite(val) ? val : default_val;
+}
+
 void appendFloatArray(std::ostringstream &json,
                       const std::vector<float> &values) {
     json << '[';
+    char buf[16];
     for (size_t i = 0; i < values.size(); ++i) {
         if (i != 0)
             json << ',';
-        // Giới hạn 1 chữ số thập phân cho mảng hàng nghìn phần tử để giảm mạnh kích thước JSON
-        json << std::fixed << std::setprecision(1) << values[i];
+        const float val = std::isfinite(values[i]) ? values[i] : 0.0f;
+        int len = std::snprintf(buf, sizeof(buf), "%.1f", val);
+        if (len > 0)
+            json.write(buf, len);
     }
-    json << std::defaultfloat << ']';
+    json << ']';
 }
 
 void appendIntArray(std::ostringstream &json,
@@ -72,11 +79,36 @@ void appendIntArray(std::ostringstream &json,
 }
 } // namespace
 
+std::string escapeJsonString(const std::string &input) {
+    std::ostringstream oss;
+    for (char c : input) {
+        switch (c) {
+            case '"':  oss << "\\\""; break;
+            case '\\': oss << "\\\\"; break;
+            case '\b': oss << "\\b"; break;
+            case '\f': oss << "\\f"; break;
+            case '\n': oss << "\\n"; break;
+            case '\r': oss << "\\r"; break;
+            case '\t': oss << "\\t"; break;
+            default:
+                if (static_cast<unsigned char>(c) < 0x20) {
+                    oss << "\\u" << std::hex << std::setw(4) << std::setfill('0')
+                        << static_cast<int>(static_cast<unsigned char>(c))
+                        << std::dec;
+                } else {
+                    oss << c;
+                }
+                break;
+        }
+    }
+    return oss.str();
+}
+
 size_t CSIData::tonesPerChain() const {
     return chains.empty() ? 0 : chains.front().amplitudes.size();
 }
 
-std::string CSIData::toJson() const {
+std::string CSIData::toJson(bool include_raw_iq) const {
     std::ostringstream json;
     json << std::setprecision(7)
          << "{\"has_data\":true,\"timestamp_ns\":" << timestamp_ns
@@ -88,46 +120,88 @@ std::string CSIData::toJson() const {
          << ",\"packet_bw_code\":" << static_cast<unsigned int>(packet_bw)
          << ",\"tones_per_chain\":" << tonesPerChain()
          << ",\"subcarriers_count\":" << tonesPerChain() * chains.size()
-         << ",\"motion_score\":" << motion_score
+         << ",\"motion_score\":" << safeFloat(motion_score)
          << ",\"motion_ready\":" << (motion_ready ? "true" : "false")
          << ",\"motion_window_samples\":" << motion_window_samples
          << ",\"motion_calibrated\":" << (motion_calibrated ? "true" : "false")
          << ",\"motion_calibration_frames\":" << motion_calibration_frames
          << ",\"motion_calibration_stable\":"
          << (motion_calibration_stable ? "true" : "false")
-         << ",\"motion_threshold_high\":" << motion_threshold_high
-         << ",\"motion_threshold_low\":" << motion_threshold_low
+         << ",\"motion_threshold_high\":" << safeFloat(motion_threshold_high)
+         << ",\"motion_threshold_low\":" << safeFloat(motion_threshold_low)
          << ",\"presence_detected\":" << (presence_detected ? "true" : "false")
-         << ",\"breath_bpm\":" << breath_bpm
-         << ",\"breath_wave\":" << breath_wave
-         << ",\"breath_quality\":" << breath_quality
-         << ",\"breath_phase_span\":" << breath_phase_span
-         << ",\"breath_asymmetry\":" << breath_asymmetry
-         << ",\"breath_rrv\":" << breath_rrv
-         << ",\"breath_regularity\":" << breath_regularity
+         << ",\"breath_bpm\":" << safeFloat(breath_bpm)
+         << ",\"breath_wave\":" << safeFloat(breath_wave)
+         << ",\"breath_quality\":" << safeFloat(breath_quality)
+         << ",\"breath_phase_span\":" << safeFloat(breath_phase_span)
+         << ",\"breath_asymmetry\":" << safeFloat(breath_asymmetry)
+         << ",\"breath_rrv\":" << safeFloat(breath_rrv)
+         << ",\"breath_regularity\":" << safeFloat(breath_regularity)
          << ",\"breath_valid\":" << (breath_valid ? "true" : "false")
          << ",\"is_human_presence\":" << (is_human_presence ? "true" : "false")
          << ",\"is_sleeping\":" << (is_sleeping ? "true" : "false")
-         << ",\"presence_status\":\"" << presence_status << "\""
+         << ",\"presence_status\":\"" << escapeJsonString(presence_status) << "\""
          << ",\"wave_detected\":" << (wave_detected ? "true" : "false")
-         << ",\"wave_confidence\":" << wave_confidence
-         << ",\"wave_status\":\"" << wave_status << "\""
+         << ",\"wave_confidence\":" << safeFloat(wave_confidence)
+         << ",\"wave_status\":\"" << escapeJsonString(wave_status) << "\""
          << ",\"wave_samples_in_window\":" << wave_samples_in_window
-         << ",\"wave_raw_prob\":" << wave_raw_prob
-         << ",\"wave_reason\":\"" << wave_reason << "\""
+         << ",\"wave_raw_prob\":" << safeFloat(wave_raw_prob)
+         << ",\"wave_reason\":\"" << escapeJsonString(wave_reason) << "\""
          << ",\"rssi_comb_db\":" << static_cast<int>(rssi_comb_db)
-         << ",\"estimated_distance_m\":" << estimated_distance_m
-         << ",\"distance_confidence\":" << distance_confidence
-         << ",\"distance_zone\":\"" << distance_zone << "\""
-         << ",\"distance_trend\":\"" << distance_trend << "\""
-         << ",\"csi_los_ratio\":" << csi_los_ratio
-         << ",\"csi_rician_k\":" << csi_rician_k
-         << ",\"ap_mac\":\"" << ap_mac << "\",\"amplitude_gain_ratio\":[";
+         << ",\"smoothed_rssi_db\":" << safeFloat(smoothed_rssi_db)
+         << ",\"estimated_distance_m\":" << safeFloat(estimated_distance_m)
+         << ",\"distance_confidence\":" << safeFloat(distance_confidence)
+         << ",\"distance_zone\":\"" << escapeJsonString(distance_zone) << "\""
+         << ",\"distance_trend\":\"" << escapeJsonString(distance_trend) << "\""
+         << ",\"distance_band\":\"" << escapeJsonString(distance_band) << "\""
+         << ",\"distance_freq_mhz\":" << safeFloat(distance_freq_mhz)
+         << ",\"distance_a_1m\":" << safeFloat(distance_a_1m)
+         << ",\"distance_n\":" << safeFloat(distance_n)
+         << ",\"distance_cal_source\":\"" << escapeJsonString(distance_cal_source) << "\""
+         << ",\"csi_los_ratio\":" << safeFloat(csi_los_ratio)
+         << ",\"csi_rician_k\":" << safeFloat(csi_rician_k)
+         << ",\"link_stability_score\":" << safeFloat(link_stability_score)
+         << ",\"link_status_text\":\"" << escapeJsonString(link_status_text) << "\""
+         << ",\"spectral_correlation\":" << safeFloat(spectral_correlation)
+         << ",\"deep_fade_ratio\":" << safeFloat(deep_fade_ratio)
+         << ",\"temporal_csi_variance\":" << safeFloat(temporal_csi_variance)
+         << ",\"is_agc_event\":" << (is_agc_event ? "true" : "false")
+         << ",\"deep_fade_warning\":" << (deep_fade_warning ? "true" : "false")
+         << ",\"gesture_model\":\"" << escapeJsonString(wakeup_model) << "\""
+         << ",\"gesture_stage\":\"" << escapeJsonString(wakeup_state) << "\""
+         << ",\"gesture_reason\":\"" << escapeJsonString(wakeup_reason) << "\""
+         << ",\"gesture_event\":\"" << escapeJsonString(wakeup_event) << "\""
+         << ",\"gesture_score\":" << safeFloat(wakeup_score)
+         << ",\"gesture_label\":" << wakeup_label
+         << ",\"gesture_triggered\":" << (wakeup_triggered ? "true" : "false")
+         << ",\"gesture_progress\":" << safeFloat(wakeup_progress)
+         << ",\"gesture_down_duration\":" << safeFloat(gesture_down_duration)
+         << ",\"gesture_pause_duration\":" << safeFloat(gesture_pause_duration)
+         << ",\"gesture_up_duration\":" << safeFloat(gesture_up_duration)
+         << ",\"wakeup_state\":\"" << escapeJsonString(wakeup_state) << "\""
+         << ",\"wakeup_reason\":\"" << escapeJsonString(wakeup_reason) << "\""
+         << ",\"wakeup_event\":\"" << escapeJsonString(wakeup_event) << "\""
+         << ",\"wakeup_score\":" << safeFloat(wakeup_score)
+         << ",\"wakeup_label\":" << wakeup_label
+         << ",\"wakeup_triggered\":" << (wakeup_triggered ? "true" : "false")
+         << ",\"wakeup_progress\":" << safeFloat(wakeup_progress)
+         << ",\"wakeup_ring_size\":" << wakeup_ring_size
+         << ",\"wakeup_ring_capacity\":" << wakeup_ring_capacity
+         << ",\"v6_state\":\"" << escapeJsonString(wakeup_state) << "\""
+         << ",\"v6_progress\":" << safeFloat(wakeup_progress)
+         << ",\"v6_fraction\":" << safeFloat(wakeup_stroke_fraction)
+         << ",\"v6_score\":" << safeFloat(wakeup_score)
+         << ",\"v6_label\":" << wakeup_label
+         << ",\"v6_reason\":\"" << escapeJsonString(wakeup_reason) << "\""
+         << ",\"v6_outcome\":\"" << (wakeup_state == "PASS" ? "pass" : (wakeup_state == "FAIL" ? "fail" : "")) << "\""
+         << ",\"v6_accepted\":" << v6_accepted
+         << ",\"v6_rejected\":" << v6_rejected
+         << ",\"ap_mac\":\"" << escapeJsonString(ap_mac) << "\",\"amplitude_gain_ratio\":[";
 
     for (size_t i = 0; i < 5; ++i) {
         if (i != 0)
             json << ',';
-        json << amplitude_gain_ratio[i];
+        json << safeFloat(amplitude_gain_ratio[i]);
     }
 
     json << "],\"chains\":[";
@@ -135,9 +209,17 @@ std::string CSIData::toJson() const {
         if (i != 0)
             json << ',';
         json << "{\"i\":";
-        appendIntArray(json, chains[i].i);
+        if (include_raw_iq) {
+            appendIntArray(json, chains[i].i);
+        } else {
+            json << "[]";
+        }
         json << ",\"q\":";
-        appendIntArray(json, chains[i].q);
+        if (include_raw_iq) {
+            appendIntArray(json, chains[i].q);
+        } else {
+            json << "[]";
+        }
         json << ",\"amplitudes\":";
         appendFloatArray(json, chains[i].amplitudes);
         json << ",\"phases\":";
@@ -316,12 +398,13 @@ bool CSIParser::decodeRecord(const uint8_t *record, size_t size,
             const int16_t qval =
                 static_cast<int16_t>(readU16(payload + byte_idx + 2));
 
+            const float f_i = static_cast<float>(ival);
+            const float f_q = static_cast<float>(qval);
+
             chain.i[tone] = ival;
             chain.q[tone] = qval;
-            chain.amplitudes[tone] =
-                std::sqrt(static_cast<float>(ival * ival + qval * qval));
-            chain.phases[tone] =
-                std::atan2(static_cast<float>(qval), static_cast<float>(ival));
+            chain.amplitudes[tone] = std::sqrt(f_i * f_i + f_q * f_q);
+            chain.phases[tone] = std::atan2(f_q, f_i);
         }
     }
     return true;

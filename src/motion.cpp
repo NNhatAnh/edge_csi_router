@@ -16,7 +16,7 @@ constexpr size_t kMaxDisruptionStreakToClear = 6;
 } // namespace
 
 void MotionDetector::reset() {
-    previous_amplitudes_.clear();
+    previous_chains_.clear();
     motion_window_.clear();
     resetCalibration();
 }
@@ -36,15 +36,18 @@ void MotionDetector::resetCalibration() {
 }
 
 void MotionDetector::update(CSIData &frame) {
-    std::vector<float> current_amplitudes;
-    for (const auto &chain : frame.chains) {
-        current_amplitudes.insert(current_amplitudes.end(),
-                                  chain.amplitudes.begin(),
-                                  chain.amplitudes.end());
+    if (frame.chains.empty()) {
+        frame.motion_ready = false;
+        frame.motion_score = 0.0f;
+        return;
     }
 
-    if (current_amplitudes.size() != previous_amplitudes_.size()) {
-        previous_amplitudes_ = std::move(current_amplitudes);
+    // Kiểm tra cấu trúc số chuỗi anten
+    if (previous_chains_.size() != frame.chains.size()) {
+        previous_chains_.resize(frame.chains.size());
+        for (size_t ch = 0; ch < frame.chains.size(); ++ch) {
+            previous_chains_[ch] = frame.chains[ch].amplitudes;
+        }
         motion_window_.clear();
         resetCalibration();
         frame.motion_ready = false;
@@ -52,25 +55,50 @@ void MotionDetector::update(CSIData &frame) {
         return;
     }
 
-    if (!previous_amplitudes_.empty()) {
-        const size_t n = current_amplitudes.size();
-        float mean_x = std::accumulate(current_amplitudes.begin(),
-                                       current_amplitudes.end(), 0.0f) /
-                       n;
-        float mean_y = std::accumulate(previous_amplitudes_.begin(),
-                                       previous_amplitudes_.end(), 0.0f) /
-                       n;
+    // Kiểm tra kích thước tone trên từng chuỗi
+    for (size_t ch = 0; ch < frame.chains.size(); ++ch) {
+        if (frame.chains[ch].amplitudes.size() != previous_chains_[ch].size() ||
+            frame.chains[ch].amplitudes.empty()) {
+            for (size_t c = 0; c < frame.chains.size(); ++c) {
+                previous_chains_[c] = frame.chains[c].amplitudes;
+            }
+            motion_window_.clear();
+            resetCalibration();
+            frame.motion_ready = false;
+            frame.motion_score = 0.0f;
+            return;
+        }
+    }
+
+    // 1. Tính tương quan Pearson riêng biệt từng antenna chain rồi lấy trung bình
+    float sum_decorr = 0.0f;
+    size_t valid_chains = 0;
+    std::vector<float> all_diffs;
+
+    for (size_t ch = 0; ch < frame.chains.size(); ++ch) {
+        const auto &curr = frame.chains[ch].amplitudes;
+        const auto &prev = previous_chains_[ch];
+        const size_t n = curr.size();
+        if (n == 0) continue;
+
+        float mean_x = std::accumulate(curr.begin(), curr.end(), 0.0f) / n;
+        float mean_y = std::accumulate(prev.begin(), prev.end(), 0.0f) / n;
 
         float num = 0.0f;
         float den_x = 0.0f;
         float den_y = 0.0f;
 
         for (size_t i = 0; i < n; ++i) {
-            float dx = current_amplitudes[i] - mean_x;
-            float dy = previous_amplitudes_[i] - mean_y;
+            float dx = curr[i] - mean_x;
+            float dy = prev[i] - mean_y;
             num += dx * dy;
             den_x += dx * dx;
             den_y += dy * dy;
+
+            // Thu thập vi sai tương đối trên các subcarrier có công suất đủ lớn (loại bỏ nhiễu biên và DC)
+            float base = std::max({curr[i], prev[i], 50.0f});
+            float d = std::abs(curr[i] - prev[i]) / base;
+            all_diffs.push_back(std::clamp(d, 0.0f, 1.0f));
         }
 
         float correlation = 1.0f;
@@ -78,28 +106,37 @@ void MotionDetector::update(CSIData &frame) {
             correlation = num / std::sqrt(den_x * den_y);
             correlation = std::clamp(correlation, -1.0f, 1.0f);
         }
-        const float pearson_score = 1.0f - correlation;
 
-        // Tính biến động vi mô trên từng subcarrier (bắt rung chân, cử động nhỏ)
-        std::vector<float> diffs(n);
-        for (size_t i = 0; i < n; ++i) {
-            const float base = std::max(current_amplitudes[i], 1.0f);
-            diffs[i] = std::abs(current_amplitudes[i] - previous_amplitudes_[i]) / base;
-        }
-        // Lấy top 10% subcarrier biến động mạnh nhất
-        const size_t top_k = std::max<size_t>(3, n / 10);
-        std::nth_element(diffs.begin(), diffs.begin() + top_k, diffs.end(), std::greater<float>());
-        const float top_k_diff = std::accumulate(diffs.begin(), diffs.begin() + top_k, 0.0f) / static_cast<float>(top_k);
-
-        // Kết hợp cả biến đổi tương quan toàn dải và biến động vi mô top-k (hệ số 0.08 vừa bắt rung chân vừa không thổi phồng nhiễu RF)
-        const float combined_score = pearson_score + top_k_diff * 0.08f;
-
-        motion_window_.push_back(combined_score);
-        if (motion_window_.size() > kMotionWindowSize)
-            motion_window_.pop_front();
+        // Độ mất tương quan (decorrelation) của riêng chain ch trong dải [0.0, 1.0]
+        float chain_decorr = std::clamp(1.0f - correlation, 0.0f, 1.0f);
+        sum_decorr += chain_decorr;
+        valid_chains++;
     }
 
-    previous_amplitudes_ = std::move(current_amplitudes);
+    float avg_decorr = (valid_chains > 0) ? (sum_decorr / static_cast<float>(valid_chains)) : 0.0f;
+
+    // 2. Tính vi sai vi mô tương đối (top 10% subcarrier biến động mạnh nhất trên các subcarrier hợp lệ)
+    float top_k_diff = 0.0f;
+    if (!all_diffs.empty()) {
+        const size_t top_k = std::max<size_t>(3, all_diffs.size() / 10);
+        std::nth_element(all_diffs.begin(), all_diffs.begin() + top_k, all_diffs.end(), std::greater<float>());
+        top_k_diff = std::accumulate(all_diffs.begin(), all_diffs.begin() + top_k, 0.0f) / static_cast<float>(top_k);
+        top_k_diff = std::clamp(top_k_diff, 0.0f, 1.0f);
+    }
+
+    // 3. Kết hợp có trọng số và kẹp trần nghiêm ngặt trong dải chuẩn [0.0, 1.0]
+    // 75% tương quan hình thái không gian, 25% biến động vi sai biên độ
+    const float combined_score = std::clamp(0.75f * avg_decorr + 0.25f * top_k_diff, 0.0f, 1.0f);
+
+    motion_window_.push_back(combined_score);
+    if (motion_window_.size() > kMotionWindowSize)
+        motion_window_.pop_front();
+
+    // Lưu lại frame hiện tại làm previous_chains_
+    for (size_t ch = 0; ch < frame.chains.size(); ++ch) {
+        previous_chains_[ch] = frame.chains[ch].amplitudes;
+    }
+
     frame.motion_ready = (motion_window_.size() == kMotionWindowSize);
     frame.motion_window_samples = motion_window_.size();
 
@@ -107,6 +144,7 @@ void MotionDetector::update(CSIData &frame) {
         frame.motion_score = std::accumulate(motion_window_.begin(),
                                              motion_window_.end(), 0.0f) /
                              motion_window_.size();
+        frame.motion_score = std::clamp(frame.motion_score, 0.0f, 1.0f);
 
         if (!motion_calibrated_) {
             calibration_sample_stable_ = false;
@@ -147,13 +185,15 @@ void MotionDetector::update(CSIData &frame) {
                         baseline_deviation_ = std::max(
                             standard_deviation, kMinimumBaselineDeviation);
                         baseline_mean_ = candidate_mean;
-                        // Ngưỡng thích ứng: tối thiểu candidate_mean + 0.04f để chống báo động giả do trôi RF
-                        motion_threshold_high_ = std::max(
-                            baseline_mean_ + 4.0f * baseline_deviation_,
-                            baseline_mean_ + 0.04f);
-                        motion_threshold_low_ = std::max(
-                            baseline_mean_ + 2.0f * baseline_deviation_,
-                            baseline_mean_ + 0.02f);
+                        // Ngưỡng thích ứng: tối thiểu candidate_mean + 0.10f để phản hồi nhạy bén và tự nhiên
+                        motion_threshold_high_ = std::clamp(
+                            std::max(baseline_mean_ + 3.0f * baseline_deviation_,
+                                     baseline_mean_ + 0.10f),
+                            0.20f, 0.60f);
+                        motion_threshold_low_ = std::clamp(
+                            std::max(baseline_mean_ + 1.5f * baseline_deviation_,
+                                     baseline_mean_ + 0.05f),
+                            0.10f, 0.40f);
                         motion_calibrated_ = true;
                         quiet_frames_ = 0;
                     }
@@ -203,12 +243,14 @@ void MotionDetector::update(CSIData &frame) {
                 baseline_deviation_ = (1.0f - alpha) * baseline_deviation_ +
                                       alpha * std::max(window_std, kMinimumBaselineDeviation);
 
-                motion_threshold_high_ = std::max(
-                    baseline_mean_ + 4.0f * baseline_deviation_,
-                    baseline_mean_ + 0.04f);
-                motion_threshold_low_ = std::max(
-                    baseline_mean_ + 2.0f * baseline_deviation_,
-                    baseline_mean_ + 0.02f);
+                motion_threshold_high_ = std::clamp(
+                    std::max(baseline_mean_ + 3.0f * baseline_deviation_,
+                             baseline_mean_ + 0.10f),
+                    0.20f, 0.60f);
+                motion_threshold_low_ = std::clamp(
+                    std::max(baseline_mean_ + 1.5f * baseline_deviation_,
+                             baseline_mean_ + 0.05f),
+                    0.10f, 0.40f);
             }
         }
     }
