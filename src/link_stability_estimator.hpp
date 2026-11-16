@@ -32,7 +32,7 @@ class LinkStabilityEstimator {
 
     // Lưu trữ khung trước để tính tương quan phổ và phát hiện AGC Hop
     std::vector<float> prev_amplitudes_;
-    int8_t prev_rssi_dbm_ = 0;
+    float prev_rssi_dbm_ = 0.0f;
     uint8_t prev_agc_[3]{0, 0, 0};
     bool has_prev_frame_ = false;
 

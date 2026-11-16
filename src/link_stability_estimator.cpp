@@ -9,6 +9,45 @@ template <typename T>
 T clampVal(T val, T low, T high) {
     return std::max(low, std::min(val, high));
 }
+
+// Bảng ánh xạ chất lượng sóng chuẩn theo đồ thị đồng hồ (Wi-Fi Signal Speedometer Gauge):
+// >= -30 dBm: 100% (Maximum Signal)
+//    -50 dBm: 85% - 90% (Excellent Signal Strength)
+//    -60 dBm: 70% - 75% (Good Signal Strength)
+//    -67 dBm: 50% (Reliable Signal Strength Minimum)
+//    -70 dBm: 40% (Not a Strong Signal)
+//    -80 dBm: 20% (Unreliable Signal Strength)
+// <= -90 dBm:  0% (Probably no Connection)
+float computeRssiQualityScore(float rssi_dbm) {
+    if (rssi_dbm >= -30.0f) {
+        return 100.0f;
+    }
+    if (rssi_dbm >= -50.0f) {
+        // Tuyến tính từ -50 dBm (85đ) lên -30 dBm (100đ)
+        return 85.0f + ((rssi_dbm - (-50.0f)) / 20.0f) * 15.0f;
+    }
+    if (rssi_dbm >= -60.0f) {
+        // Tuyến tính từ -60 dBm (70đ) lên -50 dBm (85đ)
+        return 70.0f + ((rssi_dbm - (-60.0f)) / 10.0f) * 15.0f;
+    }
+    if (rssi_dbm >= -67.0f) {
+        // Tuyến tính từ -67 dBm (50đ) lên -60 dBm (70đ)
+        return 50.0f + ((rssi_dbm - (-67.0f)) / 7.0f) * 20.0f;
+    }
+    if (rssi_dbm >= -70.0f) {
+        // Tuyến tính từ -70 dBm (40đ) lên -67 dBm (50đ)
+        return 40.0f + ((rssi_dbm - (-70.0f)) / 3.0f) * 10.0f;
+    }
+    if (rssi_dbm >= -80.0f) {
+        // Tuyến tính từ -80 dBm (20đ) lên -70 dBm (40đ)
+        return 20.0f + ((rssi_dbm - (-80.0f)) / 10.0f) * 20.0f;
+    }
+    if (rssi_dbm >= -90.0f) {
+        // Tuyến tính từ -90 dBm (0đ) lên -80 dBm (20đ)
+        return 0.0f + ((rssi_dbm - (-90.0f)) / 10.0f) * 20.0f;
+    }
+    return 0.0f;
+}
 } // namespace
 
 LinkStabilityEstimator::LinkStabilityEstimator() {
@@ -17,14 +56,14 @@ LinkStabilityEstimator::LinkStabilityEstimator() {
 
 void LinkStabilityEstimator::reset() {
     prev_amplitudes_.clear();
-    prev_rssi_dbm_ = 0;
+    prev_rssi_dbm_ = 0.0f;
     prev_agc_[0] = 0;
     prev_agc_[1] = 0;
     prev_agc_[2] = 0;
     has_prev_frame_ = false;
 
     amplitude_history_.clear();
-    smoothed_score_ = 92.0f;
+    smoothed_score_ = 90.0f;
     score_initialized_ = false;
     current_status_ = LinkStabilityStatus::Calibrating;
 }
@@ -106,6 +145,32 @@ void LinkStabilityEstimator::process(CSIData &frame) {
 
     const auto &amps = frame.chains[0].amplitudes;
 
+    // 0. Xác định công suất thu RSSI thực tế của thiết bị:
+    // Ưu tiên 1: frame.smoothed_rssi_db do DistanceEstimator tính toán (từ kernel prober / iw station get)
+    // Ưu tiên 2: frame.rssi_comb_db từ CFR header (nếu hợp lệ)
+    // Ưu tiên 3: Ước tính từ biên độ CSI và mạch AGC khuếch đại
+    float effective_rssi = 0.0f;
+    if (frame.smoothed_rssi_db < -5.0f && frame.smoothed_rssi_db > -110.0f) {
+        effective_rssi = frame.smoothed_rssi_db;
+    } else if (frame.rssi_comb_db < 0 && frame.rssi_comb_db > -110) {
+        effective_rssi = static_cast<float>(frame.rssi_comb_db);
+    } else if (frame.rssi_comb_db > 0 && frame.rssi_comb_db < 100) {
+        effective_rssi = static_cast<float>(frame.rssi_comb_db) - 95.0f;
+    } else {
+        if (!amps.empty()) {
+            float sum_sq = 0.0f;
+            for (float a : amps) sum_sq += a * a;
+            const float mean_sq = sum_sq / std::max(1.0f, static_cast<float>(amps.size()));
+            const float csi_pwr = 10.0f * std::log10(mean_sq + 1.0f);
+            const float gain_ratio = static_cast<float>(frame.amplitude_gain_ratio[0]);
+            const float gain_comp = 20.0f * std::log10(128.0f / std::max(1.0f, gain_ratio));
+            const float agc_comp = 0.85f * static_cast<float>(frame.agc_indices[0]);
+            effective_rssi = clampVal(-95.0f + csi_pwr + gain_comp - agc_comp, -85.0f, -30.0f);
+        } else {
+            effective_rssi = -55.0f;
+        }
+    }
+
     // 1. Phân tích hiện tượng suy hao chọn lọc tần số (Deep Fade)
     float mean_amp = 0.0f;
     float min_amp = 0.0f;
@@ -121,8 +186,7 @@ void LinkStabilityEstimator::process(CSIData &frame) {
     if (has_prev_frame_ && !prev_amplitudes_.empty()) {
         spectral_corr = computePearsonCorrelation(amps, prev_amplitudes_);
 
-        const int delta_rssi = std::abs(static_cast<int>(frame.rssi_comb_db) -
-                                        static_cast<int>(prev_rssi_dbm_));
+        const float delta_rssi = std::abs(effective_rssi - prev_rssi_dbm_);
         const bool agc_changed =
             (frame.agc_indices[0] != prev_agc_[0] ||
              frame.agc_indices[1] != prev_agc_[1] ||
@@ -130,7 +194,7 @@ void LinkStabilityEstimator::process(CSIData &frame) {
 
         // Nếu nấc AGC đổi hoặc RSSI nhảy bước >= 2 dB nhưng hình dạng vân phổ CSI giữ nguyên (r >= 0.90)
         // -> Khẳng định kết nối thực tế không hề suy giảm, chỉ là bước nhảy khuếch đại phần cứng!
-        if ((agc_changed || delta_rssi >= 2) && spectral_corr >= 0.90f) {
+        if ((agc_changed || delta_rssi >= 2.0f) && spectral_corr >= 0.90f) {
             is_agc_event = true;
         }
     }
@@ -172,22 +236,25 @@ void LinkStabilityEstimator::process(CSIData &frame) {
         frame.csi_rician_k > 0.0f ? frame.csi_rician_k : 1.5f;
 
     // 5. Phân loại trạng thái liên kết
-    if (amplitude_history_.size() < 8) {
+    if (amplitude_history_.size() < 5) {
         current_status_ = LinkStabilityStatus::Calibrating;
         frame.link_status_text = "calibrating";
-    } else if (frame.rssi_comb_db < -84) {
+    } else if (effective_rssi < -78.0f) {
         current_status_ = LinkStabilityStatus::WeakSignal;
         frame.link_status_text = "weak";
-    } else if (temporal_variance > 0.060f) {
-        // Môi trường xung quanh có người/vật thể di chuyển lớn làm nhiễu sóng đa đường
+    } else if (effective_rssi >= -52.0f && spectral_corr >= 0.85f) {
+        // Tín hiệu rất mạnh (ở gần router) và vân phổ ổn định -> Sóng truyền thẳng trực tiếp Clean LoS
+        current_status_ = LinkStabilityStatus::CleanLoS;
+        frame.link_status_text = "clean_los";
+    } else if (temporal_variance > 0.080f) {
+        // Môi trường xung quanh có người/vật thể di chuyển lớn làm biến thiên đa đường
         current_status_ = LinkStabilityStatus::DynamicInterference;
         frame.link_status_text = "dynamic_motion";
     } else if (frame.deep_fade_warning) {
         // Thiết bị đứng yên nhưng nằm trúng vết lõm suy hao chọn lọc tần số thực sự
         current_status_ = LinkStabilityStatus::DeepFadeWarning;
         frame.link_status_text = "deep_fade";
-    } else if (k_rician >= 2.0f && los_ratio >= 0.20f) {
-        // Tia truyền thẳng trực tiếp chiếm ưu thế
+    } else if (k_rician >= 1.8f || los_ratio >= 0.18f) {
         current_status_ = LinkStabilityStatus::CleanLoS;
         frame.link_status_text = "clean_los";
     } else {
@@ -197,71 +264,59 @@ void LinkStabilityEstimator::process(CSIData &frame) {
     }
 
     // 6. Tính toán điểm ổn định & chất lượng tổng hợp (Quality & Stability Score 0 - 100)
-    // 6.1. Thành phần công suất thu RSSI (30% trọng số): chuẩn hóa từ -85 dBm (0đ) đến -40 dBm (100đ)
-    float raw_rssi = static_cast<float>(frame.rssi_comb_db);
-    if (raw_rssi > 0.0f) {
-        raw_rssi -= 95.0f; // nếu driver trả về SNR dương
-    } else if (raw_rssi == 0.0f) {
-        // Nếu driver chưa có WMI RSSI, ước tính RSSI động từ chính biên độ CSI và gain ratio phần cứng
-        if (!amps.empty()) {
-            float sum_sq = 0.0f;
-            for (float a : amps) sum_sq += a * a;
-            const float mean_sq = sum_sq / std::max(1.0f, static_cast<float>(amps.size()));
-            const float csi_pwr = 10.0f * std::log10(mean_sq + 1.0f);
-            const float gain_ratio = static_cast<float>(frame.amplitude_gain_ratio[0]);
-            const float gain_comp = 20.0f * std::log10(128.0f / std::max(1.0f, gain_ratio));
-            raw_rssi = clampVal(-88.0f + csi_pwr - gain_comp, -85.0f, -40.0f);
-        } else {
-            raw_rssi = -50.0f; // fallback trung bình
-        }
-    }
-    const float score_rssi =
-        clampVal((raw_rssi - (-85.0f)) / 45.0f, 0.0f, 1.0f) * 100.0f;
+    // 6.1. Thành phần công suất thu RSSI (75% trọng số cơ sở theo đồ thị đồng hồ Wi-Fi chuẩn)
+    const float score_rssi = computeRssiQualityScore(effective_rssi);
 
-    // 6.2. Thành phần tỷ lệ tia truyền thẳng LoS (25% trọng số): chuẩn hóa từ 0.10 đến 0.35
-    const float score_los =
-        clampVal((los_ratio - 0.10f) / 0.25f, 0.0f, 1.0f) * 100.0f;
-
-    // 6.3. Thành phần hệ số Rician K (20% trọng số): chuẩn hóa từ K=0 đến K=3.0
-    const float score_rician =
-        clampVal(k_rician / 3.0f, 0.0f, 1.0f) * 100.0f;
-
-    // 6.4. Thành phần độ tĩnh thời gian (25% trọng số): nâng trần dung sai phương sai lên 0.12 (phù hợp cả khi cầm tay)
+    // 6.2. Thành phần độ ổn định kênh truyền CSI (25% trọng số):
+    // - Tương quan phổ r (chuẩn hóa từ 0.60 đến 0.95): kênh không bị méo/biến dạng
+    // - Độ tĩnh thời gian (phương sai biên độ chuẩn hóa từ 0.00 đến 0.15)
+    const float score_corr =
+        clampVal((spectral_corr - 0.60f) / 0.35f, 0.0f, 1.0f) * 100.0f;
     const float score_stillness =
-        (1.0f - clampVal(temporal_variance / 0.12f, 0.0f, 1.0f)) * 100.0f;
+        (1.0f - clampVal(temporal_variance / 0.15f, 0.0f, 1.0f)) * 100.0f;
+    const float csi_stability = 0.60f * score_corr + 0.40f * score_stillness;
 
-    // Điểm tổng hợp cơ sở: 30% RSSI + 25% LoS + 20% Rician K + 25% Độ tĩnh
-    float raw_score =
-        0.30f * score_rssi + 0.25f * score_los + 0.20f * score_rician + 0.25f * score_stillness;
+    // Điểm tổng hợp cơ sở: 75% RSSI + 25% CSI Stability
+    float raw_score = 0.75f * score_rssi + 0.25f * csi_stability;
 
-    // Trừ điểm nếu bị Deep Fade thực sự (suy hao chọn lọc tần số > 13 dB)
+    // Trừ điểm nhẹ nếu phát hiện vết lõm suy hao chọn lọc tần số (Deep Fade)
     if (frame.deep_fade_warning) {
         const float penalty =
-            clampVal((fade_ratio - 4.5f) / 5.0f, 0.0f, 1.0f) * 20.0f;
+            clampVal((fade_ratio - 4.5f) / 5.0f, 0.0f, 1.0f) * 6.0f;
         raw_score -= penalty;
     }
 
-    raw_score = clampVal(raw_score, 10.0f, 100.0f);
+    // Cam kết ngưỡng sàn tuyệt đối (Floor Guarantees) theo chuẩn đồng hồ đo:
+    // - Nếu RSSI >= -50 dBm (ở gần router 0.2m - 1.5m), điểm chất lượng BẮT BUỘC >= 85% (Vùng Xanh Excellent/Max)
+    // - Nếu RSSI >= -60 dBm, điểm chất lượng BẮT BUỘC >= 70% (Vùng Vàng/Xanh Good)
+    // - Nếu RSSI >= -67 dBm, điểm chất lượng BẮT BUỘC >= 50% (Vùng Đạt chuẩn tối thiểu Reliable)
+    if (effective_rssi >= -50.0f) {
+        raw_score = std::max(raw_score, 85.0f);
+    } else if (effective_rssi >= -60.0f) {
+        raw_score = std::max(raw_score, 70.0f);
+    } else if (effective_rssi >= -67.0f) {
+        raw_score = std::max(raw_score, 50.0f);
+    }
+
+    raw_score = clampVal(raw_score, 5.0f, 100.0f);
 
     // Làm mượt bằng Exponential Moving Average (EMA) kết hợp Deadband chống rung giật
     if (!score_initialized_) {
         smoothed_score_ = raw_score;
         score_initialized_ = true;
     } else {
-        // Vùng chết Deadband: 0.10f giúp nhận diện các vi biến động thực tế khi người chuyển động / vẫy tay
         const float diff = std::abs(raw_score - smoothed_score_);
-        if (diff >= 0.10f) {
-            // Hệ số alpha (0.18 bình thường, 0.04 khi AGC Hop) giúp kim chuyển động sống động, phản hồi nhanh
-            const float alpha = is_agc_event ? 0.04f : 0.18f;
+        if (diff >= 0.15f) {
+            const float alpha = is_agc_event ? 0.08f : 0.22f;
             smoothed_score_ = (1.0f - alpha) * smoothed_score_ + alpha * raw_score;
         }
     }
 
-    frame.link_stability_score = smoothed_score_;
+    frame.link_stability_score = std::round(smoothed_score_ * 10.0f) / 10.0f;
 
     // 7. Cập nhật khung lịch sử
     prev_amplitudes_ = amps;
-    prev_rssi_dbm_ = frame.rssi_comb_db;
+    prev_rssi_dbm_ = effective_rssi;
     prev_agc_[0] = frame.agc_indices[0];
     prev_agc_[1] = frame.agc_indices[1];
     prev_agc_[2] = frame.agc_indices[2];
