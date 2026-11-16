@@ -1,4 +1,13 @@
 cmake_minimum_required(VERSION 3.10)
+
+# Tự động nạp Toolchain ARM64 cho Router OpenWrt nếu có trình biên dịch chéo
+if(NOT DEFINED CMAKE_TOOLCHAIN_FILE AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/arm64_toolchain.cmake")
+    find_program(_AARCH64_GCC aarch64-linux-gnu-gcc)
+    if(_AARCH64_GCC)
+        include("${CMAKE_CURRENT_SOURCE_DIR}/arm64_toolchain.cmake")
+    endif()
+endif()
+
 project(EdgeCSIRouter LANGUAGES C CXX)
 
 set(CMAKE_CXX_STANDARD 17)
@@ -28,42 +37,80 @@ target_compile_options(edge_csi_daemon PRIVATE -Wall -Wextra -Wpedantic)
 target_link_libraries(edge_csi_daemon PRIVATE pthread m)
 target_link_options(edge_csi_daemon PRIVATE -static)
 
-file(COPY web DESTINATION "${CMAKE_BINARY_DIR}")
-
 # ==============================================================================
-# TỰ ĐỘNG TỔNG HỢP GÓI TRIỂN KHAI CHO LINUX ROUTER (/root/build_demo)
+# 1. TỰ ĐỘNG ĐỒNG BỘ ĐẦY ĐỦ TỆP RUNTIME VÀO THƯ MỤC BUILD (${CMAKE_BINARY_DIR})
 # ==============================================================================
-set(PACKAGE_DIR "${CMAKE_BINARY_DIR}/build_demo")
-
-add_custom_target(dist ALL
-    COMMAND ${CMAKE_COMMAND} -E make_directory "${PACKAGE_DIR}"
-    COMMAND ${CMAKE_COMMAND} -E copy_if_different "$<TARGET_FILE:edge_csi_daemon>" "${PACKAGE_DIR}/edge_csi_daemon"
-    COMMAND ${CMAKE_COMMAND} -E copy_directory "${CMAKE_SOURCE_DIR}/web" "${PACKAGE_DIR}/web"
-    COMMAND ${CMAKE_COMMAND} -E copy_directory "${CMAKE_SOURCE_DIR}/models" "${PACKAGE_DIR}/models"
-    COMMAND ${CMAKE_COMMAND} -E copy_if_different "${CMAKE_SOURCE_DIR}/start_all.sh" "${PACKAGE_DIR}/start_all.sh"
-    DEPENDS edge_csi_daemon
-    COMMENT ">>> Dang tong hop toan bo file chay vao thu muc: ${PACKAGE_DIR}"
+add_custom_command(TARGET edge_csi_daemon POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_directory "${CMAKE_SOURCE_DIR}/web" "${CMAKE_BINARY_DIR}/web"
+    COMMAND ${CMAKE_COMMAND} -E copy_directory "${CMAKE_SOURCE_DIR}/models" "${CMAKE_BINARY_DIR}/models"
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different "${CMAKE_SOURCE_DIR}/start_all.sh" "${CMAKE_BINARY_DIR}/start_all.sh"
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different "${CMAKE_SOURCE_DIR}/stop_all.sh" "${CMAKE_BINARY_DIR}/stop_all.sh"
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different "${CMAKE_SOURCE_DIR}/capture_wake.sh" "${CMAKE_BINARY_DIR}/capture_wake.sh"
+    COMMENT ">>> Da dong bo cac script .sh, models va web vao: ${CMAKE_BINARY_DIR}"
 )
 
 if(EXISTS "${CMAKE_SOURCE_DIR}/wake_native")
-    add_custom_command(TARGET dist POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different "${CMAKE_SOURCE_DIR}/wake_native" "${PACKAGE_DIR}/wake_native"
-        COMMAND chmod +x "${PACKAGE_DIR}/wake_native"
-        COMMENT ">>> Da bo sung binary wake_native vao goi chay"
-    )
-endif()
-
-if(EXISTS "${CMAKE_SOURCE_DIR}/capture_wake.sh")
-    add_custom_command(TARGET dist POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different "${CMAKE_SOURCE_DIR}/capture_wake.sh" "${PACKAGE_DIR}/capture_wake.sh"
-        COMMAND chmod +x "${PACKAGE_DIR}/capture_wake.sh"
+    add_custom_command(TARGET edge_csi_daemon POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different "${CMAKE_SOURCE_DIR}/wake_native" "${CMAKE_BINARY_DIR}/wake_native"
     )
 endif()
 
 if(UNIX)
-    add_custom_command(TARGET dist POST_BUILD
-        COMMAND chmod +x "${PACKAGE_DIR}/edge_csi_daemon" "${PACKAGE_DIR}/start_all.sh"
-        COMMENT ">>> Da phan quyen thuc thi (chmod +x) cho cac file nhi phan va script"
+    add_custom_command(TARGET edge_csi_daemon POST_BUILD
+        COMMAND chmod +x "${CMAKE_BINARY_DIR}/edge_csi_daemon"
+                         "${CMAKE_BINARY_DIR}/start_all.sh"
+                         "${CMAKE_BINARY_DIR}/stop_all.sh"
+                         "${CMAKE_BINARY_DIR}/capture_wake.sh" 2>/dev/null || true
+    )
+    if(EXISTS "${CMAKE_SOURCE_DIR}/wake_native")
+        add_custom_command(TARGET edge_csi_daemon POST_BUILD
+            COMMAND chmod +x "${CMAKE_BINARY_DIR}/wake_native" 2>/dev/null || true
+        )
+    endif()
+endif()
+
+# ==============================================================================
+# 2. TỔNG HỢP GÓI TRIỂN KHAI CHO LINUX ROUTER (/root/build_demo)
+#    (Tránh tạo thư mục lồng nhau build_demo/build_demo nếu tên build đã là build_demo)
+# ==============================================================================
+get_filename_component(_BUILD_DIR_NAME "${CMAKE_BINARY_DIR}" NAME)
+
+if(NOT "${_BUILD_DIR_NAME}" STREQUAL "build_demo")
+    set(PACKAGE_DIR "${CMAKE_BINARY_DIR}/build_demo")
+
+    add_custom_target(dist ALL
+        COMMAND ${CMAKE_COMMAND} -E make_directory "${PACKAGE_DIR}"
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different "$<TARGET_FILE:edge_csi_daemon>" "${PACKAGE_DIR}/edge_csi_daemon"
+        COMMAND ${CMAKE_COMMAND} -E copy_directory "${CMAKE_SOURCE_DIR}/web" "${PACKAGE_DIR}/web"
+        COMMAND ${CMAKE_COMMAND} -E copy_directory "${CMAKE_SOURCE_DIR}/models" "${PACKAGE_DIR}/models"
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different "${CMAKE_SOURCE_DIR}/start_all.sh" "${PACKAGE_DIR}/start_all.sh"
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different "${CMAKE_SOURCE_DIR}/stop_all.sh" "${PACKAGE_DIR}/stop_all.sh"
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different "${CMAKE_SOURCE_DIR}/capture_wake.sh" "${PACKAGE_DIR}/capture_wake.sh"
+        DEPENDS edge_csi_daemon
+        COMMENT ">>> Dang tong hop goi trien khai sach vao: ${PACKAGE_DIR}"
+    )
+
+    if(EXISTS "${CMAKE_SOURCE_DIR}/wake_native")
+        add_custom_command(TARGET dist POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -E copy_if_different "${CMAKE_SOURCE_DIR}/wake_native" "${PACKAGE_DIR}/wake_native"
+            COMMAND chmod +x "${PACKAGE_DIR}/wake_native" 2>/dev/null || true
+        )
+    endif()
+
+    if(UNIX)
+        add_custom_command(TARGET dist POST_BUILD
+            COMMAND chmod +x "${PACKAGE_DIR}/edge_csi_daemon"
+                             "${PACKAGE_DIR}/start_all.sh"
+                             "${PACKAGE_DIR}/stop_all.sh"
+                             "${PACKAGE_DIR}/capture_wake.sh" 2>/dev/null || true
+            COMMENT ">>> Da phan quyen thuc thi (chmod +x) cho cac file trong ${PACKAGE_DIR}"
+        )
+    endif()
+else()
+    # Nếu thư mục build hiện tại đã là build_demo, toàn bộ file đã được đồng bộ ở POST_BUILD
+    add_custom_target(dist ALL
+        DEPENDS edge_csi_daemon
+        COMMENT ">>> Thu muc build da la build_demo, toan bo file san sang o goc thu muc."
     )
 endif()
 
