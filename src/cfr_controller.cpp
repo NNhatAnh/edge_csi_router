@@ -307,10 +307,9 @@ void CFRController::checkSafetyGuardLocked() {
         last_captured_size_ = dump_size;
     }
 
-    // Cơ chế Xoay vòng file (File Rotation): Qualcomm cfr_test_app có giới hạn vòng tròn 8MB (8,388,608 bytes).
-    // Đặt ngưỡng xoay vòng là 6MB để Daemon luôn chủ động mở file mới trước khi cfr_test_app bị wrap-around,
-    // đảm bảo stream liên tục không giới hạn thời gian, không bao giờ đầy /tmp và không bị đứt đoạn frame.
-    constexpr size_t kRotationDumpBytes = 6 * 1024 * 1024; // 6 MB (< 8 MB ring limit)
+    // Cơ chế Xoay vòng file an toàn: Chỉ xoay khi dump đạt 60MB để đảm bảo phiên thu liên tục
+    // nhiều phút không bao giờ bị đứt đoạn hay reset đồ thị, đồng thời bảo vệ dung lượng /tmp
+    constexpr size_t kRotationDumpBytes = 60 * 1024 * 1024; // 60 MB (~3-4 phút capture liên tục không gián đoạn)
     if (last_captured_size_ >= kRotationDumpBytes) {
         std::cerr << "[CFR] File rotation triggered: dump reached "
                   << (last_captured_size_ / (1024 * 1024)) << " MB, rotating smoothly...\n";
@@ -358,9 +357,14 @@ bool CFRController::rotateCaptureLocked() {
 
     pid_ = cpid;
 
-    // Dừng tiến trình cũ êm dịu
+    // Dừng tiến trình cũ êm dịu và thu hồi triệt để tiến trình zombie
     kill(old_pid, SIGTERM);
-    waitpid(old_pid, nullptr, WNOHANG);
+    for (int w = 0; w < 30; ++w) {
+        int st = 0;
+        pid_t res = waitpid(old_pid, &st, WNOHANG);
+        if (res == old_pid || res < 0) break;
+        std::this_thread::sleep_for(std::chrono::milliseconds(10));
+    }
 
     // Dọn dẹp file dump cũ để giải phóng dung lượng, giữ file mới nhất
     std::this_thread::sleep_for(std::chrono::milliseconds(50));

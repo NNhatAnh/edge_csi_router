@@ -33,7 +33,9 @@ report/
 # 2. Build Directories & CMake
 # ==========================================
 build/
+build*/
 Build*/
+/wake-score-web
 bin/
 bin-int/
 out/

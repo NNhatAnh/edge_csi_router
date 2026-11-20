@@ -6,8 +6,9 @@ const i18n = {
     vi: {
         brand_sub: 'AI GATEWAY · EDGE CSI',
         nav_workspace: 'WORKSPACE',
-        tab_overview: 'Tổng quan',
-        tab_gesture_v: 'Cử chỉ chữ V',
+        tab_overview: 'Wi-Fi Sensing',
+        tab_gesture_v: 'Demo Wi-Fi Sensing',
+        btn_v_reset: 'Vẽ lại / Reset',
         sidebar_footer: 'Edge processing<br>Local network only',
         topbar_eyebrow: 'ĐO ĐẠC ROUTER / GIÁM SÁT CSI',
         btn_calibrate: 'Hiệu chuẩn lại',
@@ -22,6 +23,11 @@ const i18n = {
         metric_sc: 'SUBCARRIERS',
         metric_chains: 'ANTENNA CHAINS',
         metric_stability: 'ĐỘ ỔN ĐỊNH & CHẤT LƯỢNG',
+        lbl_signal: 'Sóng:',
+        lbl_smoothness: 'Độ mượt:',
+        lbl_space: 'Không gian:',
+        tech_details_show: '[+] Chi tiết kỹ thuật',
+        tech_details_hide: '[-] Thu gọn',
         metric_motion: 'MOTION SCORE',
         metric_distance: 'KHOẢNG CÁCH',
         env_los: 'Truyền thẳng',
@@ -105,7 +111,7 @@ const i18n = {
         prober_active: 'Đang ping',
         prober_idle: 'Tạm dừng',
         // CFR Panel
-        cfr_badge: 'ATH12K · HARDWARE CFR PIPELINE',
+        cfr_badge: 'VNPT TECHNOLOGY · SENSING PIPELINE',
         cfr_title: 'Điều Khiển Thu Thập CSI (CFR Capture Control)',
         cfr_desc: 'Tự động cấu hình thanh ghi debugfs nhân Linux (enable_cfr, cfr_capture) và điều khiển tiến trình cfr_test_app trên router để thu thập luồng CSI trực tiếp.',
         cfr_status_idle: 'Chưa thu thập',
@@ -135,7 +141,7 @@ const i18n = {
         cfr_no_client_alert: 'Không tìm thấy thiết bị Wi-Fi nào đang kết nối. Vui lòng kết nối thiết bị vào Wi-Fi trước.',
         // Gesture V
         gesture_badge: 'GIÁM SÁT CỬ CHỈ THỜI GIAN THỰC',
-        gesture_title: 'Nhận Diện Cử Chỉ Chữ V (V-Shape Gesture)',
+        gesture_title: 'Demo công nghệ Wi-Fi Sensing (V-Shape Gesture)',
         gesture_subtitle: 'Nét xuống ➔ Dừng tại đáy ➔ Nét lên. Hệ thống tự động ghi nhận khi hoàn thành đúng chu kỳ cử chỉ.',
         gesture_state_idle: 'Chờ tín hiệu',
         gesture_state_not_capturing: 'Chờ thu CSI',
@@ -168,15 +174,16 @@ const i18n = {
         v_guide_ready: 'Sẵn sàng thực hiện cử chỉ...',
         // Views
         views: {
-            overview: { title: 'Tổng quan tín hiệu', kicker: 'LIVE ACTIVITY', chart: 'Biến thiên mức độ chuyển động (Motion Score)' },
-            gesture_v: { title: 'Nhận diện cử chỉ chữ V', kicker: 'GESTURE TELEMETRY', chart: 'Điểm tin cậy & Quỹ đạo cử chỉ' }
+            overview: { title: 'Wi-Fi Sensing', kicker: 'ROUTER TELEMETRY / CSI MONITOR', chart: 'Biến thiên mức độ chuyển động (Motion Score)' },
+            gesture_v: { title: 'Demo công nghệ Wi-Fi Sensing', kicker: 'GESTURE TELEMETRY', chart: 'Biến thiên cử chỉ & Nhận diện' }
         }
     },
     en: {
         brand_sub: 'AI GATEWAY · EDGE CSI',
         nav_workspace: 'WORKSPACE',
-        tab_overview: 'Overview',
-        tab_gesture_v: 'V-Gesture',
+        tab_overview: 'Wi-Fi Sensing',
+        tab_gesture_v: 'Demo Wi-Fi Sensing',
+        btn_v_reset: 'Redraw / Reset',
         sidebar_footer: 'Edge processing<br>Local network only',
         topbar_eyebrow: 'ROUTER TELEMETRY / CSI MONITOR',
         btn_calibrate: 'Recalibrate',
@@ -191,6 +198,11 @@ const i18n = {
         metric_sc: 'SUBCARRIERS',
         metric_chains: 'ANTENNA CHAINS',
         metric_stability: 'STABILITY & QUALITY',
+        lbl_signal: 'Signal:',
+        lbl_smoothness: 'Smoothness:',
+        lbl_space: 'Space:',
+        tech_details_show: '[+] Tech details',
+        tech_details_hide: '[-] Collapse',
         metric_motion: 'MOTION SCORE',
         metric_distance: 'DISTANCE',
         env_los: 'Direct LoS',
@@ -274,7 +286,7 @@ const i18n = {
         prober_active: 'Probing',
         prober_idle: 'Idle',
         // CFR Panel
-        cfr_badge: 'ATH12K · HARDWARE CFR PIPELINE',
+        cfr_badge: 'VNPT TECHNOLOGY · SENSING PIPELINE',
         cfr_title: 'CSI CFR Capture Control',
         cfr_desc: 'Automatically configures Linux kernel debugfs registers (enable_cfr, cfr_capture) and orchestrates cfr_test_app on the router for direct live CSI streaming.',
         cfr_status_idle: 'Idle',
@@ -337,8 +349,8 @@ const i18n = {
         v_guide_ready: 'Ready for gesture execution...',
         // Views
         views: {
-            overview: { title: 'Signal Overview', kicker: 'LIVE ACTIVITY', chart: 'Motion Score Activity' },
-            gesture_v: { title: 'V-Shape Gesture Recognition', kicker: 'GESTURE TELEMETRY', chart: 'Confidence Score & Trajectory' }
+            overview: { title: 'Wi-Fi Sensing', kicker: 'ROUTER TELEMETRY / CSI MONITOR', chart: 'Motion Score Activity' },
+            gesture_v: { title: 'V-Gesture Recognition', kicker: 'GESTURE TELEMETRY', chart: 'Confidence Score & Trajectory' }
         }
     }
 };
@@ -376,9 +388,6 @@ function applyLanguage(lang) {
     renderProberUI(currentProberConfig);
     renderCfrUI();
     updateAvailableBandwidths();
-    if (proberElements.applyBtn && !isSavingProber) {
-        proberElements.applyBtn.textContent = t('apply_btn');
-    }
 }
 
 const colors = ['#00e5ff', '#ff2a85', '#8b5cf6', '#0072ce', '#38bdf8'];
@@ -391,8 +400,24 @@ const calibrateButton = document.getElementById('calibrate-button');
 const domElements = {
     stabilityScoreVal: document.getElementById('stability-score-val'),
     stabilityStatusChip: document.getElementById('stability-status-chip'),
+    stabilityRatingLabel: document.getElementById('stability-rating-label'),
     stabilityNeedle: document.getElementById('stability-needle'),
     gaugeCenterCap: document.getElementById('gauge-center-cap'),
+    pillSignal: document.getElementById('pill-signal'),
+    pillSignalVal: document.getElementById('pill-signal-val'),
+    pillJitter: document.getElementById('pill-jitter'),
+    pillJitterVal: document.getElementById('pill-jitter-val'),
+    pillEnv: document.getElementById('pill-env'),
+    pillEnvVal: document.getElementById('pill-env-val'),
+    stabilityTechToggleBtn: document.getElementById('stability-tech-toggle-btn'),
+    techToggleText: document.getElementById('tech-toggle-text'),
+    stabilityTechDetails: document.getElementById('stability-tech-details'),
+    techAgcVal: document.getElementById('tech-agc-val'),
+    techFadeVal: document.getElementById('tech-fade-val'),
+    techKVal: document.getElementById('tech-k-val'),
+    techLosVal: document.getElementById('tech-los-val'),
+    techCorrVal: document.getElementById('tech-corr-val'),
+    techVarVal: document.getElementById('tech-var-val'),
     stabilityAgcPill: document.getElementById('stability-agc-pill'),
     stabilityAgcText: document.getElementById('stability-agc-text'),
     stabilityFadePill: document.getElementById('stability-fade-pill'),
@@ -462,7 +487,7 @@ function scheduleRender() {
         renderRequested = true;
         requestAnimationFrame(() => {
             renderRequested = false;
-            if (document.hidden) return; // Không tốn CPU render canvas khi tab đang ẩn
+            if (document.hidden || activeView === 'gesture_v') return; // Không tốn CPU render canvas khi tab ẩn hoặc đang xem tab V
             drawCurrent();
         });
     }
@@ -537,71 +562,131 @@ function updateStabilityUI(frame, isNewFrame) {
             domElements.stabilityNeedle.className = `gauge-needle ${needleColorCls}`;
         }
 
-        // Update Chip status
+        // 1. Rating Label & Top Chip
+        let ratingText = '';
+        let ratingClass = 'stability-rating-badge rating-none';
+        let chipText = 'KHỞI TẠO';
+        let chipCls = 'motion-chip';
+        let captionText = '';
+
+        if (score >= 85) {
+            ratingText = currentLang === 'vi' ? 'Xuất sắc (Rất mượt mà)' : 'Excellent (Very Smooth)';
+            ratingClass = 'stability-rating-badge rating-excellent';
+            chipText = currentLang === 'vi' ? 'XUẤT SẮC' : 'EXCELLENT';
+            chipCls = 'motion-chip chip-los';
+            captionText = currentLang === 'vi'
+                ? 'Tác vụ phù hợp: Xem video 4K/8K, Họp trực tuyến HD, Game ping thấp'
+                : 'Suitable tasks: 4K/8K streaming, HD video conference, Low-ping gaming';
+        } else if (score >= 70) {
+            ratingText = currentLang === 'vi' ? 'Tốt (Ổn định)' : 'Good (Stable)';
+            ratingClass = 'stability-rating-badge rating-good';
+            chipText = currentLang === 'vi' ? 'ỔN ĐỊNH' : 'STABLE';
+            chipCls = 'motion-chip chip-multipath';
+            captionText = currentLang === 'vi'
+                ? 'Tác vụ phù hợp: Xem phim Full HD, Họp video Meet/Teams, Lướt web nhanh'
+                : 'Suitable tasks: Full HD streaming, Video meetings, Fast web browsing';
+        } else if (score >= 50) {
+            ratingText = currentLang === 'vi' ? 'Khá (Bình thường)' : 'Fair (Normal)';
+            ratingClass = 'stability-rating-badge rating-fair';
+            chipText = currentLang === 'vi' ? 'BÌNH THƯỜNG' : 'NORMAL';
+            chipCls = 'motion-chip chip-dynamic';
+            captionText = currentLang === 'vi'
+                ? 'Tác vụ phù hợp: Lướt mạng xã hội, Nghe nhạc, Đọc tin tức'
+                : 'Suitable tasks: Social media, Music streaming, News browsing';
+        } else {
+            ratingText = currentLang === 'vi' ? 'Yếu (Chập chờn)' : 'Poor (Unstable)';
+            ratingClass = 'stability-rating-badge rating-poor';
+            chipText = currentLang === 'vi' ? 'SÓNG YẾU' : 'WEAK SIGNAL';
+            chipCls = 'motion-chip chip-weak';
+            captionText = currentLang === 'vi'
+                ? 'Khuyến nghị: Tín hiệu suy giảm, nên di chuyển thiết bị lại gần router hơn'
+                : 'Recommendation: Signal degraded, consider moving closer to router';
+        }
+
+        if (domElements.stabilityRatingLabel) {
+            domElements.stabilityRatingLabel.textContent = ratingText;
+            domElements.stabilityRatingLabel.className = ratingClass;
+        }
+
         if (domElements.stabilityStatusChip) {
-            let chipText = 'KHỞI TẠO';
-            let chipCls = 'motion-chip';
-            if (statusText === 'clean_los') {
-                chipText = currentLang === 'vi' ? 'LoS SẠCH' : 'CLEAN LoS';
-                chipCls = 'motion-chip chip-los';
-            } else if (statusText === 'multipath_stable') {
-                chipText = currentLang === 'vi' ? 'PHẢN XẠ TĨNH' : 'MULTIPATH';
-                chipCls = 'motion-chip chip-multipath';
-            } else if (statusText === 'deep_fade') {
-                chipText = currentLang === 'vi' ? 'LÕM TẦN SỐ' : 'DEEP FADE';
-                chipCls = 'motion-chip chip-fade';
-            } else if (statusText === 'dynamic_motion') {
-                chipText = currentLang === 'vi' ? 'NHIỄU ĐỘNG' : 'DYNAMIC';
-                chipCls = 'motion-chip chip-dynamic';
-            } else if (statusText === 'weak') {
-                chipText = currentLang === 'vi' ? 'SÓNG YẾU' : 'WEAK SIGNAL';
-                chipCls = 'motion-chip chip-weak';
-            }
             domElements.stabilityStatusChip.textContent = chipText;
             domElements.stabilityStatusChip.className = chipCls;
         }
 
-        // Update AGC Pill
-        if (domElements.stabilityAgcPill && domElements.stabilityAgcText) {
-            if (isAgcEvent) {
-                domElements.stabilityAgcPill.className = 'stability-pill pill-agc-jump';
-                domElements.stabilityAgcText.textContent = currentLang === 'vi' ? '⚡ AGC Bù trừ' : '⚡ AGC Hop';
-                domElements.stabilityAgcPill.title = currentLang === 'vi' 
-                    ? 'Phần cứng AGC nhảy nấc độ lợi, vân phổ CSI bất biến (đã bù trừ)' 
-                    : 'Hardware AGC gain switch detected, spectral shape invariant';
+        // 2. Friendly Pill 1: Signal strength
+        const rssi = frame.rssi_comb_db !== undefined ? Number(frame.rssi_comb_db) : -60;
+        if (domElements.pillSignalVal) {
+            if (rssi >= -50) {
+                domElements.pillSignalVal.textContent = currentLang === 'vi' ? `Rất mạnh (${rssi} dBm)` : `Very strong (${rssi} dBm)`;
+                if (domElements.pillSignal) domElements.pillSignal.className = 'friendly-pill pill-status-excellent';
+            } else if (rssi >= -65) {
+                domElements.pillSignalVal.textContent = currentLang === 'vi' ? `Tốt (${rssi} dBm)` : `Good (${rssi} dBm)`;
+                if (domElements.pillSignal) domElements.pillSignal.className = 'friendly-pill pill-status-good';
+            } else if (rssi >= -75) {
+                domElements.pillSignalVal.textContent = currentLang === 'vi' ? `Khá (${rssi} dBm)` : `Fair (${rssi} dBm)`;
+                if (domElements.pillSignal) domElements.pillSignal.className = 'friendly-pill pill-status-warn';
             } else {
-                domElements.stabilityAgcPill.className = 'stability-pill';
-                domElements.stabilityAgcText.textContent = currentLang === 'vi' ? 'AGC Ổn định' : 'AGC Stable';
-                domElements.stabilityAgcPill.title = currentLang === 'vi' ? 'Mạch khuếch đại tự động ổn định' : 'AGC gain stable';
+                domElements.pillSignalVal.textContent = currentLang === 'vi' ? `Yếu (${rssi} dBm)` : `Weak (${rssi} dBm)`;
+                if (domElements.pillSignal) domElements.pillSignal.className = 'friendly-pill pill-status-bad';
             }
         }
 
-        // Update Deep Fade Pill
-        if (domElements.stabilityFadePill && domElements.stabilityFadeText) {
-            if (deepFadeWarn) {
-                domElements.stabilityFadePill.className = 'stability-pill pill-fade-warn';
-                domElements.stabilityFadeText.textContent = currentLang === 'vi' ? `⚠️ Lõm ${fadeRatio.toFixed(1)}x` : `⚠️ Fade ${fadeRatio.toFixed(1)}x`;
-                domElements.stabilityFadePill.title = currentLang === 'vi' 
-                    ? 'Xuất hiện vết lõm suy hao chọn lọc tần số sâu (nguy cơ lỗi bit ở MCS cao)' 
-                    : 'Frequency-selective deep fade detected (risk of bit error at high MCS)';
+        // 3. Friendly Pill 2: Smoothness / stability
+        if (domElements.pillJitterVal) {
+            if (varTime <= 0.025) {
+                domElements.pillJitterVal.textContent = currentLang === 'vi' ? 'Rất cao (Không trễ)' : 'High (Zero Lag)';
+                if (domElements.pillJitter) domElements.pillJitter.className = 'friendly-pill pill-status-excellent';
+            } else if (varTime <= 0.070) {
+                domElements.pillJitterVal.textContent = currentLang === 'vi' ? 'Tốt (Dao động nhẹ)' : 'Good (Slight Jitter)';
+                if (domElements.pillJitter) domElements.pillJitter.className = 'friendly-pill pill-status-good';
             } else {
-                domElements.stabilityFadePill.className = 'stability-pill';
-                domElements.stabilityFadeText.textContent = `Fade: ${fadeRatio.toFixed(1)}x`;
-                domElements.stabilityFadePill.title = currentLang === 'vi' ? 'Không có suy hao sâu cục bộ' : 'Flat channel response';
+                domElements.pillJitterVal.textContent = currentLang === 'vi' ? 'Có dao động / Cử động' : 'Dynamic / Movement';
+                if (domElements.pillJitter) domElements.pillJitter.className = 'friendly-pill pill-status-warn';
             }
         }
 
-        // Update K & LoS Pill
-        if (domElements.stabilityKPill && domElements.stabilityKText) {
-            domElements.stabilityKPill.className = 'stability-pill ' + (kRician >= 2.5 ? 'pill-clean' : '');
-            domElements.stabilityKText.textContent = `K: ${kRician.toFixed(1)} · LoS: ${Math.round(losRatio * 100)}%`;
+        // 4. Friendly Pill 3: Space / Environment
+        if (domElements.pillEnvVal) {
+            if (statusText === 'clean_los' || losRatio >= 0.70) {
+                domElements.pillEnvVal.textContent = currentLang === 'vi' ? 'Trực diện (LoS)' : 'Direct LoS';
+                if (domElements.pillEnv) domElements.pillEnv.className = 'friendly-pill pill-status-excellent';
+            } else if (statusText === 'multipath_stable' || losRatio >= 0.35) {
+                domElements.pillEnvVal.textContent = currentLang === 'vi' ? 'Trong phòng' : 'Indoor Room';
+                if (domElements.pillEnv) domElements.pillEnv.className = 'friendly-pill pill-status-good';
+            } else if (statusText === 'deep_fade') {
+                domElements.pillEnvVal.textContent = currentLang === 'vi' ? 'Lõm sóng' : 'Deep Fade';
+                if (domElements.pillEnv) domElements.pillEnv.className = 'friendly-pill pill-status-bad';
+            } else {
+                domElements.pillEnvVal.textContent = currentLang === 'vi' ? 'Góc khuất' : 'Blocked / NLoS';
+                if (domElements.pillEnv) domElements.pillEnv.className = 'friendly-pill pill-status-warn';
+            }
         }
 
-        // Update Caption
+        // 5. Update Caption
         if (domElements.stabilityCaption) {
-            domElements.stabilityCaption.textContent = currentLang === 'vi'
-                ? `Tương quan vân phổ r = ${spectralCorr.toFixed(3)} · Biến thiên σ² = ${varTime.toFixed(4)}`
-                : `Spectral correlation r = ${spectralCorr.toFixed(3)} · Variance σ² = ${varTime.toFixed(4)}`;
+            domElements.stabilityCaption.textContent = captionText;
+        }
+
+        // 6. Update Technical details (Collapsible)
+        if (domElements.techAgcVal) {
+            domElements.techAgcVal.textContent = isAgcEvent
+                ? (currentLang === 'vi' ? 'Bù trừ nấc' : 'Gain hop')
+                : (currentLang === 'vi' ? 'Ổn định' : 'Stable');
+        }
+        if (domElements.techFadeVal) {
+            domElements.techFadeVal.textContent = `${fadeRatio.toFixed(1)}x` + (deepFadeWarn ? (currentLang === 'vi' ? ' (Cảnh báo)' : ' (Warn)') : '');
+        }
+        if (domElements.techKVal) {
+            domElements.techKVal.textContent = `${kRician.toFixed(1)}`;
+        }
+        if (domElements.techLosVal) {
+            domElements.techLosVal.textContent = `${Math.round(losRatio * 100)}%`;
+        }
+        if (domElements.techCorrVal) {
+            domElements.techCorrVal.textContent = `${spectralCorr.toFixed(3)}`;
+        }
+        if (domElements.techVarVal) {
+            domElements.techVarVal.textContent = `${varTime.toFixed(4)}`;
         }
     } else {
         domElements.stabilityScoreVal.textContent = '—';
@@ -609,14 +694,24 @@ function updateStabilityUI(frame, isNewFrame) {
             domElements.stabilityNeedle.style.transform = 'rotate(-90deg)';
             domElements.stabilityNeedle.className = 'gauge-needle';
         }
+        if (domElements.stabilityRatingLabel) {
+            domElements.stabilityRatingLabel.textContent = currentLang === 'vi' ? 'Chờ dữ liệu' : 'Waiting for data';
+            domElements.stabilityRatingLabel.className = 'stability-rating-badge rating-none';
+        }
         if (domElements.stabilityStatusChip) {
             domElements.stabilityStatusChip.textContent = currentLang === 'vi' ? 'CHỜ DỮ LIỆU' : 'AWAITING';
             domElements.stabilityStatusChip.className = 'motion-chip';
         }
+        if (domElements.pillSignalVal) domElements.pillSignalVal.textContent = '—';
+        if (domElements.pillJitterVal) domElements.pillJitterVal.textContent = '—';
+        if (domElements.pillEnvVal) domElements.pillEnvVal.textContent = '—';
+        if (domElements.pillSignal) domElements.pillSignal.className = 'friendly-pill';
+        if (domElements.pillJitter) domElements.pillJitter.className = 'friendly-pill';
+        if (domElements.pillEnv) domElements.pillEnv.className = 'friendly-pill';
         if (domElements.stabilityCaption) {
             domElements.stabilityCaption.textContent = currentLang === 'vi' 
-                ? 'Đang phân tích vân phổ CSI & RSSI...' 
-                : 'Analyzing CSI & RSSI spectrum...';
+                ? 'Đang phân tích chất lượng kết nối...' 
+                : 'Analyzing link quality...';
         }
     }
 }
@@ -625,9 +720,7 @@ function updateDomMetrics(frame, isNewFrame, now) {
     updateStabilityUI(frame, isNewFrame);
 
     if (domElements.motionValue) {
-        domElements.motionValue.textContent = frame.motion_ready
-            ? (Number(frame.motion_score) || 0).toFixed(4)
-            : '—';
+        domElements.motionValue.textContent = (Number(frame.motion_score) || 0).toFixed(4);
     }
 
     const thresHigh = Number(frame.motion_threshold_high) || 0;
@@ -767,226 +860,7 @@ function updateDomMetrics(frame, isNewFrame, now) {
 const M5R_STROKE_LEN = 267; // Approximate length in px for each V stroke arm
 
 function updateGestureVUI(frame) {
-    if (!frame) return;
-    const stage = frame.gesture_stage || frame.wakeup_state || 'WAIT_STILL';
-    const reason = frame.gesture_reason || frame.wakeup_reason || 'startup';
-    const score = Number(frame.gesture_score !== undefined ? frame.gesture_score : (frame.wakeup_score || 0)) || 0;
-    const label = Number(frame.gesture_label !== undefined ? frame.gesture_label : (frame.wakeup_label || 0)) || 0;
-    const triggered = Boolean(frame.gesture_triggered || frame.wakeup_triggered);
-    const progress = Math.max(0, Math.min(1.0, Number(frame.gesture_progress !== undefined ? frame.gesture_progress : (frame.wakeup_progress || 0)) || 0));
-    const activeModel = frame.gesture_model || frame.wakeup_model || 'M1';
-
-    if (domElements.vTeleActiveModel) {
-        domElements.vTeleActiveModel.textContent = activeModel;
-    }
-    if (domElements.gestureModelSelect && document.activeElement !== domElements.gestureModelSelect) {
-        if (domElements.gestureModelSelect.value !== activeModel) {
-            domElements.gestureModelSelect.value = activeModel;
-        }
-    }
-
-    // If capture is stopped or model IDLE
-    if (!cfrState.running || stage === 'IDLE' || reason === 'not_capturing') {
-        if (domElements.gestureStateBadge && domElements.gestureStateText) {
-            domElements.gestureStateBadge.className = 'badge-idle';
-            domElements.gestureStateText.textContent = t('gesture_state_not_capturing');
-        }
-        if (domElements.gestureCelebrateBanner) domElements.gestureCelebrateBanner.hidden = true;
-        if (domElements.vStageInstruction) domElements.vStageInstruction.textContent = t('gesture_guide_not_capturing');
-        if (domElements.vProgressBar) domElements.vProgressBar.style.width = '0%';
-        if (domElements.vStrokeDown) {
-            domElements.vStrokeDown.style.strokeDashoffset = `${M5R_STROKE_LEN}px`;
-            domElements.vStrokeDown.classList.remove('illuminated');
-        }
-        if (domElements.vStrokeUp) {
-            domElements.vStrokeUp.style.strokeDashoffset = `${M5R_STROKE_LEN}px`;
-            domElements.vStrokeUp.classList.remove('illuminated');
-        }
-        if (domElements.vVertexBeacon) domElements.vVertexBeacon.classList.remove('pulsing');
-        const svgEl = document.getElementById('v-gesture-svg');
-        if (svgEl) svgEl.classList.remove('v-success-glow');
-        if (domElements.m5rScoreDisplay) domElements.m5rScoreDisplay.textContent = '0.0000';
-        if (domElements.m5rLabelChip) {
-            domElements.m5rLabelChip.className = 'motion-chip chip-still';
-            domElements.m5rLabelChip.textContent = '0 · CHỜ THU';
-        }
-        if (domElements.m5rStageDisplay) domElements.m5rStageDisplay.textContent = 'CHỜ THU CSI';
-        if (domElements.m5rTimingDisplay) domElements.m5rTimingDisplay.textContent = '0.0s / 0.0s / 0.0s';
-        return;
-    }
-
-    const isSuccess = triggered || stage === 'SUCCESS' || stage === 'PASS' || stage === 'WAKE';
-    const isDown = stage === 'MOVE1' || stage === 'DOWN' || stage === 'DOWN_STROKE';
-    const isPause = stage === 'PAUSE' || stage === 'BOTTOM' || stage === 'BOTTOM_PAUSE';
-    const isUp = stage === 'MOVE2' || stage === 'UP' || stage === 'UP_STROKE';
-    const isFinalStill = stage === 'FINAL_STILL' || stage === 'FINISH';
-    const isWaitStill = stage === 'WAIT_STILL' || stage === 'TABLE';
-    const isReady = stage === 'READY' || stage === 'SETTLE';
-
-    // 1. Update State Badge
-    if (domElements.gestureStateBadge && domElements.gestureStateText) {
-        let badgeCls = 'badge-idle';
-        let badgeTxt = 'SẴN SÀNG';
-
-        if (isSuccess) {
-            badgeCls = 'badge-active badge-success-glow';
-            badgeTxt = currentLang === 'vi' ? '✓ NHẬN DIỆN THÀNH CÔNG' : '✓ RECOGNIZED';
-        } else if (isDown) {
-            badgeCls = 'badge-active badge-drawing';
-            badgeTxt = currentLang === 'vi' ? 'PHA 1: NÉT XUỐNG' : 'PHASE 1: DOWN-STROKE';
-        } else if (isPause) {
-            badgeCls = 'badge-active badge-pause';
-            badgeTxt = currentLang === 'vi' ? 'PHA 2: DỪNG TẠI ĐÁY' : 'PHASE 2: APEX PAUSE';
-        } else if (isUp) {
-            badgeCls = 'badge-active badge-drawing';
-            badgeTxt = currentLang === 'vi' ? 'PHA 3: NÉT LÊN' : 'PHASE 3: UP-STROKE';
-        } else if (isFinalStill) {
-            badgeCls = 'badge-active badge-drawing';
-            badgeTxt = currentLang === 'vi' ? 'XÁC NHẬN GIỮ YÊN' : 'CONFIRMING STILL';
-        } else if (isWaitStill) {
-            badgeCls = 'badge-idle';
-            badgeTxt = currentLang === 'vi' ? 'CHỜ TĨNH NỀN (3S)' : 'WAIT STILL (3S)';
-        } else if (isReady) {
-            badgeCls = 'badge-idle';
-            badgeTxt = currentLang === 'vi' ? 'SẴN SÀNG VẼ CHỮ V' : 'READY FOR V-GESTURE';
-        }
-
-        domElements.gestureStateBadge.className = badgeCls;
-        domElements.gestureStateText.textContent = badgeTxt;
-    }
-
-    // 2. Progressive V-Gesture Stroke Illumination
-    const svgEl = document.getElementById('v-gesture-svg');
-    if (domElements.vStrokeDown && domElements.vStrokeUp && domElements.vVertexBeacon) {
-        if (isSuccess) {
-            // Success: both strokes 100% lit, glow effect on entire V
-            domElements.vStrokeDown.style.strokeDashoffset = '0px';
-            domElements.vStrokeDown.classList.add('illuminated');
-            domElements.vStrokeUp.style.strokeDashoffset = '0px';
-            domElements.vStrokeUp.classList.add('illuminated');
-            domElements.vVertexBeacon.classList.add('pulsing');
-            if (svgEl) svgEl.classList.add('v-success-glow');
-            if (domElements.vProgressBar) domElements.vProgressBar.style.width = '100%';
-        } else if (isDown) {
-            if (svgEl) svgEl.classList.remove('v-success-glow');
-            const downRatio = Math.min(1.0, Math.max(0.1, progress / 0.40));
-            domElements.vStrokeDown.style.strokeDashoffset = `${M5R_STROKE_LEN * (1.0 - downRatio)}px`;
-            domElements.vStrokeDown.classList.add('illuminated');
-            domElements.vStrokeUp.style.strokeDashoffset = `${M5R_STROKE_LEN}px`;
-            domElements.vStrokeUp.classList.remove('illuminated');
-            domElements.vVertexBeacon.classList.remove('pulsing');
-            if (domElements.vProgressBar) domElements.vProgressBar.style.width = `${downRatio * 45}%`;
-        } else if (isPause) {
-            if (svgEl) svgEl.classList.remove('v-success-glow');
-            domElements.vStrokeDown.style.strokeDashoffset = '0px';
-            domElements.vStrokeDown.classList.add('illuminated');
-            domElements.vStrokeUp.style.strokeDashoffset = `${M5R_STROKE_LEN}px`;
-            domElements.vStrokeUp.classList.remove('illuminated');
-            domElements.vVertexBeacon.classList.add('pulsing');
-            if (domElements.vProgressBar) domElements.vProgressBar.style.width = '50%';
-        } else if (isUp) {
-            if (svgEl) svgEl.classList.remove('v-success-glow');
-            domElements.vStrokeDown.style.strokeDashoffset = '0px';
-            domElements.vStrokeDown.classList.add('illuminated');
-            const upRatio = Math.min(1.0, Math.max(0.1, (progress - 0.50) / 0.45));
-            domElements.vStrokeUp.style.strokeDashoffset = `${M5R_STROKE_LEN * (1.0 - upRatio)}px`;
-            domElements.vStrokeUp.classList.add('illuminated');
-            domElements.vVertexBeacon.classList.add('pulsing');
-            if (domElements.vProgressBar) domElements.vProgressBar.style.width = `${55 + upRatio * 40}%`;
-        } else if (isFinalStill) {
-            if (svgEl) svgEl.classList.remove('v-success-glow');
-            domElements.vStrokeDown.style.strokeDashoffset = '0px';
-            domElements.vStrokeDown.classList.add('illuminated');
-            domElements.vStrokeUp.style.strokeDashoffset = '0px';
-            domElements.vStrokeUp.classList.add('illuminated');
-            domElements.vVertexBeacon.classList.add('pulsing');
-            if (domElements.vProgressBar) domElements.vProgressBar.style.width = '95%';
-        } else {
-            // READY or WAIT_STILL
-            if (svgEl) svgEl.classList.remove('v-success-glow');
-            domElements.vStrokeDown.style.strokeDashoffset = `${M5R_STROKE_LEN}px`;
-            domElements.vStrokeDown.classList.remove('illuminated');
-            domElements.vStrokeUp.style.strokeDashoffset = `${M5R_STROKE_LEN}px`;
-            domElements.vStrokeUp.classList.remove('illuminated');
-            domElements.vVertexBeacon.classList.remove('pulsing');
-            if (domElements.vProgressBar) domElements.vProgressBar.style.width = '0%';
-        }
-    }
-
-    // 3. Update Instruction Cards Highlight
-    if (domElements.instSteps) {
-        let activeIdx = -1;
-        if (isSuccess || isFinalStill) activeIdx = 3;
-        else if (isUp) activeIdx = 2;
-        else if (isPause) activeIdx = 1;
-        else if (isDown) activeIdx = 0;
-
-        domElements.instSteps.forEach((el, idx) => {
-            if (!el) return;
-            el.classList.toggle('active', idx === activeIdx);
-            el.classList.toggle('completed', idx < activeIdx || isSuccess);
-        });
-    }
-
-    // 4. Update HUD Instruction
-    if (domElements.vStageInstruction) {
-        if (isSuccess) {
-            domElements.vStageInstruction.textContent = currentLang === 'vi'
-                ? 'Hoàn tất: Đã ghi nhận cử chỉ chữ V hợp lệ!'
-                : 'Completed: V-shape gesture registered successfully!';
-        } else if (isDown) {
-            domElements.vStageInstruction.textContent = currentLang === 'vi'
-                ? 'Đang thực hiện nét xuống... di chuyển dứt khoát'
-                : 'Executing down-stroke... move deliberately';
-        } else if (isPause) {
-            domElements.vStageInstruction.textContent = currentLang === 'vi'
-                ? 'Dừng tại đáy: Giữ vị trí 0.2s – 2.0s rồi chuyển sang nét lên'
-                : 'Holding at apex: Pause for 0.2s – 2.0s then stroke upward';
-        } else if (isUp) {
-            domElements.vStageInstruction.textContent = currentLang === 'vi'
-                ? 'Đang thực hiện nét lên... di chuyển vút lên đỉnh'
-                : 'Executing up-stroke... move upward to the top';
-        } else if (isFinalStill) {
-            domElements.vStageInstruction.textContent = currentLang === 'vi'
-                ? 'Đã xong nét lên: Giữ yên máy 1.0s để xác nhận hoàn tất!'
-                : 'Up-stroke done: Hold still for 1.0s to confirm completion!';
-        } else if (isWaitStill) {
-            domElements.vStageInstruction.textContent = currentLang === 'vi'
-                ? 'Đang thiết lập nền tĩnh: Đặt điện thoại yên trong 3 giây...'
-                : 'Establishing baseline: Keep phone still for 3 seconds...';
-        } else {
-            domElements.vStageInstruction.textContent = currentLang === 'vi'
-                ? 'Sẵn sàng: Bắt đầu nét vẽ xuống để thực hiện cử chỉ chữ V'
-                : 'Ready: Begin down-stroke to perform V-gesture';
-        }
-    }
-
-    // 5. Celebration Banner
-    if (domElements.gestureCelebrateBanner) {
-        domElements.gestureCelebrateBanner.hidden = !isSuccess;
-    }
-
-    // 6. Telemetry Display
-    if (domElements.m5rScoreDisplay) domElements.m5rScoreDisplay.textContent = score.toFixed(4);
-    if (domElements.m5rLabelChip) {
-        if (label === 1) {
-            domElements.m5rLabelChip.className = 'motion-chip motion-active';
-            domElements.m5rLabelChip.textContent = currentLang === 'vi' ? '1 · DI CHUYỂN' : '1 · MOTION';
-        } else {
-            domElements.m5rLabelChip.className = 'motion-chip chip-still';
-            domElements.m5rLabelChip.textContent = currentLang === 'vi' ? '0 · TĨNH' : '0 · STILL';
-        }
-    }
-    if (domElements.m5rStageDisplay) domElements.m5rStageDisplay.textContent = stage;
-    if (domElements.m5rTimingDisplay) {
-        const dDur = Number(frame.gesture_down_duration || 0).toFixed(1);
-        const pDur = Number(frame.gesture_pause_duration || 0).toFixed(1);
-        const uDur = Number(frame.gesture_up_duration || 0).toFixed(1);
-        domElements.m5rTimingDisplay.textContent = `${dDur}s / ${pDur}s / ${uDur}s`;
-    }
-
-    // 7. Render V6 Visualizer
-    renderV(frame);
+    return;
 }
 
 const v6Reasons = {
@@ -1015,140 +889,7 @@ const v6Instructions = {
 };
 
 function renderV(s) {
-    if (!s) return;
-    const vShape = domElements.vShape || document.getElementById('vShape');
-    const stateLabel = domElements.v6StateLabel || document.getElementById('v6StateLabel');
-    const detailLabel = domElements.v6GuideDetail || document.getElementById('v6GuideDetail');
-    const guideBox = domElements.v6GuideBox || document.getElementById('v6GuideBox');
-
-    const state = s.state || s.v6_state || s.gesture_stage || s.wakeup_state || 'WAIT_READY';
-    const progress = Number(s.stroke_progress ?? s.v6_progress ?? s.gesture_progress ?? s.wakeup_progress) || 0;
-    const fraction = Math.min(1, Math.max(0, Number(s.stroke_fraction ?? s.v6_fraction ?? s.wakeup_stroke_fraction) || 0));
-    const reason = s.result_reason || s.reason || s.v6_reason || s.gesture_reason || s.wakeup_reason || '';
-
-    if (vShape) {
-        const marks = [
-            ['vDown', 'DOWN', 1],
-            ['vPoint', 'BOTTOM', 2],
-            ['vUp', 'UP', 3]
-        ];
-        vShape.dataset.reset = String(!progress && state !== 'DOWN');
-        for (const [id, phase, rank] of marks) {
-            const confirmed = progress >= rank;
-            const isPhaseMatch = (state === phase || (state && state.startsWith(phase))) && (phase !== 'UP' || state !== 'UP_CUE');
-            const fill = confirmed ? 1 : (isPhaseMatch ? fraction : 0);
-            const node = domElements[id] || document.getElementById(id);
-            if (node) {
-                node.style.setProperty('--fraction', fill);
-                node.style.setProperty('--remaining', (100 * (1 - fill)) + '%');
-                node.dataset.confirmed = String(confirmed);
-            }
-        }
-
-        // Cập nhật đường nét SVG và mũi tên hướng dẫn vẽ trực quan (Chuẩn màu xanh dương VNPT)
-        const strokeDown = document.getElementById('vStrokeDown');
-        const strokeUp = document.getElementById('vStrokeUp');
-        const pointSvg = document.getElementById('vPointSvg');
-        const arrowDown = document.getElementById('vArrowGuideDown');
-        const arrowUp = document.getElementById('vArrowGuideUp');
-
-        const maxLen = 147;
-        const downConfirmed = progress >= 1;
-        const downFill = downConfirmed ? 1 : (state === 'DOWN' || state === 'DOWN_HOLD' ? fraction : 0);
-        if (strokeDown) {
-            strokeDown.style.strokeDashoffset = (maxLen * (1 - downFill)) + 'px';
-        }
-
-        // Định nghĩa chính xác trạng thái chuyển động
-        const isDrawingDown = state === 'DOWN' || state === 'DOWN_HOLD';
-        const isAtBottom = state === 'BOTTOM' || state === 'UP_CUE';
-        const isDrawingUp = state === 'UP' || state === 'UP_HOLD';
-        const isPass = state === 'PASS' || progress >= 3;
-
-        // Nét 2: Kéo lên
-        // TUYỆT ĐỐI KHÔNG tự vẽ hay fill màu khi đang khựng ở đáy (state === 'BOTTOM' hoặc 'UP_CUE').
-        // CHỈ khi mô hình nhận diện người dùng thực sự kéo lên (state === 'UP' hoặc 'UP_HOLD') mới fill màu theo fraction!
-        // Hoặc khi cử chỉ hoàn thành công nhận (progress >= 3 hoặc state === 'PASS')
-        let upFill = 0;
-        if (isPass) {
-            upFill = 1;
-        } else if (isDrawingUp) {
-            upFill = fraction;
-        } else {
-            upFill = 0;
-        }
-        if (strokeUp) {
-            strokeUp.style.strokeDashoffset = (maxLen * (1 - upFill)) + 'px';
-        }
-
-        const pointActive = progress >= 2 || isAtBottom;
-        if (pointSvg) {
-            pointSvg.classList.toggle('active', pointActive);
-        }
-
-        if (arrowDown) {
-            arrowDown.classList.toggle('active', isDrawingDown);
-            arrowDown.classList.toggle('hint', state === 'READY' || state === 'WAIT_READY');
-        }
-
-        // Mũi tên 2 (KÉO LÊN ↗): Bừng sáng ngay sau khi khựng ở đáy xong (isAtBottom) để báo hiệu cho người dùng biết cần vẽ lên tiếp
-        // Duy trì sáng khi người dùng đang vẽ lên (isDrawingUp), tắt khi hoàn thành (pass)
-        if (arrowUp) {
-            arrowUp.classList.toggle('active', (isAtBottom || isDrawingUp) && !isPass);
-            arrowUp.classList.toggle('hint', false);
-        }
-
-        const finished = state === 'PASS' || state === 'FAIL';
-        const outcome = finished ? state.toLowerCase() : '';
-        if (guideBox) guideBox.dataset.outcome = outcome;
-        vShape.dataset.outcome = outcome;
-
-        if (outcome === 'pass') {
-            if (strokeDown) strokeDown.style.strokeDashoffset = '0px';
-            if (strokeUp) strokeUp.style.strokeDashoffset = '0px';
-            if (pointSvg) pointSvg.classList.add('active');
-            if (arrowDown) arrowDown.classList.remove('active', 'hint');
-            if (arrowUp) arrowUp.classList.remove('active', 'hint');
-        }
-    }
-
-    if (stateLabel) {
-        const finished = state === 'PASS' || state === 'FAIL';
-        const instruction = s.stale && !finished
-            ? 'Đang chờ tín hiệu CSI...'
-            : (v6Instructions[state] || state);
-        stateLabel.textContent = instruction;
-    }
-    if (detailLabel) {
-        const finished = state === 'PASS' || state === 'FAIL';
-        const outcome = finished ? state.toLowerCase() : '';
-        const detail = outcome === 'fail' ? (v6Reasons[reason] || reason || '') : '';
-        detailLabel.textContent = detail;
-        detailLabel.hidden = !detail;
-    }
-
-    // Cập nhật các chỉ số telemetry M5R
-    const scoreVal = s.score !== null && s.score !== undefined ? Number(s.score) : (Number(s.v6_score ?? s.gesture_score ?? s.wakeup_score) || 0);
-    const labelVal = s.label !== null && s.label !== undefined ? Number(s.label) : (Number(s.v6_label ?? s.gesture_label ?? s.wakeup_label) || 0);
-    if (domElements.v6TeleScore) domElements.v6TeleScore.textContent = scoreVal.toFixed(4);
-    if (domElements.v6TeleLabel) {
-        domElements.v6TeleLabel.textContent = labelVal === 1 ? '1 (ĐỘNG)' : '0 (TĨNH)';
-        domElements.v6TeleLabel.style.color = labelVal === 1 ? '#00e5ff' : '#8fa2bd';
-    }
-
-    const thresHigh = s.threshold_high !== null && s.threshold_high !== undefined ? Number(s.threshold_high) : 0.80;
-    const thresLow = s.threshold_low !== null && s.threshold_low !== undefined ? Number(s.threshold_low) : 0.65;
-    const teleThres = document.getElementById('v6-tele-threshold');
-    if (teleThres) {
-        teleThres.textContent = `${thresHigh.toFixed(2)} / ${thresLow.toFixed(2)}`;
-    }
-
-    // Đồng bộ thông tin thiết bị mục tiêu
-    if (domElements.v6SyncedTarget) {
-        let mac = cfrState.targetMac || (currentProberConfig.clients && currentProberConfig.clients[0]?.mac) || '';
-        let ip = cfrState.targetIp || (currentProberConfig.clients && currentProberConfig.clients[0]?.ip) || '';
-        domElements.v6SyncedTarget.textContent = mac ? `${ip ? ip + ' · ' : ''}${mac}` : 'Đang chờ thiết bị 5 GHz...';
-    }
+    return;
 }
 
 function setStatus(status, description) {
@@ -1208,41 +949,248 @@ function updateV6UIControls(running) {
     if (domElements.v6RefreshBtn) domElements.v6RefreshBtn.disabled = v6State.running;
 }
 
-function syncTargetDeviceToV6(mac, ip) {
+function syncTargetDeviceToV6(mac, ip, hostname = '') {
     if (!mac) return;
     v6State.mac = mac;
     if (ip) v6State.ip = ip;
 
-    if (domElements.v6DeviceSelect) {
-        let found = false;
-        for (let i = 0; i < domElements.v6DeviceSelect.options.length; i++) {
-            const opt = domElements.v6DeviceSelect.options[i];
-            if (opt.value && opt.value.toLowerCase() === mac.toLowerCase()) {
-                domElements.v6DeviceSelect.selectedIndex = i;
-                found = true;
-                if (!ip && opt.dataset.ip) {
-                    v6State.ip = opt.dataset.ip;
-                }
-                break;
-            }
+    // Tự động tìm hostname từ danh sách client nếu chưa có
+    if (!hostname && currentProberConfig && Array.isArray(currentProberConfig.clients)) {
+        const found = currentProberConfig.clients.find(c => c.mac && c.mac.toLowerCase() === mac.toLowerCase());
+        if (found) {
+            hostname = found.hostname || '';
+            if (!ip && found.ip) ip = found.ip;
         }
-        if (!found && mac) {
-            const newOpt = document.createElement('option');
-            newOpt.value = mac;
-            newOpt.dataset.ip = ip || '';
-            newOpt.textContent = `${ip ? ip + ' · ' : ''}${mac} (Mục tiêu hiện tại)`;
-            domElements.v6DeviceSelect.appendChild(newOpt);
-            domElements.v6DeviceSelect.value = mac;
+    }
+    if (!hostname) {
+        try {
+            hostname = localStorage.getItem('edge_csi_selected_hostname') || '';
+        } catch (_) {}
+    }
+    v6State.hostname = hostname;
+
+    // Lưu vào localStorage để nhớ thiết bị kể cả khi refresh
+    try {
+        localStorage.setItem('edge_csi_selected_mac', mac);
+        if (ip) localStorage.setItem('edge_csi_selected_ip', ip);
+        if (hostname) localStorage.setItem('edge_csi_selected_hostname', hostname);
+    } catch (_) {}
+
+    // Iframe 8082 chỉ được nạp khi mở tab Cử chỉ chữ V (xem enterGestureView),
+    // tránh 8082 tự thu CSI trong lúc người dùng đang xem tab Tổng quan.
+    updateGestureToolbar();
+    if (activeView === 'gesture_v') enterGestureView();
+}
+
+// ===== Tab Cử chỉ chữ V: nhúng cổng 8082, thiết bị lấy từ tab Tổng quan =====
+// Driver ath12k chỉ cho một bộ đọc CFR. Khi vào tab chữ V, phiên thu của tab
+// Tổng quan được dừng để 8082 thu; khi rời tab, 8082 dừng rồi phiên cũ được thu lại.
+const gestureFrame = {
+    key: '',             // mac|ip đang nạp trong iframe
+    running: false,      // trạng thái phiên 8082 do iframe báo về (WAKE_STATE)
+    paused: true,        // ban đầu ở trạng thái chờ/tạm dừng, người dùng bấm mới bắt đầu
+    resumeOverview: null, // phiên thu Tổng quan cần khôi phục khi rời tab
+    stopWaiters: []
+};
+
+function gestureHost() {
+    return window.location.hostname || '192.168.5.1';
+}
+
+function gestureTarget() {
+    let mac = String(cfrState.targetMac || cfrState.target_mac || v6State.mac || '').toLowerCase();
+    let ip = String(cfrState.targetIp || cfrState.target_ip || v6State.ip || '');
+    if (mac && !/^\d{1,3}(\.\d{1,3}){3}$/.test(ip) && currentProberConfig && Array.isArray(currentProberConfig.clients)) {
+        const found = currentProberConfig.clients.find(c => c.mac && c.mac.toLowerCase() === mac);
+        if (found && found.ip) ip = found.ip;
+    }
+    // Tự động tìm thiết bị 5 GHz khả dụng nếu người dùng chưa bấm chọn ở Tổng quan
+    if ((!mac || !ip) && currentProberConfig && Array.isArray(currentProberConfig.clients)) {
+        const autoClient = currentProberConfig.clients.find(c => c.is_5ghz && c.ip && /^\d{1,3}(\.\d{1,3}){3}$/.test(c.ip)) ||
+                           currentProberConfig.clients.find(c => c.ip && /^\d{1,3}(\.\d{1,3}){3}$/.test(c.ip));
+        if (autoClient) {
+            mac = autoClient.mac.toLowerCase();
+            ip = autoClient.ip;
+            syncTargetDeviceToV6(mac, ip, autoClient.hostname || '');
+        }
+    }
+    if (!/^([0-9a-f]{2}:){5}[0-9a-f]{2}$/.test(mac)) return null;
+    return { mac, ip: /^\d{1,3}(\.\d{1,3}){3}$/.test(ip) ? ip : '' };
+}
+
+function populateGestureDeviceSelect(clients, currentTargetIp) {
+    const select = document.getElementById('gesture-device-select');
+    if (!select) return;
+
+    const list = Array.isArray(clients) ? clients : (currentProberConfig && Array.isArray(currentProberConfig.clients) ? currentProberConfig.clients : []);
+    const target = gestureTarget();
+    const currentMac = (target && target.mac ? target.mac.toLowerCase() : '');
+    const previousVal = select.value || currentMac;
+
+    select.innerHTML = '';
+
+    // Bỏ thiết bị 2.4 GHz, chỉ lấy các thiết bị 5 GHz
+    const list5g = list.filter(c => {
+        if (!c.mac) return false;
+        if (c.is_5ghz) return true;
+        if (c.freq && c.freq > 5000) return true;
+        if (c.iface && (c.iface.includes('.0-') || c.iface.includes('5g') || c.iface.includes('5G'))) return true;
+        return false;
+    });
+    const candidates = list5g.length > 0 ? list5g : list.filter(c => c.mac && !(c.freq && c.freq < 3000));
+
+    if (!candidates.length) {
+        select.innerHTML = '<option value="">Chưa có thiết bị 5 GHz</option>';
+        return;
+    }
+
+    let matchedOption = false;
+    for (const c of candidates) {
+        if (!c.mac) continue;
+        const macLower = c.mac.toLowerCase();
+        // Chỉ cần tên thiết bị
+        const deviceName = (c.hostname && c.hostname !== '*' && c.hostname.trim())
+            ? c.hostname.trim()
+            : (c.ip || c.mac);
+
+        const opt = document.createElement('option');
+        opt.value = macLower;
+        opt.textContent = deviceName;
+        opt.title = `${deviceName} · ${c.ip || 'chưa có IP'} · ${c.mac}`;
+        opt.dataset.ip = c.ip || '';
+        opt.dataset.hostname = c.hostname || '';
+
+        if (previousVal && (previousVal === macLower || (target && target.ip && target.ip === c.ip))) {
+            opt.selected = true;
+            matchedOption = true;
+        }
+        select.appendChild(opt);
+    }
+
+    if (!matchedOption && select.options.length > 0) {
+        select.selectedIndex = 0;
+    }
+}
+
+function updateGestureToolbar() {
+    const target = gestureTarget();
+    const statusText = document.getElementById('gesture-status-text');
+    const statusDot = document.getElementById('gesture-status-dot');
+
+    if (statusText && statusDot) {
+        if (gestureFrame.running) {
+            statusText.textContent = 'AI đang phân tích sóng Wi-Fi...';
+            statusDot.style.background = '#00d2ff';
+            statusDot.style.boxShadow = '0 0 10px #00d2ff';
+        } else if (target && target.ip) {
+            statusText.textContent = `Đã kết nối (${target.ip}) · Sẵn sàng`;
+            statusDot.style.background = '#5ce3bd';
+            statusDot.style.boxShadow = '0 0 8px #5ce3bd';
+        } else if (target && target.mac) {
+            statusText.textContent = `Đang chờ cấp IP cho ${target.mac}...`;
+            statusDot.style.background = '#f59e0b';
+            statusDot.style.boxShadow = '0 0 8px #f59e0b';
+        } else {
+            statusText.textContent = 'Đang chờ chọn thiết bị 5 GHz...';
+            statusDot.style.background = '#95acc0';
+            statusDot.style.boxShadow = 'none';
         }
     }
 
-    if (domElements.v6IpInput && v6State.ip) {
-        domElements.v6IpInput.value = v6State.ip;
-    }
+    const openLink = document.getElementById('link-open-8082');
+    if (openLink) openLink.href = `http://${gestureHost()}:8082/`;
+}
 
-    if (domElements.v6SyncedTarget) {
-        const displayIp = v6State.ip || (domElements.v6IpInput ? domElements.v6IpInput.value : '');
-        domElements.v6SyncedTarget.textContent = `${displayIp ? displayIp + ' · ' : ''}${mac}`;
+function postToGestureFrame(type) {
+    const iframe = document.getElementById('v8082-iframe');
+    if (!iframe || !iframe.contentWindow || !gestureFrame.key) return;
+    try { iframe.contentWindow.postMessage({ type }, `http://${gestureHost()}:8082`); } catch (_) {}
+}
+
+function waitGestureStopped(timeoutMs = 5000) {
+    if (!gestureFrame.running) return Promise.resolve();
+    return new Promise(resolve => {
+        const timer = setTimeout(done, timeoutMs);
+        function done() { clearTimeout(timer); resolve(); }
+        gestureFrame.stopWaiters.push(done);
+    });
+}
+
+window.addEventListener('message', async event => {
+    let origin;
+    try { origin = new URL(event.origin); } catch (_) { return; }
+    if (origin.hostname !== gestureHost() || origin.port !== '8082') return;
+    const data = event.data || {};
+
+    // Handover thông minh: Chỉ dừng việc thu của tab Tổng quan khi người dùng thực sự bấm bắt đầu thu ở Bước 1
+    if (data.type === 'WAKE_USER_START' || (data.type === 'WAKE_STATE' && data.running && !gestureFrame.running)) {
+        gestureFrame.running = true;
+        if (cfrState.running) {
+            gestureFrame.resumeOverview = null;
+            await stopCfrCapture(false);
+        }
+        updateGestureToolbar();
+    } else if (data.type === 'WAKE_USER_STOP' || (data.type === 'WAKE_STATE' && !data.running && gestureFrame.running)) {
+        gestureFrame.running = false;
+        const waiters = gestureFrame.stopWaiters.splice(0);
+        waiters.forEach(fn => fn());
+        updateGestureToolbar();
+    } else if (data.type === 'WAKE_STATE') {
+        gestureFrame.running = Boolean(data.running);
+        if (!gestureFrame.running) {
+            const waiters = gestureFrame.stopWaiters.splice(0);
+            waiters.forEach(fn => fn());
+        }
+        updateGestureToolbar();
+    }
+});
+
+async function enterGestureView() {
+    updateGestureToolbar();
+    populateGestureDeviceSelect();
+    const iframe = document.getElementById('v8082-iframe');
+    const empty = document.getElementById('v8082-empty');
+    const target = gestureTarget();
+    if (!iframe) return;
+
+    if (!target || !target.ip) {
+        if (empty) {
+            empty.hidden = false;
+            const detail = document.getElementById('v8082-empty-detail');
+            if (detail) detail.textContent = target
+                ? `Thiết bị ${target.mac} chưa có địa chỉ IPv4. Chọn một thiết bị 5 GHz khác từ danh sách ở trên.`
+                : 'Chọn một điện thoại 5 GHz trong danh sách thiết bị ở trên để bắt đầu trải nghiệm.';
+        }
+        return;
+    }
+    if (empty) empty.hidden = true;
+
+    // Không dừng tab Tổng quan ngay tại đây! Tab Tổng quan vẫn chạy cho tới khi bấm Bắt đầu trải nghiệm ở Bước 1.
+    const key = `${target.mac}|${target.ip}`;
+    if (gestureFrame.key && gestureFrame.key !== key) {
+        postToGestureFrame('WAKE_STOP');
+        await waitGestureStopped();
+        if (activeView !== 'gesture_v') return;
+    }
+    if (gestureFrame.key !== key || !iframe.src || iframe.src === 'about:blank') {
+        gestureFrame.key = key;
+        gestureFrame.paused = true;
+        iframe.src = `http://${gestureHost()}:8082/?embed=1&mac=${encodeURIComponent(target.mac)}&ip=${encodeURIComponent(target.ip)}`;
+    }
+    updateGestureToolbar();
+}
+
+async function leaveGestureView() {
+    if (!gestureFrame.key) return;
+    // Rời tab Cử chỉ chữ V: dừng thu tín hiệu của model 8082
+    postToGestureFrame('WAKE_STOP');
+    gestureFrame.resumeOverview = null;
+    await waitGestureStopped();
+
+    // Tuyệt đối không tự động bắt đầu thu khi quay lại tab Tổng quan.
+    // Nếu có tiến trình thu nào đang chạy dở, dừng hẳn lại để giữ trạng thái nghỉ (idle).
+    if (cfrState.running) {
+        await stopCfrCapture(false);
     }
 }
 
@@ -1300,7 +1248,11 @@ async function fetchV6Devices(forceRefresh = false) {
 }
 
 async function startV6Capture() {
-    if (v6State.running) return;
+    if (v6State.running || cfrState.running) {
+        v6State.running = true;
+        updateV6UIControls(true);
+        return;
+    }
 
     let mac = (domElements.v6DeviceSelect ? domElements.v6DeviceSelect.value : '') || v6State.mac || cfrState.target_mac || cfrState.targetMac || '';
     let ip = (domElements.v6IpInput ? domElements.v6IpInput.value.trim() : '') || v6State.ip || cfrState.target_ip || cfrState.targetIp || '';
@@ -1310,37 +1262,7 @@ async function startV6Capture() {
         return;
     }
 
-    v6State.masterActive = true;
-    v6State.mac = mac;
-    v6State.ip = ip;
-    cfrState.target_mac = mac;
-    cfrState.targetMac = mac;
-    cfrState.target_ip = ip;
-    cfrState.targetIp = ip;
-    syncTargetDeviceToV6(mac, ip);
-
-    showV6Notice('Đang khởi động Model V6 Native...');
-    updateV6UIControls(true);
-
-    try {
-        const res = await fetch('/api/v6/start', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ mac, ip })
-        });
-        const data = await res.json();
-        if (!res.ok || data.status !== 'ok') {
-            throw new Error(data.error || 'Khởi động V6 thất bại');
-        }
-
-        showV6Notice('');
-        v6State.running = true;
-        updateV6UIControls(true);
-        startV6Polling();
-    } catch (e) {
-        showV6Notice('Lỗi: ' + e.message, true);
-        updateV6UIControls(false);
-    }
+    await startCfrCapture({ mac, ip });
 }
 
 async function stopV6Capture(clearMaster = true) {
@@ -1350,19 +1272,16 @@ async function stopV6Capture(clearMaster = true) {
     stopV6Polling();
     v6State.running = false;
     updateV6UIControls(false);
-    try {
-        await fetch('/api/v6/stop', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({})
-        });
-    } catch (_) {}
+    if (cfrState.running) {
+        await stopCfrCapture(clearMaster);
+    }
     renderV({ state: 'READY', stroke_progress: 0, stroke_fraction: 0, score: 0, label: 0 });
 }
 
 function startV6Polling() {
     stopV6Polling();
-    v6State.pollTimer = setInterval(pollV6Score, 60);
+    // Đã dùng luồng SSE /events duy nhất đẩy v6_state thời gian thực,
+    // không khởi động polling HTTP 60ms để tránh xung đột lock mutex và nghẽn tài nguyên router.
 }
 
 function stopV6Polling() {
@@ -1373,39 +1292,43 @@ function stopV6Polling() {
 }
 
 async function pollV6Score() {
-    if (!v6State.running && activeView !== 'gesture_v') {
-        stopV6Polling();
-        return;
-    }
-    if (v6State.isPolling) return;
-    v6State.isPolling = true;
-
-    try {
-        const res = await fetch('/api/v6/score');
-        if (!res.ok) return;
-        const data = await res.json();
-        if (!data) return;
-
-        // Nếu backend báo đã dừng (tiến trình thoát hoặc chuyển tab)
-        if (data.running === false && v6State.running) {
-            v6State.running = false;
-            updateV6UIControls(false);
-            showV6Notice(''); // Ẩn hoàn toàn thông báo lỗi trước mặt người dùng
-            renderV({ state: 'READY', stroke_progress: 0, stroke_fraction: 0, score: 0, label: 0 });
-        } else if (data.running && !v6State.running) {
-            v6State.running = true;
-            updateV6UIControls(true);
-        }
-
-        renderV(data);
-    } catch (e) {
-        // Lỗi mạng hoặc server dừng
-    } finally {
-        v6State.isPolling = false;
-    }
+    // Không thực hiện request HTTP - toàn bộ dữ liệu V6 được nhận qua luồng SSE thời gian thực
+    return;
 }
 
 function initV6Controls() {
+    const btnResetGesture = document.getElementById('btnResetGesture');
+    if (btnResetGesture) {
+        btnResetGesture.addEventListener('click', async () => {
+            btnResetGesture.classList.add('loading');
+            try {
+                await fetch('/api/v6/reset', { method: 'POST' });
+            } catch (err) {
+                console.warn('Reset gesture error:', err);
+            }
+            const strokeDown = document.getElementById('vStrokeDown');
+            const strokeUp = document.getElementById('vStrokeUp');
+            const pointSvg = document.getElementById('vPointSvg');
+            const stateLabel = document.getElementById('v6StateLabel');
+            if (strokeDown) strokeDown.style.strokeDashoffset = '147px';
+            if (strokeUp) strokeUp.style.strokeDashoffset = '147px';
+            if (pointSvg) pointSvg.classList.remove('active');
+            if (stateLabel) {
+                stateLabel.textContent = currentLang === 'vi' ? 'Sẵn sàng' : 'Ready';
+                stateLabel.className = 'v6-status-text ready';
+            }
+            if (domElements.m5rScoreDisplay) domElements.m5rScoreDisplay.textContent = '0.0000';
+            if (domElements.m5rLabelChip) {
+                domElements.m5rLabelChip.className = 'motion-chip chip-still';
+                domElements.m5rLabelChip.textContent = currentLang === 'vi' ? '0 · TĨNH' : '0 · STILL';
+            }
+            if (domElements.m5rStageDisplay) {
+                domElements.m5rStageDisplay.textContent = currentLang === 'vi' ? 'SẴN SÀNG' : 'READY';
+            }
+            setTimeout(() => btnResetGesture.classList.remove('loading'), 300);
+        });
+    }
+
     if (domElements.v6StartBtn) {
         domElements.v6StartBtn.addEventListener('click', startV6Capture);
     }
@@ -1478,11 +1401,41 @@ function initV6Controls() {
             }
         }
     }
+    // Bộ nút nạp lại giao diện 8082
+    const btnReload8082 = document.getElementById('btn-reload-8082');
+    if (btnReload8082) {
+        btnReload8082.addEventListener('click', () => {
+            gestureFrame.key = '';
+            if (activeView === 'gesture_v') enterGestureView();
+        });
+    }
+    const btnPause8082 = document.getElementById('btn-pause-8082');
+    if (btnPause8082) {
+        btnPause8082.addEventListener('click', () => {
+            gestureFrame.paused = !gestureFrame.paused;
+            postToGestureFrame(gestureFrame.paused ? 'WAKE_STOP' : 'WAKE_START');
+            updateGestureToolbar();
+        });
+    }
+
+    // Khôi phục thiết bị đã chọn từ localStorage khi khởi động
+    try {
+        const savedMac = localStorage.getItem('edge_csi_selected_mac');
+        const savedIp = localStorage.getItem('edge_csi_selected_ip');
+        if (savedMac) {
+            v6State.mac = savedMac;
+            v6State.ip = savedIp || '';
+            cfrState.targetMac = savedMac;
+            cfrState.targetIp = savedIp || '';
+            syncTargetDeviceToV6(savedMac, savedIp);
+        }
+    } catch (_) {}
 }
 
 async function setView(view) {
     const viewDict = i18n[currentLang]?.views || i18n.vi.views;
     if (!viewDict[view]) return;
+    const previousView = activeView;
     activeView = view;
     document.querySelectorAll('.tab-btn').forEach(button => {
         button.classList.toggle('active', button.dataset.view === view);
@@ -1495,67 +1448,30 @@ async function setView(view) {
     const chartPanel = document.getElementById('chart-panel');
     const gestureVPanel = document.getElementById('gesture-v-panel');
 
+    const overviewTechPanel = document.getElementById('overview-tech-panel');
     if (view === 'gesture_v') {
+        if (cfrState.running) {
+            await stopCfrCapture(false);
+        }
         if (cfrPanel) { cfrPanel.hidden = true; cfrPanel.style.display = 'none'; }
         if (proberPanel) { proberPanel.hidden = true; proberPanel.style.display = 'none'; }
         if (metricGrid) { metricGrid.hidden = true; metricGrid.style.display = 'none'; }
         if (chartPanel) { chartPanel.hidden = true; chartPanel.style.display = 'none'; }
-        if (gestureVPanel) { gestureVPanel.hidden = false; gestureVPanel.style.display = ''; }
+        if (overviewTechPanel) { overviewTechPanel.hidden = true; overviewTechPanel.style.display = 'none'; }
+        if (gestureVPanel) { gestureVPanel.hidden = false; gestureVPanel.style.display = 'flex'; }
 
-        // 1. Tự động tạm dừng phiên thu Overview (nếu đang chạy) để nhường relay cho Model V6
-        if (cfrState.running) {
-            await stopCfrCapture(false);
-        }
-
-        // 2. Tự động đồng bộ thiết bị từ Tab Tổng quan sang Model V6
-        const curMac = v6State.mac || cfrState.target_mac || cfrState.targetMac || '';
-        const curIp = v6State.ip || cfrState.target_ip || cfrState.targetIp || '';
-        await fetchV6Devices();
-        if (curMac) syncTargetDeviceToV6(curMac, curIp);
-
-        // 3. Nếu phiên master đang bật (do đã bấm Bắt đầu thu CSI ở Tổng quan), TỰ ĐỘNG BẮT ĐẦU V6 NGAY LẬP TỨC!
-        const targetMac = curMac || (domElements.v6DeviceSelect ? domElements.v6DeviceSelect.value : '');
-        if (v6State.masterActive && !v6State.running && targetMac) {
-            await startV6Capture();
-        } else {
-            // Kiểm tra trạng thái hiện tại của V6 Engine
-            try {
-                const r = await fetch('/api/v6/status');
-                const data = await r.json();
-                if (data && data.running) {
-                    v6State.running = true;
-                    updateV6UIControls(true);
-                    startV6Polling();
-                } else {
-                    updateV6UIControls(false);
-                }
-            } catch (_) {}
-        }
+        // Nhúng cổng 8082 với thiết bị đang chọn ở tab Tổng quan (không cần chọn lại trong 8082)
+        enterGestureView();
     } else {
+        if (previousView === 'gesture_v') await leaveGestureView();
         if (cfrPanel) { cfrPanel.hidden = false; cfrPanel.style.display = ''; }
         if (proberPanel) { proberPanel.hidden = false; proberPanel.style.display = ''; }
         if (metricGrid) { metricGrid.hidden = false; metricGrid.style.display = ''; }
         if (chartPanel) { chartPanel.hidden = false; chartPanel.style.display = ''; }
+        if (overviewTechPanel) { overviewTechPanel.hidden = false; overviewTechPanel.style.display = ''; }
         if (gestureVPanel) { gestureVPanel.hidden = true; gestureVPanel.style.display = 'none'; }
         document.getElementById('chart-kicker').textContent = viewDict[view].kicker;
         document.getElementById('chart-title').textContent = viewDict[view].chart;
-
-        // Tự động tạm dừng Model V6 khi chuyển sang các tab khác để giải phóng relay phần cứng
-        if (v6State.running) {
-            await stopV6Capture(false);
-        }
-
-        // Nếu phiên master đang bật, tự động phục hồi luồng thu CFR ở Tab Tổng quan!
-        if (v6State.masterActive && !cfrState.running) {
-            const target = {
-                mac: v6State.mac || cfrState.target_mac || cfrState.targetMac,
-                ip: v6State.ip || cfrState.target_ip || cfrState.targetIp,
-                iface: cfrState.iface || ''
-            };
-            if (target.mac) {
-                await startCfrCapture(target);
-            }
-        }
     }
 
     const chainCtrl = document.getElementById('chain-control');
@@ -1566,6 +1482,36 @@ async function setView(view) {
 document.querySelectorAll('.tab-btn').forEach(button => {
     button.addEventListener('click', () => setView(button.dataset.view));
 });
+
+// Lắng nghe thay đổi trên bộ chọn thiết bị của Tab Demo Wi-Fi Sensing
+const gestureDeviceSelect = document.getElementById('gesture-device-select');
+if (gestureDeviceSelect) {
+    gestureDeviceSelect.addEventListener('change', () => {
+        const mac = gestureDeviceSelect.value;
+        if (!mac || !currentProberConfig || !Array.isArray(currentProberConfig.clients)) return;
+        const c = currentProberConfig.clients.find(item => item.mac && item.mac.toLowerCase() === mac.toLowerCase());
+        if (c) {
+            currentProberConfig.target_ip = c.ip || c.mac;
+            cfrState.targetMac = c.mac;
+            cfrState.targetIp = c.ip || '';
+            v6State.mac = c.mac;
+            v6State.ip = c.ip || '';
+            v6State.hostname = c.hostname || '';
+            syncTargetDeviceToV6(c.mac, c.ip || '', c.hostname || '');
+            renderProberUI(currentProberConfig, true);
+            if (activeView === 'gesture_v') {
+                enterGestureView();
+            }
+        }
+    });
+}
+
+const gestureRefreshBtn = document.getElementById('gesture-refresh-btn');
+if (gestureRefreshBtn) {
+    gestureRefreshBtn.addEventListener('click', () => {
+        fetchProberData(true);
+    });
+}
 
 chainSelect.addEventListener('change', scheduleRender);
 calibrateButton.addEventListener('click', requestCalibration);
@@ -1717,6 +1663,18 @@ if (domElements.distCalBtn) {
     });
 }
 
+if (domElements.stabilityTechToggleBtn && domElements.stabilityTechDetails) {
+    domElements.stabilityTechToggleBtn.addEventListener('click', () => {
+        const isHidden = domElements.stabilityTechDetails.hidden;
+        domElements.stabilityTechDetails.hidden = !isHidden;
+        if (domElements.techToggleText) {
+            domElements.techToggleText.textContent = isHidden
+                ? (currentLang === 'vi' ? '[-] Thu gọn' : '[-] Collapse')
+                : (currentLang === 'vi' ? '[+] Chi tiết kỹ thuật' : '[+] Tech details');
+        }
+    });
+}
+
 if (domElements.gestureModelSelect) {
     domElements.gestureModelSelect.addEventListener('change', async (e) => {
         const chosen = e.target.value;
@@ -1822,12 +1780,16 @@ function acceptFrame(frame) {
             frameRate = average > 0 ? 1000 / average : 0;
         }
 
-        if (frame.motion_ready) {
-            motionHistory.push({ time: now, score: Number(frame.motion_score) || 0 });
-            if (motionHistory.length > 180) motionHistory.shift();
-        }
+        const score = Number(frame.motion_score) || 0;
+        motionHistory.push({ time: now, score: score });
+        if (motionHistory.length > 180) motionHistory.shift();
         breathWaveHistory.push(Number(frame.breath_wave) || 0);
         if (breathWaveHistory.length > 240) breathWaveHistory.shift();
+    }
+
+    if (activeView === 'gesture_v' && isNewFrame) {
+        renderV(frame);
+        updateGestureVUI(frame);
     }
 
     if (now - lastDomUpdateAt >= 100 || isNewFrame && !lastDomUpdateAt) {
@@ -2281,7 +2243,7 @@ function renderCfrUI() {
     }
 
     if (cfrElements.chipsetDisplay) {
-        cfrElements.chipsetDisplay.textContent = cfrState.hw ? `${cfrState.hw} (${cfrState.mac_dev || 'mac'})` : 'ath12k';
+        cfrElements.chipsetDisplay.textContent = cfrState.hw ? `${cfrState.hw} (${cfrState.mac_dev || 'mac'})` : 'VNPT Gateway (Wi-Fi 7)';
     }
 
     if (cfrElements.pidDisplay) {
@@ -2429,20 +2391,10 @@ async function startCfrCapture(target = null) {
     } else if (cfrElements.bandwidthSelect) {
         bandwidth = parseInt(cfrElements.bandwidthSelect.value, 10) || 0;
     }
-    let period = 10;
-    if (target && target.period !== undefined) {
-        period = target.period;
-    } else if (activeView === 'gesture_v') {
-        period = 10;
-    } else if (proberElements.interval) {
-        period = Math.max(10, Math.min(parseInt(proberElements.interval.value, 10) || 10, 2000));
-    }
-    const autoProbe = proberElements.toggle ? proberElements.toggle.checked : true;
+    const period = 10;
+    const autoProbe = true;
 
     try {
-        // Đảm bảo dừng Model V6 trước khi Daemon chiếm relay
-        await stopV6Capture(false);
-
         const res = await fetch('/api/cfr', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -2459,6 +2411,8 @@ async function startCfrCapture(target = null) {
         const data = await res.json();
         if (res.ok && data.status === 'ok') {
             cfrState.running = true;
+            v6State.running = true;
+            updateV6UIControls(true);
             captureStartedAt = performance.now();
             autoWakeAttempts = 0;
             cfrState.target_mac = data.target_mac || mac;
@@ -2496,9 +2450,6 @@ async function stopCfrCapture(clearMaster = true) {
     }
     if (cfrElements.stopBtn) cfrElements.stopBtn.disabled = true;
     try {
-        // Đảm bảo dừng hoàn toàn Model V6 trước khi Daemon chiếm relay
-        await stopV6Capture(false);
-
         const res = await fetch('/api/cfr', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -2507,6 +2458,9 @@ async function stopCfrCapture(clearMaster = true) {
         const data = await res.json();
         if (res.ok) {
             cfrState.running = false;
+            v6State.running = false;
+            updateV6UIControls(false);
+            renderV({ state: 'READY', stroke_progress: 0, stroke_fraction: 0, score: 0, label: 0 });
             cfrState.uptime_sec = 0;
             latestFrame = null;
             frameRate = 0;
@@ -2535,13 +2489,6 @@ async function stopCfrCapture(clearMaster = true) {
 // Active Prober Controller (Grouped by Wi-Fi Card)
 // ============================================================================
 const proberElements = {
-    toggle: document.getElementById('prober-toggle'),
-    toggleLabel: document.getElementById('prober-toggle-label'),
-    interval: document.getElementById('prober-interval'),
-    rateBadge: document.getElementById('prober-rate-badge'),
-    applyBtn: document.getElementById('prober-apply-btn'),
-    packetsCount: document.getElementById('prober-packets-count'),
-    statusBadge: document.getElementById('prober-status-badge'),
     selectionBadge: document.getElementById('prober-selection-badge'),
     quickAutoBtn: document.getElementById('quick-auto-btn'),
     refreshBtn: document.getElementById('prober-refresh-btn'),
@@ -2549,14 +2496,6 @@ const proberElements = {
 };
 
 // currentProberConfig is initialized at the top of file
-
-function updateRateBadge(ms) {
-    const val = Number(ms) || 50;
-    const hz = val > 0 ? (1000 / val).toFixed(1) : '0';
-    if (proberElements.rateBadge) {
-        proberElements.rateBadge.textContent = `${hz} Hz`;
-    }
-}
 
 function getSignalClass(snrStr, signalStr) {
     let snr = -1;
@@ -2576,32 +2515,7 @@ function getSignalClass(snrStr, signalStr) {
 }
 
 function renderProberUI(data, isFullRender = true) {
-    if (!proberElements.toggle) return;
-
-    proberElements.toggle.checked = Boolean(data.enabled);
-    proberElements.toggleLabel.textContent = data.enabled ? t('prober_on') : t('prober_off');
-    proberElements.toggleLabel.classList.toggle('active', Boolean(data.enabled));
-
-    if (data.interval_ms && proberElements.interval && document.activeElement !== proberElements.interval) {
-        proberElements.interval.value = data.interval_ms;
-        updateRateBadge(data.interval_ms);
-        document.querySelectorAll('.preset-pill').forEach(btn => {
-            btn.classList.toggle('active', Number(btn.dataset.ms) === Number(data.interval_ms));
-        });
-    }
-
-    if (proberElements.packetsCount) {
-        proberElements.packetsCount.textContent = `${Number(data.packets_sent || 0).toLocaleString()} ${currentLang === 'vi' ? 'gói' : 'pkts'}`;
-    }
-    if (proberElements.statusBadge) {
-        if (data.enabled) {
-            proberElements.statusBadge.textContent = `${t('prober_active')} (${data.interval_ms}ms)`;
-            proberElements.statusBadge.className = 'badge-active';
-        } else {
-            proberElements.statusBadge.textContent = t('prober_idle');
-            proberElements.statusBadge.className = 'badge-idle';
-        }
-    }
+    if (!data) return;
 
     // Update selection summary badge
     const targetIp = (data.target_ip && data.target_ip !== 'auto') ? data.target_ip : '';
@@ -2622,6 +2536,8 @@ function renderProberUI(data, isFullRender = true) {
             }
         }
     }
+
+    populateGestureDeviceSelect(data.clients, targetIp);
 
     if (isFullRender) {
         renderCardsTables(data.cards, data.clients, targetIp);
@@ -2837,7 +2753,8 @@ function renderCardsTables(cards, clients, currentTargetIp) {
                         cfrState.targetIp = c.ip;
                         v6State.mac = c.mac;
                         v6State.ip = c.ip;
-                        syncTargetDeviceToV6(c.mac, c.ip);
+                        v6State.hostname = c.hostname || '';
+                        syncTargetDeviceToV6(c.mac, c.ip, c.hostname || '');
                         input.checked = true;
                         document.querySelectorAll('.wifi-station-row').forEach(r => r.classList.remove('selected-row'));
                         tr.classList.add('selected-row');
@@ -2854,16 +2771,6 @@ function renderCardsTables(cards, clients, currentTargetIp) {
                             cfrElements.bandwidthSelect.value = String(maxBw);
                         }
 
-                        // 2. OPTION DEFAULT: Chu kỳ gửi gói mặc định 10ms (100 Hz)
-                        if (proberElements.interval) {
-                            proberElements.interval.value = '10';
-                            updateRateBadge(10);
-                        }
-
-                        // 3. OPTION DEFAULT: Bật ping giữ nhịp thăm dò (Keep-alive)
-                        if (proberElements.toggle) {
-                            proberElements.toggle.checked = true;
-                        }
 
                         updateAvailableBandwidths(c, card);
 
@@ -2979,7 +2886,7 @@ function renderCardsTables(cards, clients, currentTargetIp) {
 
 function escapeHtml(str) {
     if (!str) return '';
-    return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    return str.replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('"', '&quot;');
 }
 
 let isScanningNetwork = false;
@@ -3028,55 +2935,25 @@ async function loadProberStatus(forceScan = false) {
     }
 }
 
-let isSavingProber = false;
-let saveSuccessTimeout = null;
-
 async function saveProberConfig() {
-    if (isSavingProber) return;
-    if (!proberElements.applyBtn) return;
-    isSavingProber = true;
-
-    clearTimeout(saveSuccessTimeout);
-    proberElements.applyBtn.textContent = t('applying');
-    proberElements.applyBtn.disabled = true;
-
     try {
-        const enabled = proberElements.toggle ? proberElements.toggle.checked : false;
-        const mode = 'single';
         const target_ip = currentProberConfig.target_ip || 'auto';
         const target_ips = (target_ip && target_ip !== 'auto') ? [target_ip] : [];
-
-        const interval_ms = Math.max(10, Math.min(Number(proberElements.interval?.value) || 50, 2000));
+        const interval_ms = 10;
+        const enabled = cfrState.running;
 
         const res = await fetch('/api/prober', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ enabled, mode, target_ip, target_ips, interval_ms })
+            body: JSON.stringify({ enabled, mode: 'single', target_ip, target_ips, interval_ms })
         });
         if (res.ok) {
             const data = await res.json();
             currentProberConfig = data;
-            renderProberUI(data);
-
-            proberElements.applyBtn.textContent = t('saved_btn');
-            saveSuccessTimeout = setTimeout(() => {
-                if (proberElements.applyBtn) {
-                    proberElements.applyBtn.textContent = t('apply_btn');
-                    proberElements.applyBtn.disabled = false;
-                }
-            }, 800);
-        } else {
-            proberElements.applyBtn.textContent = t('apply_btn');
-            proberElements.applyBtn.disabled = false;
+            renderProberUI(data, false);
         }
     } catch (e) {
         console.error('Cannot save prober config', e);
-        if (proberElements.applyBtn) {
-            proberElements.applyBtn.textContent = t('apply_btn');
-            proberElements.applyBtn.disabled = false;
-        }
-    } finally {
-        isSavingProber = false;
     }
 }
 
@@ -3090,35 +2967,6 @@ if (proberElements.quickAutoBtn) {
         renderCfrUI();
         saveProberConfig();
     });
-}
-
-if (proberElements.interval) {
-    proberElements.interval.addEventListener('input', e => {
-        updateRateBadge(e.target.value);
-        document.querySelectorAll('.preset-pill').forEach(btn => {
-            btn.classList.toggle('active', Number(btn.dataset.ms) === Number(e.target.value));
-        });
-    });
-}
-
-document.querySelectorAll('.preset-pill').forEach(btn => {
-    btn.addEventListener('click', () => {
-        const ms = Number(btn.dataset.ms);
-        if (proberElements.interval) {
-            proberElements.interval.value = ms;
-            updateRateBadge(ms);
-        }
-        document.querySelectorAll('.preset-pill').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        saveProberConfig();
-    });
-});
-
-if (proberElements.toggle) {
-    proberElements.toggle.addEventListener('change', saveProberConfig);
-}
-if (proberElements.applyBtn) {
-    proberElements.applyBtn.addEventListener('click', saveProberConfig);
 }
 
 // Language switch listeners
@@ -3215,3 +3063,69 @@ window.setInterval(() => {
         }).catch(() => {});
     }
 }, 1000);
+
+// Khởi tạo mã QR ở Sidebar bên trái
+function initSidebarQr() {
+    const container = document.getElementById('sidebarQrBox');
+    if (!container || typeof QRCode === 'undefined') return;
+    container.innerHTML = '';
+    const host = location.hostname || '192.168.5.1';
+    const port = location.port ? (':' + location.port) : '';
+    const url = `${location.protocol}//${host}${port}/gioithieu`;
+    try {
+        new QRCode(container, {
+            text: url,
+            width: 104,
+            height: 104,
+            colorDark: '#07121e',
+            colorLight: '#ffffff',
+            correctLevel: QRCode.CorrectLevel.M
+        });
+    } catch (e) {
+        console.error('[QR] Sidebar render error:', e);
+    }
+}
+
+// Bộ chuyển tab mã QR ở chân Sidebar (Phương án B: QR Wi-Fi & Tài liệu mô tả)
+function initSidebarQrTabs() {
+    const tabWifi = document.getElementById('tab-qr-wifi');
+    const tabDoc = document.getElementById('tab-qr-doc');
+    const panelWifi = document.getElementById('panel-qr-wifi');
+    const panelDoc = document.getElementById('panel-qr-doc');
+    if (!tabWifi || !tabDoc || !panelWifi || !panelDoc) return;
+
+    function switchTab(toWifi) {
+        if (toWifi) {
+            tabWifi.classList.add('active');
+            tabWifi.setAttribute('aria-selected', 'true');
+            tabDoc.classList.remove('active');
+            tabDoc.setAttribute('aria-selected', 'false');
+            panelWifi.hidden = false;
+            panelWifi.classList.add('active');
+            panelDoc.hidden = true;
+            panelDoc.classList.remove('active');
+        } else {
+            tabDoc.classList.add('active');
+            tabDoc.setAttribute('aria-selected', 'true');
+            tabWifi.classList.remove('active');
+            tabWifi.setAttribute('aria-selected', 'false');
+            panelDoc.hidden = false;
+            panelDoc.classList.add('active');
+            panelWifi.hidden = true;
+            panelWifi.classList.remove('active');
+            initSidebarQr();
+        }
+    }
+
+    tabWifi.onclick = () => switchTab(true);
+    tabDoc.onclick = () => switchTab(false);
+}
+
+window.addEventListener('DOMContentLoaded', () => {
+    initSidebarQr();
+    initSidebarQrTabs();
+});
+setTimeout(() => {
+    initSidebarQr();
+    initSidebarQrTabs();
+}, 600);

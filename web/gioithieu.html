@@ -1,0 +1,756 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Các ứng dụng tiềm năng · VQEC - VNPT</title>
+<style>
+:root {
+  color-scheme: dark;
+  --bg: #07121e;
+  --card: #0e1e2d;
+  --card-subtle: #091622;
+  --border: #1a3854;
+  --border-focus: #0066cc;
+  --text: #e9f3f8;
+  --text-muted: #95acc0;
+  --vnpt-blue: #0066cc;
+  --vnpt-blue-light: #1a8cff;
+  --vnpt-blue-glow: rgba(0, 102, 204, 0.45);
+  --cyan: #00d2ff;
+  --cyan-dim: rgba(0, 210, 255, 0.12);
+  --accent: #5ce3bd;
+  --accent-dim: rgba(92, 227, 189, 0.12);
+  --default-font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --code-font: var(--default-font);
+  --sans-font: var(--default-font);
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--sans-font);
+  font-size: 15px;
+  line-height: 1.55;
+  padding: 16px 14px 40px;
+  -webkit-font-smoothing: antialiased;
+}
+main {
+  max-width: 860px;
+  margin: 0 auto;
+}
+
+/* Header thương hiệu VQEC & VNPT Blue */
+header.mobile-header {
+  background: linear-gradient(135deg, rgba(0, 102, 204, 0.22) 0%, rgba(7, 18, 30, 0.95) 100%);
+  border: 1px solid rgba(0, 102, 204, 0.4);
+  border-radius: 14px;
+  padding: 20px 18px;
+  margin-bottom: 16px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+}
+.kicker-badge {
+  display: inline-block;
+  font-family: var(--code-font);
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--cyan);
+  background: var(--cyan-dim);
+  border: 1px solid rgba(0, 210, 255, 0.3);
+  padding: 3px 9px;
+  border-radius: 4px;
+  letter-spacing: 0.08em;
+  margin-bottom: 8px;
+  text-transform: uppercase;
+}
+h1.mobile-title {
+  font-size: 24px;
+  font-weight: 800;
+  color: #ffffff;
+  letter-spacing: -0.01em;
+  margin-bottom: 6px;
+}
+.mobile-lead {
+  color: var(--text-muted);
+  font-size: 13.5px;
+  line-height: 1.5;
+  margin-bottom: 14px;
+}
+
+/* Potential Applications Pills */
+.potential-apps-block {
+  border-top: 1px solid rgba(26, 56, 84, 0.8);
+  padding-top: 12px;
+}
+.apps-tag {
+  font-family: var(--code-font);
+  font-size: 10.5px;
+  font-weight: 700;
+  color: var(--vnpt-blue-light);
+  letter-spacing: 0.1em;
+  display: block;
+  margin-bottom: 8px;
+}
+.apps-flex {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 6px;
+}
+@media (min-width: 520px) {
+  .apps-flex { grid-template-columns: 1fr 1fr; }
+}
+.app-pill {
+  background: var(--card-subtle);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 6px 10px;
+  font-size: 12px;
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.app-pill strong { color: var(--text); }
+
+/* Thanh Tabs Di Động (Touch-friendly Segmented Tabs) */
+.mobile-tabs-bar {
+  display: flex;
+  background: var(--card-subtle);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 4px;
+  gap: 4px;
+  margin-bottom: 16px;
+  position: sticky;
+  top: 10px;
+  z-index: 100;
+  backdrop-filter: blur(12px);
+}
+.mobile-tab-btn {
+  flex: 1;
+  font-family: var(--code-font);
+  font-size: 11.5px;
+  font-weight: 700;
+  color: var(--text-muted);
+  background: transparent;
+  border: none;
+  border-radius: 7px;
+  padding: 10px 4px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.18s ease;
+  white-space: nowrap;
+}
+.mobile-tab-btn.active {
+  background: var(--vnpt-blue);
+  color: #ffffff;
+  box-shadow: 0 2px 10px var(--vnpt-blue-glow);
+}
+
+/* PHÂN KHU HOW IT WORKS CHUẨN MOCKUP */
+.how-it-works-block {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 18px 16px;
+  margin-bottom: 16px;
+}
+.hiw-heading {
+  font-family: var(--sans-font);
+  font-size: 14px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  color: #ffffff;
+  text-transform: uppercase;
+  margin-bottom: 14px;
+}
+.hiw-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.hiw-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  background: var(--card-subtle);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 12px 14px;
+}
+.hiw-thumb {
+  width: 72px;
+  height: 72px;
+  min-width: 72px;
+  border-radius: 10px;
+  overflow: hidden;
+  background: #030a14;
+  border: 1px solid rgba(0, 210, 255, 0.25);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: inset 0 0 16px rgba(0, 102, 204, 0.3);
+}
+.hiw-thumb svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+.hiw-info {
+  flex: 1;
+}
+.hiw-title {
+  font-size: 15px;
+  font-weight: 800;
+  color: #ffffff;
+  margin-bottom: 4px;
+}
+.hiw-desc {
+  font-size: 13px;
+  color: var(--text-muted);
+  line-height: 1.45;
+}
+
+/* PHÂN KHU POTENTIAL APPLICATIONS DẠNG GRID */
+.divider-line {
+  border: 0;
+  height: 1px;
+  background: var(--border);
+  margin: 18px 0;
+}
+.apps-grid-modern {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+@media (max-width: 480px) {
+  .apps-grid-modern {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+.app-card-item {
+  background: var(--card-subtle);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 12px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.app-card-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #ffffff;
+}
+.app-card-icon {
+  width: 17px;
+  height: 17px;
+  color: var(--cyan);
+  flex-shrink: 0;
+}
+.app-card-sub {
+  font-size: 11.5px;
+  color: var(--text-muted);
+  padding-left: 25px;
+  line-height: 1.35;
+}
+
+/* Nội dung Tab */
+.tab-panel { display: none; }
+.tab-panel.active { display: block; }
+
+/* Kịch bản 3 Bước của Sếp */
+.step-box {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 16px 16px;
+  margin-bottom: 12px;
+}
+.step-tag-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+.step-num-badge {
+  font-family: var(--code-font);
+  font-size: 10.5px;
+  font-weight: 700;
+  color: #ffffff;
+  background: var(--vnpt-blue);
+  padding: 2px 7px;
+  border-radius: 4px;
+}
+.step-title-text {
+  font-size: 13.5px;
+  font-weight: 700;
+  color: var(--text);
+  text-transform: uppercase;
+}
+.try-big-text {
+  font-size: 22px;
+  font-weight: 900;
+  color: var(--cyan);
+  margin-bottom: 4px;
+  letter-spacing: 0.04em;
+}
+.step-body-p {
+  font-size: 13.5px;
+  color: var(--text);
+  line-height: 1.5;
+  margin-bottom: 12px;
+}
+.btn-open-realtime {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: 100%;
+  font-family: var(--code-font);
+  font-size: 13.5px;
+  font-weight: 700;
+  padding: 12px;
+  border-radius: 8px;
+  background: linear-gradient(135deg, #0072bc 0%, #005bb5 100%);
+  color: #ffffff;
+  text-decoration: none;
+  border: 1px solid #1a8cff;
+  box-shadow: 0 4px 14px var(--vnpt-blue-glow);
+  cursor: pointer;
+}
+
+/* Mô phỏng Sóng Wi-Fi trên Mobile */
+.mobile-wifi-anim {
+  position: relative;
+  width: 100%;
+  height: 140px;
+  background: var(--card-subtle);
+  border: 1px dashed var(--border);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 10px 0;
+  overflow: hidden;
+}
+.mobile-ripple {
+  position: absolute;
+  border-radius: 50%;
+  border: 1.5px solid var(--cyan);
+  animation: mobilePulse 2s ease-out infinite;
+}
+.mr1 { width: 40px; height: 40px; animation-delay: 0s; }
+.mr2 { width: 80px; height: 80px; animation-delay: 0.5s; }
+.mr3 { width: 120px; height: 120px; animation-delay: 1s; }
+@keyframes mobilePulse {
+  0% { transform: scale(0.4); opacity: 0.9; }
+  100% { transform: scale(1.3); opacity: 0; }
+}
+
+.mobile-signal-stream-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+  background: var(--card-subtle);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 14px;
+  font-family: var(--code-font);
+  font-size: 11.5px;
+  color: var(--cyan);
+}
+.mobile-v-icon {
+  position: relative;
+  z-index: 2;
+  font-size: 38px;
+  font-weight: 900;
+  color: #ffffff;
+  text-shadow: 0 0 16px var(--cyan);
+}
+
+/* Banner phản hồi thành công */
+.mobile-success-card {
+  background: linear-gradient(135deg, rgba(0, 102, 204, 0.3) 0%, rgba(92, 227, 189, 0.15) 100%);
+  border: 1.5px solid var(--accent);
+  border-radius: 10px;
+  padding: 14px;
+  text-align: center;
+}
+.success-h2 {
+  font-size: 18px;
+  font-weight: 800;
+  color: #ffffff;
+  margin: 4px 0 6px;
+}
+
+/* Thẻ Kỹ Thuật (Tab 2) */
+.tech-card-mobile {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 14px 16px;
+  margin-bottom: 12px;
+}
+.tech-card-mobile .t-num {
+  font-family: var(--code-font);
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--cyan);
+  background: var(--cyan-dim);
+  padding: 2px 6px;
+  border-radius: 3px;
+  display: inline-block;
+  margin-bottom: 6px;
+}
+.tech-card-mobile h3 {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 6px;
+}
+.tech-card-mobile p {
+  font-size: 13px;
+  color: var(--text-muted);
+  line-height: 1.55;
+  margin-bottom: 8px;
+}
+.tech-spec-badge {
+  background: var(--card-subtle);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 6px 10px;
+  font-family: var(--code-font);
+  font-size: 11px;
+  color: var(--cyan);
+  line-height: 1.5;
+}
+
+/* Footer VQEC */
+footer.mobile-footer {
+  border-top: 1px solid var(--border);
+  padding-top: 18px;
+  margin-top: 24px;
+  text-align: center;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+.footer-vqec {
+  font-family: var(--code-font);
+  font-weight: 700;
+  color: var(--vnpt-blue-light);
+  display: block;
+  margin-bottom: 4px;
+}
+</style>
+</head>
+<body>
+<main>
+  <!-- Header thương hiệu VQEC & VNPT -->
+  <header class="mobile-header">
+    <span class="kicker-badge">VQEC · VNPT WI-FI SENSING DEMO</span>
+    <h1 class="mobile-title">Các ứng dụng tiềm năng</h1>
+    <p class="mobile-lead">Khai thác sự thay đổi của tín hiệu Wi-Fi để phát hiện chuyển động và nhận diện một số cử chỉ trong không gian.</p>
+  </header>
+
+  <!-- Thanh Chuyển Tab Di Động -->
+  <nav class="mobile-tabs-bar" aria-label="Mobile Navigation">
+    <button type="button" class="mobile-tab-btn active" data-tab="tab-demo">TRẢI NGHIỆM</button>
+    <button type="button" class="mobile-tab-btn" data-tab="tab-tech">GIỚI THIỆU CÔNG NGHỆ</button>
+    <button type="button" class="mobile-tab-btn" data-tab="tab-apps">ỨNG DỤNG</button>
+  </nav>
+
+  <!-- TAB 1: TRẢI NGHIỆM & QUY TRÌNH HOẠT ĐỘNG (HOW IT WORKS) -->
+  <section id="tab-demo" class="tab-panel active">
+    <!-- KHỐI HOW IT WORKS & POTENTIAL APPLICATIONS CHUẨN MOCKUP -->
+    <div class="how-it-works-block">
+      <h2 class="hiw-heading">HOW IT WORKS</h2>
+      <div class="hiw-list">
+        <!-- 01. Sense -->
+        <div class="hiw-card">
+          <div class="hiw-thumb" aria-hidden="true">
+            <svg viewBox="0 0 72 72" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <rect width="72" height="72" rx="10" fill="url(#sense-bg)"/>
+              <defs>
+                <radialGradient id="sense-bg" cx="50%" cy="50%" r="50%">
+                  <stop offset="0%" stop-color="#0a3266"/>
+                  <stop offset="100%" stop-color="#020813"/>
+                </radialGradient>
+              </defs>
+              <path d="M 18 46 A 22 22 0 0 1 54 46" stroke="#00d2ff" stroke-width="2.6" stroke-linecap="round" opacity="0.95"/>
+              <path d="M 24 49 A 14 14 0 0 1 48 49" stroke="#00a8ff" stroke-width="2.2" stroke-linecap="round" opacity="0.8"/>
+              <path d="M 12 43 A 30 30 0 0 1 60 43" stroke="#0072bc" stroke-width="1.8" stroke-linecap="round" opacity="0.5"/>
+              <circle cx="36" cy="46" r="4.5" fill="#e9f3f8"/>
+              <path d="M 31 62 C 31 54 41 54 41 62" fill="#b0c3d0"/>
+            </svg>
+          </div>
+          <div class="hiw-info">
+            <h3 class="hiw-title">01. Sense</h3>
+            <p class="hiw-desc">Cảm nhận sự thay đổi của tín hiệu Wi-Fi.</p>
+          </div>
+        </div>
+
+        <!-- 02. Recognize -->
+        <div class="hiw-card">
+          <div class="hiw-thumb" aria-hidden="true">
+            <svg viewBox="0 0 72 72" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <rect width="72" height="72" rx="10" fill="url(#rec-bg)"/>
+              <defs>
+                <radialGradient id="rec-bg" cx="50%" cy="50%" r="50%">
+                  <stop offset="0%" stop-color="#14244a"/>
+                  <stop offset="100%" stop-color="#030814"/>
+                </radialGradient>
+                <linearGradient id="heat-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stop-color="#ff4757"/>
+                  <stop offset="40%" stop-color="#ffa502"/>
+                  <stop offset="80%" stop-color="#00d2ff"/>
+                  <stop offset="100%" stop-color="#2ed573"/>
+                </linearGradient>
+              </defs>
+              <g transform="translate(15, 12)">
+                <path d="M 21 27 C 21 22 19 12 17 6 C 16.5 4 14.8 4 14.3 6 C 13.5 11 13.5 19 13.5 24 M 13.5 24 C 12.5 18 10.5 9 9 5 C 8.5 3 6.8 3.5 6.3 5.5 C 5.3 12 6.3 22 6.8 28 M 6.8 28 C 4.8 25 3 22 1.5 21 C 0.5 20.5 -0.5 21.5 0.5 23 C 2.5 26 5 31 7 35 C 9 39 12 43 17 43 C 22 43 25 39 26 34 C 27 28 27 22 27 15 C 27 13 25 13 25 15 C 24 21 23 25 21 27 Z" fill="url(#heat-grad)" opacity="0.95"/>
+                <line x1="2" y1="2" x2="10" y2="2" stroke="#00d2ff" stroke-width="1.5" stroke-linecap="round" stroke-dasharray="2 3"/>
+                <line x1="23" y1="5" x2="31" y2="5" stroke="#2ed573" stroke-width="1.5" stroke-linecap="round" stroke-dasharray="2 3"/>
+                <circle cx="17" cy="6" r="1.8" fill="#ffffff"/>
+                <circle cx="9" cy="5" r="1.8" fill="#ffffff"/>
+              </g>
+            </svg>
+          </div>
+          <div class="hiw-info">
+            <h3 class="hiw-title">02. Recognize</h3>
+            <p class="hiw-desc">Phân tích chuyển động, nhận diện cử chỉ.</p>
+          </div>
+        </div>
+
+        <!-- 03. Interact -->
+        <div class="hiw-card">
+          <div class="hiw-thumb" aria-hidden="true">
+            <svg viewBox="0 0 72 72" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <rect width="72" height="72" rx="10" fill="url(#inter-bg)"/>
+              <defs>
+                <radialGradient id="inter-bg" cx="50%" cy="50%" r="50%">
+                  <stop offset="0%" stop-color="#0a3560"/>
+                  <stop offset="100%" stop-color="#020812"/>
+                </radialGradient>
+              </defs>
+              <path d="M 20 40 L 36 26 L 52 40 L 48 40 L 48 56 L 24 56 L 24 40 Z" fill="#0066cc" opacity="0.8" stroke="#00d2ff" stroke-width="1.6"/>
+              <circle cx="36" cy="42" r="3.5" fill="#ffffff"/>
+              <rect x="32" y="48" width="8" height="8" rx="1" fill="#00d2ff" opacity="0.9"/>
+              <circle cx="36" cy="18" r="3.5" fill="#00d2ff"/>
+              <path d="M 31 15 A 6 6 0 0 1 41 15" stroke="#00d2ff" stroke-width="1.3" stroke-linecap="round"/>
+              <circle cx="56" cy="28" r="3" fill="#2ed573"/>
+              <line x1="52" y1="36" x2="56" y2="31" stroke="#2ed573" stroke-width="1.2" stroke-dasharray="1.5 1.5"/>
+              <circle cx="16" cy="28" r="3" fill="#1a8cff"/>
+              <line x1="22" y1="36" x2="18" y2="30" stroke="#1a8cff" stroke-width="1.2" stroke-dasharray="1.5 1.5"/>
+              <line x1="36" y1="26" x2="36" y2="21.5" stroke="#00d2ff" stroke-width="1.3"/>
+            </svg>
+          </div>
+          <div class="hiw-info">
+            <h3 class="hiw-title">03. Interact</h3>
+            <p class="hiw-desc">Kích hoạt các tương tác và dịch vụ thông minh.</p>
+          </div>
+        </div>
+      </div>
+
+      <hr class="divider-line">
+
+      <!-- POTENTIAL APPLICATIONS GRID -->
+      <h2 class="hiw-heading" style="margin-top:4px">POTENTIAL APPLICATIONS</h2>
+      <div class="apps-grid-modern">
+        <!-- 1. Gesture Control -->
+        <div class="app-card-item">
+          <div class="app-card-head">
+            <svg class="app-card-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M18 11V6a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v0"/>
+              <path d="M14 10V4a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v2"/>
+              <path d="M10 10.5V6a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v8"/>
+              <path d="M18 8a2 2 0 1 1 4 0v6a8 8 0 0 1-8 8h-2c-2.8 0-4.5-.86-5.99-2.34l-3.6-3.6a2 2 0 0 1 2.83-2.82L7 15"/>
+            </svg>
+            <span>Gesture Control</span>
+          </div>
+          <span class="app-card-sub">Điều khiển bằng cử chỉ</span>
+        </div>
+
+        <!-- 2. Smart Home -->
+        <div class="app-card-item">
+          <div class="app-card-head">
+            <svg class="app-card-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+              <polyline points="9 22 9 12 15 12 15 22"/>
+            </svg>
+            <span>Smart Home</span>
+          </div>
+          <span class="app-card-sub">Tự động hóa nhà thông minh</span>
+        </div>
+
+        <!-- 3. Motion Detection -->
+        <div class="app-card-item">
+          <div class="app-card-head">
+            <svg class="app-card-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M2 12h3l2-6 4 12 3-8 2 4h4"/>
+              <rect x="2" y="3" width="20" height="18" rx="4" stroke-width="1.5" opacity="0.4"/>
+            </svg>
+            <span>Motion Detection</span>
+          </div>
+          <span class="app-card-sub">Phát hiện chuyển động</span>
+        </div>
+
+        <!-- 4. Smart Monitoring -->
+        <div class="app-card-item">
+          <div class="app-card-head">
+            <svg class="app-card-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+              <path d="m9 12 2 2 4-4"/>
+            </svg>
+            <span>Smart Monitoring</span>
+          </div>
+          <span class="app-card-sub">Hỗ trợ giám sát thông minh</span>
+        </div>
+      </div>
+    </div>
+    <!-- Bước 1 -->
+    <div class="step-box">
+      <div class="step-tag-wrap">
+        <span class="step-num-badge">BƯỚC 1</span>
+        <span class="step-title-text">Mời trải nghiệm</span>
+      </div>
+      <h2 class="try-big-text">TRY IT NOW!</h2>
+      <p class="step-body-p">Hãy thử vẽ chữ V bằng tay trong không khí.<br>Xem AI Gateway có nhận diện được cử chỉ của bạn không!</p>
+      <a href="/score.html" class="btn-open-realtime">Trải nghiệm nhận diện Live</a>
+    </div>
+
+    <!-- Bước 2 -->
+    <div class="step-box">
+      <div class="step-tag-wrap">
+        <span class="step-num-badge">BƯỚC 2</span>
+        <span class="step-title-text">Wi-Fi cảm nhận</span>
+      </div>
+      <p class="step-body-p">Khi khách thực hiện cử chỉ, màn hình thể hiện hiệu ứng sóng Wi-Fi đang được phân tích và nhận diện chuyển động.</p>
+      <div class="mobile-wifi-anim">
+        <div class="mobile-ripple mr1"></div>
+        <div class="mobile-ripple mr2"></div>
+        <div class="mobile-ripple mr3"></div>
+        <div class="mobile-v-icon">V</div>
+      </div>
+      <p style="font-size:12px;color:var(--text-muted);text-align:center">Trường sóng CSI 5 GHz phân tích biến động vi mô của bàn tay</p>
+    </div>
+
+    <!-- Bước 3 -->
+    <div class="step-box">
+      <div class="step-tag-wrap">
+        <span class="step-num-badge">BƯỚC 3</span>
+        <span class="step-title-text">AI phản hồi</span>
+      </div>
+      <div class="mobile-success-card">
+        <span style="font-family:var(--code-font);font-size:10.5px;color:var(--accent);font-weight:700">KẾT QUẢ THÀNH CÔNG</span>
+        <h2 class="success-h2">"Đã nhận diện V thành công!"</h2>
+        <p style="font-size:12.5px;color:var(--text)">Gateway phát âm thanh chúc mừng hoặc kích hoạt một hiệu ứng tương ứng.</p>
+      </div>
+    </div>
+
+    <!-- Ô Dài Hiển Thị Tín Hiệu Thu Được -->
+    <div class="step-box signal-preview-box">
+      <div class="step-tag-wrap">
+        <span class="step-num-badge">TÍN HIỆU CSI</span>
+        <span class="step-title-text">Tín hiệu thu được thời gian thực</span>
+      </div>
+      <p class="step-body-p">Trường sóng vô tuyến Wi-Fi 5 GHz phản hồi biến động vi mô theo chu kỳ 10 ms (100 gói/giây), phân tách cử chỉ bàn tay khỏi nhiễu môi trường.</p>
+      <div class="mobile-signal-stream-bar">
+        <span>Tần số: 100 Hz (10 ms)</span>
+        <span>Thu nhận: 100 gói/s</span>
+        <span>Trạng thái: Ổn định</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- TAB 2: GIỚI THIỆU CÔNG NGHỆ WI-FI SENSING -->
+  <section id="tab-tech" class="tab-panel">
+    <div class="tech-card-mobile">
+      <span class="t-num">KHÁI NIỆM CƠ BẢN</span>
+      <h3>Wi-Fi Sensing Là Gì?</h3>
+      <p>Wi-Fi Sensing là công nghệ tận dụng sóng Wi-Fi sẵn có trong nhà để cảm nhận chuyển động cơ thể người. Tương tự như viên sỏi ném xuống hồ nước tạo gợn sóng lan tỏa, chuyển động của bạn làm biến thiên trường sóng Wi-Fi, giúp Router nhận diện cử chỉ mà hoàn toàn không cần camera hay micro thu âm.</p>
+      <div class="tech-spec-badge">
+        Cảm biến không dây vô hình<br>
+        Không dùng camera · 100% Riêng tư
+      </div>
+    </div>
+
+    <div class="tech-card-mobile">
+      <span class="t-num">ƯU THẾ VƯỢT TRỘI</span>
+      <h3>Vì Sao An Toàn Hơn Camera?</h3>
+      <p>Không ghi lại bất kỳ hình ảnh riêng tư nào, loại bỏ hoàn toàn nỗi lo bị lộ dữ liệu nhạy cảm ở phòng ngủ hay phòng tắm. Công nghệ hoạt động tin cậy trong bóng tối tuyệt đối và có thể cảm nhận xuyên qua các vật cản nhẹ như rèm cửa hoặc cửa gỗ.</p>
+      <div class="tech-spec-badge">
+        100% Bảo mật dữ liệu cá nhân<br>
+        Hoạt động xuyên bóng tối và vật cản nhẹ
+      </div>
+    </div>
+
+    <div class="tech-card-mobile">
+      <span class="t-num">CÔNG NGHỆ VNPT</span>
+      <h3>Trí Tuệ Nhân Tạo VNPT Edge AI</h3>
+      <p>Được nghiên cứu và làm chủ bởi các kỹ sư VNPT Technology, mô hình Trí tuệ nhân tạo (Edge AI) chạy trực tiếp ngay trên Router. Nhận diện cử chỉ tức thì dưới 10 mili-giây, toàn bộ dữ liệu xử lý tại chỗ trong nhà bạn, không truyền lên đám mây.</p>
+      <div class="tech-spec-badge">
+        Phản hồi tức thì &lt; 10 ms<br>
+        Toàn bộ dữ liệu xử lý cục bộ trên Router
+      </div>
+    </div>
+
+    <div class="tech-card-mobile">
+      <span class="t-num">HƯỚNG PHÁT TRIỂN</span>
+      <h3>Nâng Cấp Thiết Bị Với Chi Phí 0 Đồng</h3>
+      <p>VNPT định hướng phổ cập công nghệ Wi-Fi Sensing đến hàng triệu hộ gia đình qua các bản cập nhật phần mềm từ xa (OTA). Khách hàng không cần mua thêm cảm biến rời, biến chiếc Router sẵn có thành trung tâm nhà thông minh an toàn và tiện nghi.</p>
+      <div class="tech-spec-badge">
+        Chi phí phần cứng bổ sung: 0 VNĐ<br>
+        Cập nhật từ xa qua OTA cho Router VNPT
+      </div>
+    </div>
+  </section>
+
+  <!-- TAB 3: POTENTIAL APPLICATIONS -->
+  <section id="tab-apps" class="tab-panel">
+    <div class="tech-card-mobile">
+      <span class="t-num">ỨNG DỤNG 01</span>
+      <h3>Motion Detection: Phát Hiện Chuyển Động</h3>
+      <p>Giám sát không gian phòng khách, hành lang hoặc văn phòng làm việc. Nhận diện chuyển động bước chân hoặc di chuyển người trong phạm vi 1 – 6 mét xuyên qua rèm cửa, bóng tối và vật cản nhẹ.</p>
+    </div>
+
+    <div class="tech-card-mobile">
+      <span class="t-num">ỨNG DỤNG 02</span>
+      <h3>Gesture Control: Điều Khiển Bằng Cử Chỉ</h3>
+      <p>Nhận diện cử chỉ trong không gian (cử chỉ chữ V, vẫy tay) để kích hoạt lệnh điều khiển nhà thông minh mà không cần chạm tay hay dùng remote.</p>
+    </div>
+
+    <div class="tech-card-mobile">
+      <span class="t-num">ỨNG DỤNG 03</span>
+      <h3>Smart Home: Tự Động Hóa Nhà Thông Minh</h3>
+      <p>Tự động bật đèn khi có người bước vào phòng, tắt điều hòa khi phòng không có người, tạo kịch bản sinh hoạt tiện nghi và tiết kiệm năng lượng.</p>
+    </div>
+
+    <div class="tech-card-mobile">
+      <span class="t-num">ỨNG DỤNG 04</span>
+      <h3>Smart Monitoring: Hỗ Trợ Giám Sát Thông Minh</h3>
+      <p>Cảnh báo ngã (Fall Detection) cho người già tại phòng ngủ hoặc phòng tắm mà không xâm phạm quyền riêng tư (không dùng camera), đồng thời giám sát an ninh chống đột nhập ban đêm.</p>
+    </div>
+  </section>
+</main>
+
+<script>
+// Chuyển tab trên giao diện Mobile
+const tabBtns = document.querySelectorAll('.mobile-tab-btn');
+const tabPanels = document.querySelectorAll('.tab-panel');
+
+tabBtns.forEach(btn => {
+  btn.addEventListener('click', () => {
+    tabBtns.forEach(b => b.classList.remove('active'));
+    tabPanels.forEach(p => p.classList.remove('active'));
+    btn.classList.add('active');
+    const target = document.getElementById(btn.dataset.tab);
+    if (target) target.classList.add('active');
+  });
+});
+</script>
+</body>
+</html>

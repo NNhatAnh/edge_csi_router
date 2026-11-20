@@ -86,26 +86,8 @@ struct CSIData {
     bool is_agc_event = false;                   // Cờ báo hiệu bước nhảy do AGC phần cứng
     bool deep_fade_warning = false;              // Cảnh báo xuất hiện vết lõm tần số (nguy cơ lỗi MCS cao)
 
-    // Model Wake 8082 V6 (M5R) Gesture Recognition (Duy nhat 1 model)
-    std::string wakeup_model = "M5R_V6";
-    std::string wakeup_state = "WAIT_READY";
-    std::string wakeup_reason = "startup";
-    std::string wakeup_event = "NONE";
-    float wakeup_score = 0.0f;
-    int wakeup_label = 0;
-    bool wakeup_triggered = false;
-    float wakeup_progress = 0.0f;
-    float wakeup_stroke_fraction = 0.0f;
-    float gesture_down_duration = 0.0f;
-    float gesture_pause_duration = 0.0f;
-    float gesture_up_duration = 0.0f;
-    int wakeup_ring_size = 0;
-    int wakeup_ring_capacity = 40;
-    int v6_accepted = 0;
-    int v6_rejected = 0;
-
     size_t tonesPerChain() const;
-    std::string toJson(bool include_raw_iq = false) const;
+    std::string toJson(bool include_raw_iq = false, bool include_subcarriers = false) const;
 };
 
 std::string escapeJsonString(const std::string &input);

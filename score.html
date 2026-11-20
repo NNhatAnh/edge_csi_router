@@ -1,0 +1,1178 @@
+<!doctype html>
+<html lang="vi">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Wake · Vẽ chữ V</title>
+<style>
+[hidden]{display:none!important}
+:root{
+  color-scheme:dark;
+  --bg:#07121e;
+  --card:#0e1e2d;
+  --card-subtle:#091622;
+  --line:#1a344b;
+  --border:#1f3d59;
+  --border-focus:#0066cc;
+  --text:#e9f3f8;
+  --muted:#95acc0;
+  --vnpt-blue:#0066cc;
+  --vnpt-blue-light:#1a8cff;
+  --vnpt-blue-glow:rgba(0,102,204,0.45);
+  --cyan:#00d2ff;
+  --cyan-dim:rgba(0,210,255,0.12);
+  --accent:#5ce3bd;
+  --accent-dim:rgba(92,227,189,0.12);
+  --warn:#ffbf8b;
+  --code-font:"DM Mono","Consolas","Courier New",monospace;
+  --sans-font:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font:15px var(--sans-font);line-height:1.55;zoom:0.92}
+main{max-width:1130px;margin:20px auto;padding:0 20px}
+p{margin:6px 0}
+small,.muted{color:var(--muted)}
+section{padding:20px;margin:16px 0;border:1px solid var(--border);border-radius:12px;background:var(--card)}
+
+/* Demo Showcase Header */
+.demo-showcase-header{background:linear-gradient(135deg,rgba(0,102,204,0.15) 0%,rgba(7,18,30,0.9) 100%);border:1px solid rgba(0,102,204,0.35);border-radius:12px;padding:22px 24px;margin-bottom:18px}
+.demo-badge{display:inline-block;font-family:var(--code-font);font-size:11px;font-weight:700;color:var(--cyan);background:var(--cyan-dim);border:1px solid rgba(0,210,255,0.3);padding:3px 9px;border-radius:4px;letter-spacing:0.08em;margin-bottom:8px}
+.demo-title{font-size:24px;font-weight:800;color:#ffffff;margin:2px 0 6px;letter-spacing:-0.01em}
+.demo-desc{color:var(--muted);font-size:14px;max-width:850px;margin:0 0 16px;line-height:1.5}
+.potential-apps-bar{border-top:1px solid rgba(31,61,89,0.8);padding-top:14px}
+.apps-label{font-family:var(--code-font);font-size:11px;font-weight:700;color:var(--vnpt-blue-light);letter-spacing:0.1em;display:block;margin-bottom:8px}
+.apps-grid{display:grid;grid-template-columns:1fr;gap:8px}
+@media(min-width:680px){.apps-grid{grid-template-columns:repeat(2,1fr)}}
+@media(min-width:960px){.apps-grid{grid-template-columns:repeat(4,1fr)}}
+.app-chip{background:var(--card-subtle);border:1px solid var(--border);border-radius:6px;padding:7px 11px;font-size:12px;color:var(--muted);display:flex;align-items:center;gap:6px}
+.app-chip strong{color:var(--text)}
+
+/* 3 Bước Trải Nghiệm (Workflow Sếp) */
+.experience-flow{display:grid;grid-template-columns:1fr;gap:16px;margin:18px 0}
+@media(min-width:860px){.experience-flow{grid-template-columns:1fr 1.15fr 1fr}}
+.step-card{background:var(--card);border:1.5px solid var(--border);border-radius:12px;padding:18px;display:flex;flex-direction:column;position:relative;transition:border-color 0.3s ease,box-shadow 0.3s ease}
+
+/* Hiệu ứng viền Neon từng bước */
+.step-card.step-active-neon{
+  border: 2px solid var(--cyan)!important;
+  box-shadow: 0 0 24px rgba(0,210,255,0.48), inset 0 0 10px rgba(0,210,255,0.08)!important;
+}
+.step-card.step-success-neon{
+  border: 2px solid var(--accent)!important;
+  box-shadow: 0 0 26px rgba(92,227,189,0.55), inset 0 0 12px rgba(92,227,189,0.12)!important;
+}
+
+.step-header{display:flex;align-items:center;gap:8px;margin-bottom:12px;padding-bottom:10px;border-bottom:1px solid var(--line)}
+.step-badge{font-family:var(--code-font);font-size:10.5px;font-weight:700;color:#ffffff;background:var(--vnpt-blue);padding:2px 7px;border-radius:4px}
+.step-name{font-size:13px;font-weight:700;color:var(--text);text-transform:uppercase;letter-spacing:0.04em}
+
+/* Bước 1: Mời trải nghiệm - Không dùng justify-content center ở container ngoài để đồng bộ baseline header */
+.step-invite{text-align:center}
+.try-title{font-size:26px;font-weight:900;color:var(--cyan);margin:8px 0 6px;letter-spacing:0.05em;text-shadow:0 0 15px rgba(0,210,255,0.4)}
+.try-text{color:var(--text);font-size:13.5px;line-height:1.6;margin:0 0 16px}
+.btn-guide-primary{font-family:var(--code-font);font-size:14px;font-weight:700;padding:12px 22px;border-radius:8px;cursor:pointer;background:linear-gradient(135deg,#0072bc 0%,#005bb5 100%);color:#ffffff;border:1px solid #1a8cff;box-shadow:0 4px 15px var(--vnpt-blue-glow);transition:all .2s ease;display:inline-flex;align-items:center;justify-content:center}
+.btn-guide-primary:hover{background:linear-gradient(135deg,#1a8cff 0%,#0066cc 100%);box-shadow:0 6px 20px rgba(0,102,204,0.6);transform:translateY(-1px)}
+.btn-guide-primary:active{transform:translateY(1px)}
+
+/* Bước 2: Wi-Fi Cảm Nhận */
+.step-sensing{align-items:center;text-align:center}
+.wifi-stage{position:relative;width:220px;height:180px;display:flex;align-items:center;justify-content:center;margin:4px 0 12px}
+.wifi-ripples{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none}
+.ripple{position:absolute;border-radius:50%;border:1.5px solid rgba(0,102,204,0.35);opacity:0;transition:all .3s ease}
+.r1{width:80px;height:80px}
+.r2{width:130px;height:130px}
+.r3{width:180px;height:180px}
+.step-sensing[data-active="true"] .r1{animation:wifiPulse 1.8s ease-out infinite}
+.step-sensing[data-active="true"] .r2{animation:wifiPulse 1.8s ease-out 0.45s infinite}
+.step-sensing[data-active="true"] .r3{animation:wifiPulse 1.8s ease-out 0.9s infinite}
+@keyframes wifiPulse{
+  0%{transform:scale(0.6);opacity:0.8;border-color:var(--cyan)}
+  50%{opacity:0.4;border-color:var(--vnpt-blue-light)}
+  100%{transform:scale(1.25);opacity:0;border-color:var(--vnpt-blue)}
+}
+.wifi-stage .v-shape{position:relative;z-index:2;width:170px;height:135px;color:#93cdff}
+.v-shape[data-outcome="pass"]{color:var(--accent)}
+.v-shape[data-outcome="fail"]{color:var(--warn)}
+.v-stroke,.v-point{position:absolute;left:50%;bottom:10px;background:var(--line)}
+.v-stroke{width:12px;height:128px;margin-left:-6px;border-radius:8px;transform-origin:50% 100%;overflow:hidden}
+.v-down{transform:rotate(-33deg)}
+.v-up{transform:rotate(33deg)}
+.v-point{width:18px;height:18px;margin-left:-9px;bottom:5px;border-radius:50%;overflow:hidden}
+.v-fill{position:absolute;inset:0;border-radius:inherit;background:currentColor;opacity:.65;transition:clip-path 90ms linear,opacity 90ms ease,transform 90ms ease}
+.v-down .v-fill{clip-path:inset(0 0 var(--remaining,100%) 0)}
+.v-up .v-fill{clip-path:inset(var(--remaining,100%) 0 0 0)}
+.v-point .v-fill{transform:scale(var(--fraction,0));opacity:calc(.65 * var(--fraction,0))}
+.v-fill[data-confirmed="true"]{opacity:1}
+.v-fill[data-preview="true"]{opacity:.38}
+.v-shape[data-reset="true"] .v-fill{transition:none}
+.pace-dot{display:none;position:absolute;left:10px;top:10px;width:14px;height:14px;border-radius:50%;background:#fff4cb;box-shadow:0 0 12px #fff4cb}
+.step-sensing[data-ready="true"] .pace-dot{display:block;animation:pace 1.65s linear infinite}
+@keyframes pace{
+  0%{transform:translate(0,0)}
+  42%{transform:translate(66px,98px)}
+  50%{transform:translate(71px,104px)}
+  92%{transform:translate(138px,0)}
+  100%{transform:translate(138px,0)}
+}
+.sensing-status{font-size:16px;font-weight:700;color:var(--cyan);margin:4px 0}
+.sensing-note{font-size:11.5px;color:var(--muted);margin:2px 0 8px;line-height:1.45}
+.signal{display:flex;align-items:center;justify-content:center;gap:8px;font-size:12px;color:var(--muted);width:100%}
+meter{width:90px;height:8px}
+
+/* Bước 3: AI Phản hồi */
+.step-response{text-align:center}
+.step-body-centered{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:6px 0;width:100%;min-height:190px}
+.ai-idle-badge{font-family:var(--code-font);font-size:11px;font-weight:700;color:var(--cyan);background:var(--cyan-dim);border:1px solid rgba(0,210,255,0.3);padding:4px 10px;border-radius:5px;letter-spacing:0.08em;margin-bottom:8px}
+.prompt-text{font-size:13.5px;color:var(--text);text-align:center;line-height:1.55;margin:4px 0 0}
+.prompt-text strong{color:var(--cyan)}
+
+.waiting-prompt{padding:24px 10px;color:var(--muted);font-size:13px;display:flex;flex-direction:column;align-items:center;gap:10px}
+.waiting-spinner{width:36px;height:36px;border:3px solid var(--line);border-top-color:var(--vnpt-blue);border-radius:50%;animation:spin 1s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.success-banner{background:linear-gradient(135deg,rgba(0,102,204,0.3) 0%,rgba(92,227,189,0.15) 100%);border:1.5px solid var(--accent);border-radius:10px;padding:20px 16px;animation:celebratePop .35s ease}
+@keyframes celebratePop{0%{transform:scale(0.9);opacity:0}100%{transform:scale(1);opacity:1}}
+.celebration-badge{font-family:var(--code-font);font-size:10.5px;font-weight:700;color:var(--accent);letter-spacing:0.1em;margin-bottom:6px}
+.success-title{font-size:20px;font-weight:800;color:#ffffff;margin:2px 0 8px}
+.success-desc{font-size:12.5px;color:var(--text);line-height:1.5;margin:0 0 14px}
+.btn-retry{font-family:var(--code-font);font-size:12.5px;font-weight:700;padding:8px 16px;border-radius:6px;cursor:pointer;background:transparent;color:var(--accent);border:1px solid var(--accent);transition:all .15s ease}
+.btn-retry:hover{background:var(--accent-dim)}
+.success-timer-wrap{width:100%;height:3px;background:rgba(255,255,255,0.15);border-radius:2px;margin:12px 0 10px;overflow:hidden}
+.success-timer-bar{height:100%;width:100%;background:var(--accent);border-radius:2px;box-shadow:0 0 8px var(--accent)}
+@keyframes successCountDown{from{width:100%}to{width:0%}}
+.success-actions{display:flex;align-items:center;justify-content:center;gap:12px}
+.success-auto-hint{font-size:11px;color:var(--muted)}
+
+/* Phân khu nội dung giới thiệu & thông số kỹ thuật đầy đủ của Tab Chữ V */
+.tab-tech-content{padding:26px 24px;margin:28px 0 20px;background:var(--card);border:1px solid var(--border);border-radius:14px}
+.tech-header{margin-bottom:20px;border-bottom:1px solid var(--border);padding-bottom:16px}
+.tech-kicker{font-family:var(--code-font);font-size:12px;font-weight:700;color:var(--cyan);letter-spacing:0.12em;display:block;margin-bottom:6px}
+.tech-title{font-size:20px;font-weight:700;color:var(--text);margin-bottom:8px}
+.tech-lead{font-size:13.5px;color:var(--muted);line-height:1.6}
+.tech-lead strong{color:var(--text)}
+.tech-grid{display:grid;grid-template-columns:1fr;gap:14px;margin-bottom:24px}
+@media(min-width:720px){.tech-grid{grid-template-columns:1fr 1fr}}
+.tech-card{background:var(--card-subtle);border:1px solid var(--border);border-radius:9px;padding:16px}
+.tech-card-badge{font-family:var(--code-font);font-size:10.5px;font-weight:700;color:var(--vnpt-blue-light);letter-spacing:0.08em;margin-bottom:6px}
+.tech-card h3{font-size:14.5px;font-weight:700;color:var(--text);margin-bottom:8px}
+.tech-card p{font-size:12.5px;color:var(--muted);line-height:1.6;margin:0 0 10px}
+.tech-card p strong{color:var(--text)}
+.tech-card-meta{display:flex;flex-wrap:wrap;gap:8px 14px;border-top:1px dashed var(--border);padding-top:8px;font-family:var(--code-font);font-size:11px;color:var(--cyan)}
+
+/* Ô dài hiển thị luồng tín hiệu CSI thời gian thực */
+.signal-stream-card{margin-top:16px;padding:18px 20px}
+.signal-stream-header{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:12px;padding-bottom:10px;border-bottom:1px solid var(--line)}
+.signal-header-left{display:flex;align-items:center;gap:8px}
+.signal-header-pills{display:flex;align-items:center;flex-wrap:wrap;gap:8px}
+.signal-pill{font-family:var(--code-font);font-size:11.5px;color:var(--muted);background:var(--card-subtle);border:1px solid var(--border);padding:3px 9px;border-radius:5px}
+.signal-pill strong{color:var(--cyan);font-weight:700}
+.signal-canvas-wrap{width:100%;margin:6px 0}
+.live-signal-canvas{width:100%;height:130px;display:block;background:rgba(4,12,20,0.6);border:1px solid var(--border);border-radius:8px}
+.signal-legend-bar{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;font-family:var(--code-font);font-size:11px;color:var(--muted);padding-top:6px}
+.signal-legend-bar span{display:inline-flex;align-items:center;gap:6px}
+.legend-dot{display:inline-block;width:8px;height:8px;border-radius:50%}
+.ld-cyan{background:var(--cyan);box-shadow:0 0 6px var(--cyan)}
+.ld-cam{background:#e3945c}
+.ld-dim{background:rgba(92,227,189,0.5)}
+
+/* ?embed=1: dùng khi nhúng vào trang tổng quan */
+body.embed{background:transparent}
+body.embed main{max-width:none;margin:0;padding:0}
+body.embed #configTitle,body.embed #timing,body.embed .advanced,
+body.embed section[aria-labelledby="labelTitle"],body.embed #diagnostics{display:none!important}
+body.embed section{margin:0 0 12px}
+body.embed #config{margin:0}
+body.embed .signal-stream-card{display:block!important;margin-top:14px}
+body:not(.diag) .advanced{display:none!important}
+body.auto #captureFields,body.auto #config .controls{display:none!important}
+body.auto #config>section,body.auto main>section:first-of-type{border:0;padding:0;background:none}
+</style>
+<main>
+
+<div class="demo-showcase-header">
+  <div class="demo-badge">VQEC · VNPT WI-FI SENSING DEMO</div>
+  <h1 class="demo-title">Các ứng dụng tiềm năng</h1>
+  <p class="demo-desc">Khai thác sự thay đổi của tín hiệu Wi-Fi để phát hiện chuyển động và nhận diện một số cử chỉ trong không gian.</p>
+  
+  <div class="potential-apps-bar">
+    <span class="apps-label">POTENTIAL APPLICATIONS</span>
+    <div class="apps-grid">
+      <div class="app-chip"><div><strong>Motion Detection</strong>: Phát hiện chuyển động</div></div>
+      <div class="app-chip"><div><strong>Gesture Control</strong>: Điều khiển bằng cử chỉ</div></div>
+      <div class="app-chip"><div><strong>Smart Home</strong>: Tự động hóa nhà thông minh</div></div>
+      <div class="app-chip"><div><strong>Smart Monitoring</strong>: Hỗ trợ giám sát thông minh</div></div>
+    </div>
+  </div>
+</div>
+
+
+<section>
+ <h2 id="configTitle">Cấu hình thu CSI</h2>
+ <form id="config">
+  <div class="controls" id="captureFields">
+   <label>Điện thoại 5 GHz<select id="device" name="mac" required><option value="">Đang tìm thiết bị…</option></select></label>
+   <button type="button" id="refresh">Tìm thiết bị</button>
+   <label>IPv4<input name="ip" id="ip" required placeholder="192.168.5.x"></label>
+   <label class="advanced">Model<input value="M5R" readonly></label>
+   <label class="advanced">Ping (ms)<input id="ping" name="ping" type="number" value="10" min="1" max="20" step="1" required></label>
+   <label class="advanced">Bước trượt (gói)<input id="step" name="step" type="number" value="10" min="1" max="40" step="1" required></label>
+   <label class="advanced" hidden>Số nhãn 0 giữ yên cuối (không dùng ở luật V6)<input id="finishLabels" name="finish_labels" type="number" value="24" min="2" max="100" step="1" required></label>
+  </div>
+  <details id="timing"><summary>Luật nhận diện V6</summary>
+   <dl>
+    <dt>Sẵn sàng</dt><dd>Một nhãn 0 hợp lệ.</dd>
+    <dt>Nét xuống</dt><dd>Nhãn 1 liên tục từ 0,15 đến 1,5 s.</dd>
+    <dt>Khựng ở đáy</dt><dd>Nhãn 0 liên tục từ 0,10 đến 2 s.</dd>
+    <dt>Nét lên</dt><dd>Nhãn 1 liên tục từ 0,15 đến 2 s.</dd>
+    <dt>Giữ yên cuối</dt><dd>Nhãn 0 liên tục ít nhất 0,5 s. Giới hạn toàn lượt 5,5 s.<span id="finishRuleCount" hidden></span></dd>
+   </dl>
+  </details>
+  <div class="controls"><button class="primary" id="start" disabled>Bắt đầu</button><button type="button" id="stop" disabled>Dừng</button></div>
+ </form>
+ <p id="error" role="alert"></p>
+ <p id="notice" role="alert" hidden></p>
+</section>
+
+
+<section id="guide" class="guide-experience">
+  <div class="experience-flow">
+    <!-- Bước 1 – Mời trải nghiệm -->
+    <div class="step-card step-invite" id="stepInvite">
+      <div class="step-header">
+        <span class="step-badge">BƯỚC 1</span>
+        <span class="step-name">Mời trải nghiệm</span>
+      </div>
+      <div class="step-body-centered">
+        <h2 class="try-title">TRY IT NOW!</h2>
+        <p class="try-text">Hãy thử vẽ chữ V bằng tay trong không khí.<br>Xem AI Gateway có nhận diện được cử chỉ của bạn không!</p>
+        <div class="guide-ctrl-bar">
+          <button type="button" class="btn-guide-primary" id="btnToggleCapture">Bắt đầu trải nghiệm</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bước 2 – Wi-Fi cảm nhận -->
+    <div class="step-card step-sensing" id="stepSensing" data-active="false">
+      <div class="step-header">
+        <span class="step-badge">BƯỚC 2</span>
+        <span class="step-name">Wi-Fi cảm nhận</span>
+      </div>
+      
+      <div class="wifi-stage">
+        <div class="wifi-ripples" id="wifiRipples">
+          <div class="ripple r1"></div>
+          <div class="ripple r2"></div>
+          <div class="ripple r3"></div>
+        </div>
+        
+        <div class="v-shape" id="vShape" aria-hidden="true">
+          <span class="v-stroke v-down"><span class="v-fill" id="vDown"></span></span>
+          <span class="v-stroke v-up"><span class="v-fill" id="vUp"></span></span>
+          <span class="v-point"><span class="v-fill" id="vPoint"></span></span>
+          <span class="pace-dot"></span>
+        </div>
+      </div>
+
+      <div id="state" class="sensing-status" aria-live="polite">Giữ yên để chuẩn bị</div>
+      <p id="guideDetail" class="sensing-note">Khi khách thực hiện cử chỉ, màn hình thể hiện hiệu ứng sóng Wi-Fi đang được phân tích và nhận diện chuyển động.</p>
+      
+      <div class="signal">
+        <label for="signal">Tín hiệu CSI</label>
+        <meter id="signal" max="100" aria-label="Gói CSI hợp lệ mỗi giây"></meter>
+        <span id="packetRate">— gói/s</span>
+      </div>
+      <p id="noise" role="status" hidden>Môi trường nhiễu</p>
+    </div>
+
+            <!-- Bước 3 – AI phản hồi -->
+    <div class="step-card step-response" id="stepResponse">
+      <div class="step-header">
+        <span class="step-badge">BƯỚC 3</span>
+        <span class="step-name">AI phản hồi</span>
+      </div>
+      
+      <div class="step-body-centered">
+        <!-- Trạng thái 1: Tĩnh khi chưa bắt đầu (KHÔNG XOAY, ĐẦY ĐỦ CHỮ) -->
+        <div class="waiting-prompt prompt-standby" id="standbyPrompt">
+          <div class="ai-idle-badge">AI STANDBY</div>
+          <p class="prompt-text">Sẵn sàng kết nối.<br>Bấm <strong>"Bắt đầu trải nghiệm"</strong> ở Bước 1 để AI Gateway theo dõi.</p>
+        </div>
+
+        <!-- Trạng thái 2: Đang theo dõi (CHỈ XOAY KHI BẮT ĐẦU) -->
+        <div class="waiting-prompt prompt-active" id="waitingPrompt" hidden>
+          <div class="waiting-spinner"></div>
+          <p class="prompt-text">AI đang phân tích sóng Wi-Fi và nhận diện cử chỉ...</p>
+        </div>
+
+        <!-- Trạng thái 3: Kết quả thành công -->
+        <div class="success-banner" id="successBanner" hidden>
+          <div class="celebration-badge">NHẬN DIỆN THÀNH CÔNG</div>
+          <h2 class="success-title">Đã nhận diện V thành công!</h2>
+          <p class="success-desc">AI Gateway đã nhận diện chính xác cử chỉ chữ V và kích hoạt phản hồi tương ứng.</p>
+          <div class="success-timer-wrap">
+            <div class="success-timer-bar" id="successTimerBar"></div>
+          </div>
+          <div class="success-actions">
+            <button type="button" class="btn-retry" id="btnSuccessRetry">Thử lại ngay</button>
+            <small class="success-auto-hint">Tự động hoàn tất sau 5 giây</small>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Ô DÀI HIỂN THỊ TÍN HIỆU THU ĐƯỢC THỜI GIAN THỰC -->
+  <div class="step-card signal-stream-card" id="signalStreamCard">
+    <div class="step-header signal-stream-header">
+      <div class="signal-header-left">
+        <span class="step-badge">TÍN HIỆU CSI</span>
+        <span class="step-name">Tín hiệu sóng Wi-Fi thu được theo thời gian thực (100 Hz)</span>
+      </div>
+      <div class="signal-header-pills">
+        <span class="signal-pill">Lấy mẫu: <strong>100 Hz</strong></span>
+        <span class="signal-pill">Thu nhận: <strong id="streamPacketRate">— gói/s</strong></span>
+        <span class="signal-pill">Điểm AI: <strong id="streamScoreValue" style="color:var(--accent)">—</strong></span>
+        <span class="signal-pill">Nhãn: <strong id="streamLabelNum">—</strong></span>
+        <span class="signal-pill">Trạng thái: <strong id="streamMotionStatus">Sẵn sàng</strong></span>
+      </div>
+    </div>
+    
+    <div class="signal-canvas-wrap">
+      <canvas id="liveSignalPlot" class="live-signal-canvas" height="130"></canvas>
+    </div>
+
+    <div class="signal-legend-bar">
+      <span><i class="legend-dot ld-cyan"></i> Đường sóng xanh Cyan: Biến thiên tín hiệu sóng & điểm tin cậy cử chỉ</span>
+      <span><i class="legend-dot ld-cam"></i> Đường đứt cam: Ngưỡng nhận diện (P &ge; 0.70)</span>
+      <span><i class="legend-dot ld-dim"></i> Vùng sáng: Giai đoạn phát hiện chuyển động</span>
+    </div>
+  </div>
+</section>
+
+<section aria-labelledby="labelTitle">
+  <div class="chart-heading">
+    <h2 id="labelTitle">Nhãn chuyển động M5R</h2>
+    <span id="labelStatus">Chưa có nhãn</span>
+  </div>
+  <canvas id="labelPlot" role="img" aria-label="Đồ thị nhãn trong 30 giây gần nhất. 0 là đứng yên, 1 là chuyển động."></canvas>
+  <p class="chart-legend"><span>0 · Đứng yên</span><span>1 · Chuyển động</span></p>
+</section>
+<section id="diagnostics" hidden>
+  <h2>Chẩn đoán M5R</h2>
+  <div class="controls">
+    <button type="button" id="mark" disabled>Bắt đầu vẽ</button>
+    <a href="/api/score/log" download="wake-score.csv">Tải CSV</a>
+  </div>
+  <p class="muted" id="markStatus" aria-live="polite">Nhấn Space trước khi vẽ và ngay khi vẽ xong.</p>
+  <p class="muted" id="fastCounts"></p>
+  <canvas id="scorePlot" aria-label="Điểm M5R trong 30 giây, đường ngưỡng 0,70"></canvas>
+</section>
+
+<!-- BẢNG GIỚI THIỆU CÔNG NGHỆ WI-FI SENSING (HIỂN THỊ TRONG TAB DEMO WI-FI SENSING) -->
+<section class="tab-tech-content" id="tabTechContent">
+  <div class="tech-header">
+    <span class="tech-kicker">GIỚI THIỆU CÔNG NGHỆ · VNPT TECHNOLOGY</span>
+    <h2 class="tech-title">Wi-Fi Sensing: Công Nghệ Cảm Nhận Không Gian Bằng Sóng Vô Tuyến</h2>
+    <p class="tech-lead">
+      Giải pháp đột phá biến sóng Wi-Fi sẵn có trong nhà thành "mắt thần" vô hình cảm nhận chuyển động theo thời gian thực.
+      <strong>Không sử dụng camera</strong> (bảo vệ quyền riêng tư 100%), <strong>không cần thiết bị đeo</strong>, hoạt động tốt trong bóng tối và xuyên vật cản nhẹ.
+    </p>
+  </div>
+
+  <div class="tech-grid">
+    <!-- Module 1: Wi-Fi Sensing là gì? -->
+    <div class="tech-card">
+      <div class="tech-card-badge">KHÁI NIỆM CƠ BẢN</div>
+      <h3>Wi-Fi Sensing Là Gì?</h3>
+      <p>
+        Trong mỗi ngôi nhà, sóng Wi-Fi liên tục phát ra từ Router và bao phủ mọi ngóc ngách. Khi một người bước đi, ngồi xuống, vẫy tay hay cử động, cơ thể người sẽ làm biến dạng và tán xạ trường sóng vô tuyến (tương tự như khi ném viên sỏi xuống mặt hồ tạo ra các gợn sóng lan tỏa).<br><br>
+        Công nghệ Wi-Fi Sensing ghi nhận và phân tích các gợn sóng biến thiên này để nhận diện chuyển động mà <strong>hoàn toàn không cần gắn camera ghi hình và không dùng micro thu âm</strong>.
+      </p>
+      <div class="tech-card-meta">
+        <span>100% Bảo vệ riêng tư</span>
+        <span>Không góc khuất, xuyên bóng tối</span>
+      </div>
+    </div>
+
+    <!-- Module 2: Wi-Fi Sensing làm được những gì? -->
+    <div class="tech-card">
+      <div class="tech-card-badge">ỨNG DỤNG THỰC TẾ</div>
+      <h3>Wi-Fi Sensing Có Thể Làm Được Gì?</h3>
+      <p>
+        <strong>1. Phát hiện chuyển động (Motion Detection)</strong>: Nhận biết có người vào phòng, hành lang trong cự ly 1 – 6m.<br>
+        <strong>2. Điều khiển bằng cử chỉ (Gesture Control)</strong>: Khua tay vẽ chữ V, vẫy tay ra lệnh cho thiết bị thông minh không cần chạm tay.<br>
+        <strong>3. Tự động hóa nhà ở (Smart Home)</strong>: Tự bật đèn khi có người, tự tắt điều hòa khi vắng nhà, tiết kiệm điện năng.<br>
+        <strong>4. Giám sát an toàn & An ninh (Smart Monitoring)</strong>: Cảnh báo té ngã cho người cao tuổi ở phòng ngủ/nhà tắm và báo động chống trộm ban đêm.
+      </p>
+      <div class="tech-card-meta">
+        <span>Zero-Wearable (Không cần đeo)</span>
+        <span>Tự động hóa thông minh</span>
+      </div>
+    </div>
+
+    <!-- Module 3: VNPT đang nghiên cứu những gì? -->
+    <div class="tech-card">
+      <div class="tech-card-badge">LÀM CHỦ CÔNG NGHỆ</div>
+      <h3>VNPT Đang Nghiên Cứu Những Gì?</h3>
+      <p>
+        Kỹ sư tại VNPT Technology (VQEC) đã làm chủ giải pháp trích xuất dữ liệu sóng vô tuyến và tích hợp mô hình <strong>Trí tuệ nhân tạo (Edge AI) xử lý trực tiếp ngay trên Router VNPT</strong>.<br><br>
+        Mọi cử chỉ được nhận diện tức thì trong chưa đầy 10 mili-giây. Toàn bộ dữ liệu được <strong>xử lý cục bộ tại thiết bị trong nhà, không gửi lên máy chủ đám mây</strong>, đảm bảo tốc độ phản hồi cực nhanh và an toàn tuyệt đối.
+      </p>
+      <div class="tech-card-meta">
+        <span>Xử lý tại biên (Edge AI &lt; 10ms)</span>
+        <span>Dữ liệu ở lại trong nhà</span>
+      </div>
+    </div>
+
+    <!-- Module 4: Hướng phát triển của VNPT -->
+    <div class="tech-card">
+      <div class="tech-card-badge">HƯỚNG PHÁT TRIỂN</div>
+      <h3>Định Hướng Phát Triển Của VNPT</h3>
+      <p>
+        Mục tiêu của VNPT là đưa tiện ích Wi-Fi Sensing đến hàng triệu hộ gia đình trên khắp Việt Nam thông qua các bản cập nhật phần mềm từ xa (OTA), <strong>với chi phí mua sắm thiết bị mới = 0 đồng</strong>.<br><br>
+        Chiếc Router Wi-Fi thân thuộc sẽ đóng vai trò trung tâm cảm nhận thông minh, kiến tạo hệ sinh thái Nhà thông minh an toàn, riêng tư và hiện đại cho mọi gia đình Việt.
+      </p>
+      <div class="tech-card-meta">
+        <span>Chi phí thiết bị: 0 VNĐ (OTA)</span>
+        <span>Hệ sinh thái thông minh người Việt</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<!-- Widget Mã QR cố định ở góc màn hình -->
+
+
+<script type="text/javascript">
+var QRCode;!function(){function a(a){this.mode=c.MODE_8BIT_BYTE,this.data=a,this.parsedData=[];for(var b=[],d=0,e=this.data.length;e>d;d++){var f=this.data.charCodeAt(d);f>65536?(b[0]=240|(1835008&f)>>>18,b[1]=128|(258048&f)>>>12,b[2]=128|(4032&f)>>>6,b[3]=128|63&f):f>2048?(b[0]=224|(61440&f)>>>12,b[1]=128|(4032&f)>>>6,b[2]=128|63&f):f>128?(b[0]=192|(1984&f)>>>6,b[1]=128|63&f):b[0]=f,this.parsedData=this.parsedData.concat(b)}this.parsedData.length!=this.data.length&&(this.parsedData.unshift(191),this.parsedData.unshift(187),this.parsedData.unshift(239))}function b(a,b){this.typeNumber=a,this.errorCorrectLevel=b,this.modules=null,this.moduleCount=0,this.dataCache=null,this.dataList=[]}function i(a,b){if(void 0==a.length)throw new Error(a.length+"/"+b);for(var c=0;c<a.length&&0==a[c];)c++;this.num=new Array(a.length-c+b);for(var d=0;d<a.length-c;d++)this.num[d]=a[d+c]}function j(a,b){this.totalCount=a,this.dataCount=b}function k(){this.buffer=[],this.length=0}function m(){return"undefined"!=typeof CanvasRenderingContext2D}function n(){var a=!1,b=navigator.userAgent;return/android/i.test(b)&&(a=!0,aMat=b.toString().match(/android ([0-9]\.[0-9])/i),aMat&&aMat[1]&&(a=parseFloat(aMat[1]))),a}function r(a,b){for(var c=1,e=s(a),f=0,g=l.length;g>=f;f++){var h=0;switch(b){case d.L:h=l[f][0];break;case d.M:h=l[f][1];break;case d.Q:h=l[f][2];break;case d.H:h=l[f][3]}if(h>=e)break;c++}if(c>l.length)throw new Error("Too long data");return c}function s(a){var b=encodeURI(a).toString().replace(/\%[0-9a-fA-F]{2}/g,"a");return b.length+(b.length!=a?3:0)}a.prototype={getLength:function(){return this.parsedData.length},write:function(a){for(var b=0,c=this.parsedData.length;c>b;b++)a.put(this.parsedData[b],8)}},b.prototype={addData:function(b){var c=new a(b);this.dataList.push(c),this.dataCache=null},isDark:function(a,b){if(0>a||this.moduleCount<=a||0>b||this.moduleCount<=b)throw new Error(a+","+b);return this.modules[a][b]},getModuleCount:function(){return this.moduleCount},make:function(){this.makeImpl(!1,this.getBestMaskPattern())},makeImpl:function(a,c){this.moduleCount=4*this.typeNumber+17,this.modules=new Array(this.moduleCount);for(var d=0;d<this.moduleCount;d++){this.modules[d]=new Array(this.moduleCount);for(var e=0;e<this.moduleCount;e++)this.modules[d][e]=null}this.setupPositionProbePattern(0,0),this.setupPositionProbePattern(this.moduleCount-7,0),this.setupPositionProbePattern(0,this.moduleCount-7),this.setupPositionAdjustPattern(),this.setupTimingPattern(),this.setupTypeInfo(a,c),this.typeNumber>=7&&this.setupTypeNumber(a),null==this.dataCache&&(this.dataCache=b.createData(this.typeNumber,this.errorCorrectLevel,this.dataList)),this.mapData(this.dataCache,c)},setupPositionProbePattern:function(a,b){for(var c=-1;7>=c;c++)if(!(-1>=a+c||this.moduleCount<=a+c))for(var d=-1;7>=d;d++)-1>=b+d||this.moduleCount<=b+d||(this.modules[a+c][b+d]=c>=0&&6>=c&&(0==d||6==d)||d>=0&&6>=d&&(0==c||6==c)||c>=2&&4>=c&&d>=2&&4>=d?!0:!1)},getBestMaskPattern:function(){for(var a=0,b=0,c=0;8>c;c++){this.makeImpl(!0,c);var d=f.getLostPoint(this);(0==c||a>d)&&(a=d,b=c)}return b},createMovieClip:function(a,b,c){var d=a.createEmptyMovieClip(b,c),e=1;this.make();for(var f=0;f<this.modules.length;f++)for(var g=f*e,h=0;h<this.modules[f].length;h++){var i=h*e,j=this.modules[f][h];j&&(d.beginFill(0,100),d.moveTo(i,g),d.lineTo(i+e,g),d.lineTo(i+e,g+e),d.lineTo(i,g+e),d.endFill())}return d},setupTimingPattern:function(){for(var a=8;a<this.moduleCount-8;a++)null==this.modules[a][6]&&(this.modules[a][6]=0==a%2);for(var b=8;b<this.moduleCount-8;b++)null==this.modules[6][b]&&(this.modules[6][b]=0==b%2)},setupPositionAdjustPattern:function(){for(var a=f.getPatternPosition(this.typeNumber),b=0;b<a.length;b++)for(var c=0;c<a.length;c++){var d=a[b],e=a[c];if(null==this.modules[d][e])for(var g=-2;2>=g;g++)for(var h=-2;2>=h;h++)this.modules[d+g][e+h]=-2==g||2==g||-2==h||2==h||0==g&&0==h?!0:!1}},setupTypeNumber:function(a){for(var b=f.getBCHTypeNumber(this.typeNumber),c=0;18>c;c++){var d=!a&&1==(1&b>>c);this.modules[Math.floor(c/3)][c%3+this.moduleCount-8-3]=d}for(var c=0;18>c;c++){var d=!a&&1==(1&b>>c);this.modules[c%3+this.moduleCount-8-3][Math.floor(c/3)]=d}},setupTypeInfo:function(a,b){for(var c=this.errorCorrectLevel<<3|b,d=f.getBCHTypeInfo(c),e=0;15>e;e++){var g=!a&&1==(1&d>>e);6>e?this.modules[e][8]=g:8>e?this.modules[e+1][8]=g:this.modules[this.moduleCount-15+e][8]=g}for(var e=0;15>e;e++){var g=!a&&1==(1&d>>e);8>e?this.modules[8][this.moduleCount-e-1]=g:9>e?this.modules[8][15-e-1+1]=g:this.modules[8][15-e-1]=g}this.modules[this.moduleCount-8][8]=!a},mapData:function(a,b){for(var c=-1,d=this.moduleCount-1,e=7,g=0,h=this.moduleCount-1;h>0;h-=2)for(6==h&&h--;;){for(var i=0;2>i;i++)if(null==this.modules[d][h-i]){var j=!1;g<a.length&&(j=1==(1&a[g]>>>e));var k=f.getMask(b,d,h-i);k&&(j=!j),this.modules[d][h-i]=j,e--,-1==e&&(g++,e=7)}if(d+=c,0>d||this.moduleCount<=d){d-=c,c=-c;break}}}},b.PAD0=236,b.PAD1=17,b.createData=function(a,c,d){for(var e=j.getRSBlocks(a,c),g=new k,h=0;h<d.length;h++){var i=d[h];g.put(i.mode,4),g.put(i.getLength(),f.getLengthInBits(i.mode,a)),i.write(g)}for(var l=0,h=0;h<e.length;h++)l+=e[h].dataCount;if(g.getLengthInBits()>8*l)throw new Error("code length overflow. ("+g.getLengthInBits()+">"+8*l+")");for(g.getLengthInBits()+4<=8*l&&g.put(0,4);0!=g.getLengthInBits()%8;)g.putBit(!1);for(;;){if(g.getLengthInBits()>=8*l)break;if(g.put(b.PAD0,8),g.getLengthInBits()>=8*l)break;g.put(b.PAD1,8)}return b.createBytes(g,e)},b.createBytes=function(a,b){for(var c=0,d=0,e=0,g=new Array(b.length),h=new Array(b.length),j=0;j<b.length;j++){var k=b[j].dataCount,l=b[j].totalCount-k;d=Math.max(d,k),e=Math.max(e,l),g[j]=new Array(k);for(var m=0;m<g[j].length;m++)g[j][m]=255&a.buffer[m+c];c+=k;var n=f.getErrorCorrectPolynomial(l),o=new i(g[j],n.getLength()-1),p=o.mod(n);h[j]=new Array(n.getLength()-1);for(var m=0;m<h[j].length;m++){var q=m+p.getLength()-h[j].length;h[j][m]=q>=0?p.get(q):0}}for(var r=0,m=0;m<b.length;m++)r+=b[m].totalCount;for(var s=new Array(r),t=0,m=0;d>m;m++)for(var j=0;j<b.length;j++)m<g[j].length&&(s[t++]=g[j][m]);for(var m=0;e>m;m++)for(var j=0;j<b.length;j++)m<h[j].length&&(s[t++]=h[j][m]);return s};for(var c={MODE_NUMBER:1,MODE_ALPHA_NUM:2,MODE_8BIT_BYTE:4,MODE_KANJI:8},d={L:1,M:0,Q:3,H:2},e={PATTERN000:0,PATTERN001:1,PATTERN010:2,PATTERN011:3,PATTERN100:4,PATTERN101:5,PATTERN110:6,PATTERN111:7},f={PATTERN_POSITION_TABLE:[[],[6,18],[6,22],[6,26],[6,30],[6,34],[6,22,38],[6,24,42],[6,26,46],[6,28,50],[6,30,54],[6,32,58],[6,34,62],[6,26,46,66],[6,26,48,70],[6,26,50,74],[6,30,54,78],[6,30,56,82],[6,30,58,86],[6,34,62,90],[6,28,50,72,94],[6,26,50,74,98],[6,30,54,78,102],[6,28,54,80,106],[6,32,58,84,110],[6,30,58,86,114],[6,34,62,90,118],[6,26,50,74,98,122],[6,30,54,78,102,126],[6,26,52,78,104,130],[6,30,56,82,108,134],[6,34,60,86,112,138],[6,30,58,86,114,142],[6,34,62,90,118,146],[6,30,54,78,102,126,150],[6,24,50,76,102,128,154],[6,28,54,80,106,132,158],[6,32,58,84,110,136,162],[6,26,54,82,110,138,166],[6,30,58,86,114,142,170]],G15:1335,G18:7973,G15_MASK:21522,getBCHTypeInfo:function(a){for(var b=a<<10;f.getBCHDigit(b)-f.getBCHDigit(f.G15)>=0;)b^=f.G15<<f.getBCHDigit(b)-f.getBCHDigit(f.G15);return(a<<10|b)^f.G15_MASK},getBCHTypeNumber:function(a){for(var b=a<<12;f.getBCHDigit(b)-f.getBCHDigit(f.G18)>=0;)b^=f.G18<<f.getBCHDigit(b)-f.getBCHDigit(f.G18);return a<<12|b},getBCHDigit:function(a){for(var b=0;0!=a;)b++,a>>>=1;return b},getPatternPosition:function(a){return f.PATTERN_POSITION_TABLE[a-1]},getMask:function(a,b,c){switch(a){case e.PATTERN000:return 0==(b+c)%2;case e.PATTERN001:return 0==b%2;case e.PATTERN010:return 0==c%3;case e.PATTERN011:return 0==(b+c)%3;case e.PATTERN100:return 0==(Math.floor(b/2)+Math.floor(c/3))%2;case e.PATTERN101:return 0==b*c%2+b*c%3;case e.PATTERN110:return 0==(b*c%2+b*c%3)%2;case e.PATTERN111:return 0==(b*c%3+(b+c)%2)%2;default:throw new Error("bad maskPattern:"+a)}},getErrorCorrectPolynomial:function(a){for(var b=new i([1],0),c=0;a>c;c++)b=b.multiply(new i([1,g.gexp(c)],0));return b},getLengthInBits:function(a,b){if(b>=1&&10>b)switch(a){case c.MODE_NUMBER:return 10;case c.MODE_ALPHA_NUM:return 9;case c.MODE_8BIT_BYTE:return 8;case c.MODE_KANJI:return 8;default:throw new Error("mode:"+a)}else if(27>b)switch(a){case c.MODE_NUMBER:return 12;case c.MODE_ALPHA_NUM:return 11;case c.MODE_8BIT_BYTE:return 16;case c.MODE_KANJI:return 10;default:throw new Error("mode:"+a)}else{if(!(41>b))throw new Error("type:"+b);switch(a){case c.MODE_NUMBER:return 14;case c.MODE_ALPHA_NUM:return 13;case c.MODE_8BIT_BYTE:return 16;case c.MODE_KANJI:return 12;default:throw new Error("mode:"+a)}}},getLostPoint:function(a){for(var b=a.getModuleCount(),c=0,d=0;b>d;d++)for(var e=0;b>e;e++){for(var f=0,g=a.isDark(d,e),h=-1;1>=h;h++)if(!(0>d+h||d+h>=b))for(var i=-1;1>=i;i++)0>e+i||e+i>=b||(0!=h||0!=i)&&g==a.isDark(d+h,e+i)&&f++;f>5&&(c+=3+f-5)}for(var d=0;b-1>d;d++)for(var e=0;b-1>e;e++){var j=0;a.isDark(d,e)&&j++,a.isDark(d+1,e)&&j++,a.isDark(d,e+1)&&j++,a.isDark(d+1,e+1)&&j++,(0==j||4==j)&&(c+=3)}for(var d=0;b>d;d++)for(var e=0;b-6>e;e++)a.isDark(d,e)&&!a.isDark(d,e+1)&&a.isDark(d,e+2)&&a.isDark(d,e+3)&&a.isDark(d,e+4)&&!a.isDark(d,e+5)&&a.isDark(d,e+6)&&(c+=40);for(var e=0;b>e;e++)for(var d=0;b-6>d;d++)a.isDark(d,e)&&!a.isDark(d+1,e)&&a.isDark(d+2,e)&&a.isDark(d+3,e)&&a.isDark(d+4,e)&&!a.isDark(d+5,e)&&a.isDark(d+6,e)&&(c+=40);for(var k=0,e=0;b>e;e++)for(var d=0;b>d;d++)a.isDark(d,e)&&k++;var l=Math.abs(100*k/b/b-50)/5;return c+=10*l}},g={glog:function(a){if(1>a)throw new Error("glog("+a+")");return g.LOG_TABLE[a]},gexp:function(a){for(;0>a;)a+=255;for(;a>=256;)a-=255;return g.EXP_TABLE[a]},EXP_TABLE:new Array(256),LOG_TABLE:new Array(256)},h=0;8>h;h++)g.EXP_TABLE[h]=1<<h;for(var h=8;256>h;h++)g.EXP_TABLE[h]=g.EXP_TABLE[h-4]^g.EXP_TABLE[h-5]^g.EXP_TABLE[h-6]^g.EXP_TABLE[h-8];for(var h=0;255>h;h++)g.LOG_TABLE[g.EXP_TABLE[h]]=h;i.prototype={get:function(a){return this.num[a]},getLength:function(){return this.num.length},multiply:function(a){for(var b=new Array(this.getLength()+a.getLength()-1),c=0;c<this.getLength();c++)for(var d=0;d<a.getLength();d++)b[c+d]^=g.gexp(g.glog(this.get(c))+g.glog(a.get(d)));return new i(b,0)},mod:function(a){if(this.getLength()-a.getLength()<0)return this;for(var b=g.glog(this.get(0))-g.glog(a.get(0)),c=new Array(this.getLength()),d=0;d<this.getLength();d++)c[d]=this.get(d);for(var d=0;d<a.getLength();d++)c[d]^=g.gexp(g.glog(a.get(d))+b);return new i(c,0).mod(a)}},j.RS_BLOCK_TABLE=[[1,26,19],[1,26,16],[1,26,13],[1,26,9],[1,44,34],[1,44,28],[1,44,22],[1,44,16],[1,70,55],[1,70,44],[2,35,17],[2,35,13],[1,100,80],[2,50,32],[2,50,24],[4,25,9],[1,134,108],[2,67,43],[2,33,15,2,34,16],[2,33,11,2,34,12],[2,86,68],[4,43,27],[4,43,19],[4,43,15],[2,98,78],[4,49,31],[2,32,14,4,33,15],[4,39,13,1,40,14],[2,121,97],[2,60,38,2,61,39],[4,40,18,2,41,19],[4,40,14,2,41,15],[2,146,116],[3,58,36,2,59,37],[4,36,16,4,37,17],[4,36,12,4,37,13],[2,86,68,2,87,69],[4,69,43,1,70,44],[6,43,19,2,44,20],[6,43,15,2,44,16],[4,101,81],[1,80,50,4,81,51],[4,50,22,4,51,23],[3,36,12,8,37,13],[2,116,92,2,117,93],[6,58,36,2,59,37],[4,46,20,6,47,21],[7,42,14,4,43,15],[4,133,107],[8,59,37,1,60,38],[8,44,20,4,45,21],[12,33,11,4,34,12],[3,145,115,1,146,116],[4,64,40,5,65,41],[11,36,16,5,37,17],[11,36,12,5,37,13],[5,109,87,1,110,88],[5,65,41,5,66,42],[5,54,24,7,55,25],[11,36,12],[5,122,98,1,123,99],[7,73,45,3,74,46],[15,43,19,2,44,20],[3,45,15,13,46,16],[1,135,107,5,136,108],[10,74,46,1,75,47],[1,50,22,15,51,23],[2,42,14,17,43,15],[5,150,120,1,151,121],[9,69,43,4,70,44],[17,50,22,1,51,23],[2,42,14,19,43,15],[3,141,113,4,142,114],[3,70,44,11,71,45],[17,47,21,4,48,22],[9,39,13,16,40,14],[3,135,107,5,136,108],[3,67,41,13,68,42],[15,54,24,5,55,25],[15,43,15,10,44,16],[4,144,116,4,145,117],[17,68,42],[17,50,22,6,51,23],[19,46,16,6,47,17],[2,139,111,7,140,112],[17,74,46],[7,54,24,16,55,25],[34,37,13],[4,151,121,5,152,122],[4,75,47,14,76,48],[11,54,24,14,55,25],[16,45,15,14,46,16],[6,147,117,4,148,118],[6,73,45,14,74,46],[11,54,24,16,55,25],[30,46,16,2,47,17],[8,132,106,4,133,107],[8,75,47,13,76,48],[7,54,24,22,55,25],[22,45,15,13,46,16],[10,142,114,2,143,115],[19,74,46,4,75,47],[28,50,22,6,51,23],[33,46,16,4,47,17],[8,152,122,4,153,123],[22,73,45,3,74,46],[8,53,23,26,54,24],[12,45,15,28,46,16],[3,147,117,10,148,118],[3,73,45,23,74,46],[4,54,24,31,55,25],[11,45,15,31,46,16],[7,146,116,7,147,117],[21,73,45,7,74,46],[1,53,23,37,54,24],[19,45,15,26,46,16],[5,145,115,10,146,116],[19,75,47,10,76,48],[15,54,24,25,55,25],[23,45,15,25,46,16],[13,145,115,3,146,116],[2,74,46,29,75,47],[42,54,24,1,55,25],[23,45,15,28,46,16],[17,145,115],[10,74,46,23,75,47],[10,54,24,35,55,25],[19,45,15,35,46,16],[17,145,115,1,146,116],[14,74,46,21,75,47],[29,54,24,19,55,25],[11,45,15,46,46,16],[13,145,115,6,146,116],[14,74,46,23,75,47],[44,54,24,7,55,25],[59,46,16,1,47,17],[12,151,121,7,152,122],[12,75,47,26,76,48],[39,54,24,14,55,25],[22,45,15,41,46,16],[6,151,121,14,152,122],[6,75,47,34,76,48],[46,54,24,10,55,25],[2,45,15,64,46,16],[17,152,122,4,153,123],[29,74,46,14,75,47],[49,54,24,10,55,25],[24,45,15,46,46,16],[4,152,122,18,153,123],[13,74,46,32,75,47],[48,54,24,14,55,25],[42,45,15,32,46,16],[20,147,117,4,148,118],[40,75,47,7,76,48],[43,54,24,22,55,25],[10,45,15,67,46,16],[19,148,118,6,149,119],[18,75,47,31,76,48],[34,54,24,34,55,25],[20,45,15,61,46,16]],j.getRSBlocks=function(a,b){var c=j.getRsBlockTable(a,b);if(void 0==c)throw new Error("bad rs block @ typeNumber:"+a+"/errorCorrectLevel:"+b);for(var d=c.length/3,e=[],f=0;d>f;f++)for(var g=c[3*f+0],h=c[3*f+1],i=c[3*f+2],k=0;g>k;k++)e.push(new j(h,i));return e},j.getRsBlockTable=function(a,b){switch(b){case d.L:return j.RS_BLOCK_TABLE[4*(a-1)+0];case d.M:return j.RS_BLOCK_TABLE[4*(a-1)+1];case d.Q:return j.RS_BLOCK_TABLE[4*(a-1)+2];case d.H:return j.RS_BLOCK_TABLE[4*(a-1)+3];default:return void 0}},k.prototype={get:function(a){var b=Math.floor(a/8);return 1==(1&this.buffer[b]>>>7-a%8)},put:function(a,b){for(var c=0;b>c;c++)this.putBit(1==(1&a>>>b-c-1))},getLengthInBits:function(){return this.length},putBit:function(a){var b=Math.floor(this.length/8);this.buffer.length<=b&&this.buffer.push(0),a&&(this.buffer[b]|=128>>>this.length%8),this.length++}};var l=[[17,14,11,7],[32,26,20,14],[53,42,32,24],[78,62,46,34],[106,84,60,44],[134,106,74,58],[154,122,86,64],[192,152,108,84],[230,180,130,98],[271,213,151,119],[321,251,177,137],[367,287,203,155],[425,331,241,177],[458,362,258,194],[520,412,292,220],[586,450,322,250],[644,504,364,280],[718,560,394,310],[792,624,442,338],[858,666,482,382],[929,711,509,403],[1003,779,565,439],[1091,857,611,461],[1171,911,661,511],[1273,997,715,535],[1367,1059,751,593],[1465,1125,805,625],[1528,1190,868,658],[1628,1264,908,698],[1732,1370,982,742],[1840,1452,1030,790],[1952,1538,1112,842],[2068,1628,1168,898],[2188,1722,1228,958],[2303,1809,1283,983],[2431,1911,1351,1051],[2563,1989,1423,1093],[2699,2099,1499,1139],[2809,2213,1579,1219],[2953,2331,1663,1273]],o=function(){var a=function(a,b){this._el=a,this._htOption=b};return a.prototype.draw=function(a){function g(a,b){var c=document.createElementNS("http://www.w3.org/2000/svg",a);for(var d in b)b.hasOwnProperty(d)&&c.setAttribute(d,b[d]);return c}var b=this._htOption,c=this._el,d=a.getModuleCount();Math.floor(b.width/d),Math.floor(b.height/d),this.clear();var h=g("svg",{viewBox:"0 0 "+String(d)+" "+String(d),width:"100%",height:"100%",fill:b.colorLight});h.setAttributeNS("http://www.w3.org/2000/xmlns/","xmlns:xlink","http://www.w3.org/1999/xlink"),c.appendChild(h),h.appendChild(g("rect",{fill:b.colorDark,width:"1",height:"1",id:"template"}));for(var i=0;d>i;i++)for(var j=0;d>j;j++)if(a.isDark(i,j)){var k=g("use",{x:String(i),y:String(j)});k.setAttributeNS("http://www.w3.org/1999/xlink","href","#template"),h.appendChild(k)}},a.prototype.clear=function(){for(;this._el.hasChildNodes();)this._el.removeChild(this._el.lastChild)},a}(),p="svg"===document.documentElement.tagName.toLowerCase(),q=p?o:m()?function(){function a(){this._elImage.src=this._elCanvas.toDataURL("image/png"),this._elImage.style.display="block",this._elCanvas.style.display="none"}function d(a,b){var c=this;if(c._fFail=b,c._fSuccess=a,null===c._bSupportDataURI){var d=document.createElement("img"),e=function(){c._bSupportDataURI=!1,c._fFail&&_fFail.call(c)},f=function(){c._bSupportDataURI=!0,c._fSuccess&&c._fSuccess.call(c)};return d.onabort=e,d.onerror=e,d.onload=f,d.src="data:image/gif;base64,iVBORw0KGgoAAAANSUhEUgAAAAUAAAAFCAYAAACNbyblAAAAHElEQVQI12P4//8/w38GIAXDIBKE0DHxgljNBAAO9TXL0Y4OHwAAAABJRU5ErkJggg==",void 0}c._bSupportDataURI===!0&&c._fSuccess?c._fSuccess.call(c):c._bSupportDataURI===!1&&c._fFail&&c._fFail.call(c)}if(this._android&&this._android<=2.1){var b=1/window.devicePixelRatio,c=CanvasRenderingContext2D.prototype.drawImage;CanvasRenderingContext2D.prototype.drawImage=function(a,d,e,f,g,h,i,j){if("nodeName"in a&&/img/i.test(a.nodeName))for(var l=arguments.length-1;l>=1;l--)arguments[l]=arguments[l]*b;else"undefined"==typeof j&&(arguments[1]*=b,arguments[2]*=b,arguments[3]*=b,arguments[4]*=b);c.apply(this,arguments)}}var e=function(a,b){this._bIsPainted=!1,this._android=n(),this._htOption=b,this._elCanvas=document.createElement("canvas"),this._elCanvas.width=b.width,this._elCanvas.height=b.height,a.appendChild(this._elCanvas),this._el=a,this._oContext=this._elCanvas.getContext("2d"),this._bIsPainted=!1,this._elImage=document.createElement("img"),this._elImage.style.display="none",this._el.appendChild(this._elImage),this._bSupportDataURI=null};return e.prototype.draw=function(a){var b=this._elImage,c=this._oContext,d=this._htOption,e=a.getModuleCount(),f=d.width/e,g=d.height/e,h=Math.round(f),i=Math.round(g);b.style.display="none",this.clear();for(var j=0;e>j;j++)for(var k=0;e>k;k++){var l=a.isDark(j,k),m=k*f,n=j*g;c.strokeStyle=l?d.colorDark:d.colorLight,c.lineWidth=1,c.fillStyle=l?d.colorDark:d.colorLight,c.fillRect(m,n,f,g),c.strokeRect(Math.floor(m)+.5,Math.floor(n)+.5,h,i),c.strokeRect(Math.ceil(m)-.5,Math.ceil(n)-.5,h,i)}this._bIsPainted=!0},e.prototype.makeImage=function(){this._bIsPainted&&d.call(this,a)},e.prototype.isPainted=function(){return this._bIsPainted},e.prototype.clear=function(){this._oContext.clearRect(0,0,this._elCanvas.width,this._elCanvas.height),this._bIsPainted=!1},e.prototype.round=function(a){return a?Math.floor(1e3*a)/1e3:a},e}():function(){var a=function(a,b){this._el=a,this._htOption=b};return a.prototype.draw=function(a){for(var b=this._htOption,c=this._el,d=a.getModuleCount(),e=Math.floor(b.width/d),f=Math.floor(b.height/d),g=['<table style="border:0;border-collapse:collapse;">'],h=0;d>h;h++){g.push("<tr>");for(var i=0;d>i;i++)g.push('<td style="border:0;border-collapse:collapse;padding:0;margin:0;width:'+e+"px;height:"+f+"px;background-color:"+(a.isDark(h,i)?b.colorDark:b.colorLight)+';"></td>');g.push("</tr>")}g.push("</table>"),c.innerHTML=g.join("");var j=c.childNodes[0],k=(b.width-j.offsetWidth)/2,l=(b.height-j.offsetHeight)/2;k>0&&l>0&&(j.style.margin=l+"px "+k+"px")},a.prototype.clear=function(){this._el.innerHTML=""},a}();QRCode=function(a,b){if(this._htOption={width:256,height:256,typeNumber:4,colorDark:"#000000",colorLight:"#ffffff",correctLevel:d.H},"string"==typeof b&&(b={text:b}),b)for(var c in b)this._htOption[c]=b[c];"string"==typeof a&&(a=document.getElementById(a)),this._android=n(),this._el=a,this._oQRCode=null,this._oDrawing=new q(this._el,this._htOption),this._htOption.text&&this.makeCode(this._htOption.text)},QRCode.prototype.makeCode=function(a){this._oQRCode=new b(r(a,this._htOption.correctLevel),this._htOption.correctLevel),this._oQRCode.addData(a),this._oQRCode.make(),this._el.title=a,this._oDrawing.draw(this._oQRCode),this.makeImage()},QRCode.prototype.makeImage=function(){"function"==typeof this._oDrawing.makeImage&&(!this._android||this._android>=3)&&this._oDrawing.makeImage()},QRCode.prototype.clear=function(){this._oDrawing.clear()},QRCode.CorrectLevel=d}();
+</script>
+<script>
+'use strict';
+const $ = id => document.getElementById(id);
+const form = $('config');
+const diagnostics = new URLSearchParams(location.search).get('diag') === '1';
+const embedded = new URLSearchParams(location.search).get('embed') === '1';
+if (embedded) document.body.classList.add('embed');
+if (diagnostics) document.body.classList.add('diag');
+// Thiết bị do trang tổng quan truyền sang: ?embed=1&mac=..&ip=..
+const query = new URLSearchParams(location.search);
+const autoTarget = embedded && /^([0-9a-fA-F]{2}:){5}[0-9a-fA-F]{2}$/.test(query.get('mac') || '') &&
+  /^\d{1,3}(\.\d{1,3}){3}$/.test(query.get('ip') || '') ? {mac: query.get('mac').toLowerCase(), ip: query.get('ip')} : null;
+if (autoTarget) document.body.classList.add('auto');
+// Tham số thu cố định của V7 (chỉ chỉnh được ở ?diag=1)
+const FIXED_CAPTURE = {ping: '10', step: '10', finish_labels: '24'};
+let autoPaused = true, autoRetryAt = 0;
+$('diagnostics').hidden = !diagnostics;
+const chartDurationMs = 30000;
+let cursor = 0, series = [], marking = false;
+
+function plot(canvas, ticks, field, stepped = false) {
+  const ratio = window.devicePixelRatio || 1;
+  const w = canvas.clientWidth, h = canvas.clientHeight;
+  if (!w || !h) return;
+  const width = Math.round(w * ratio), height = Math.round(h * ratio);
+  if (canvas.width !== width) canvas.width = width;
+  if (canvas.height !== height) canvas.height = height;
+  const ctx = canvas.getContext('2d');
+  ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
+  ctx.clearRect(0, 0, w, h);
+
+  const left = 34, right = w - 15, top = 13, bottom = h - 26;
+  const y = value => bottom - value * (bottom - top);
+  ctx.font = '12px system-ui';
+  ctx.fillStyle = '#b0c3d0';
+  for (const [level, caption, color] of ticks) {
+    ctx.strokeStyle = color;
+    ctx.beginPath();
+    ctx.moveTo(left, y(level));
+    ctx.lineTo(right, y(level));
+    ctx.stroke();
+    if (caption) {
+      ctx.textAlign = 'right';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(caption, left - 6, y(level));
+    }
+  }
+
+  for (let s = 0; s <= 30; s += 5) {
+    const x = right - (s / 30) * (right - left);
+    ctx.strokeStyle = s === 0 ? '#496073' : '#1d3142';
+    ctx.beginPath();
+    ctx.moveTo(x, top);
+    ctx.lineTo(x, bottom);
+    ctx.stroke();
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'top';
+    ctx.fillText(s === 0 ? '0s' : '-' + s + 's', x, bottom + 6);
+  }
+
+  if (!series.length) return;
+  // Trục thời gian trôi đều đặn theo performance.now() với buffer trễ 40ms giúp triệt tiêu hoàn toàn giật cục
+  const renderTime = performance.now() - 40;
+  const x = time => right - Math.max(0, (renderTime - time) / chartDurationMs) * (right - left);
+
+  ctx.save();
+  ctx.beginPath();
+  ctx.rect(left, top, right - left, bottom - top);
+  ctx.clip();
+
+  // Vẽ vùng đánh dấu marker (nếu có)
+  let regionStart = null;
+  ctx.fillStyle = 'rgba(92, 227, 189, 0.16)';
+  for (const [id, time, label, score, marker] of series) {
+    if (marker && regionStart == null) regionStart = time;
+    else if (!marker && regionStart != null) {
+      const x1 = Math.max(left, x(regionStart)), x2 = Math.min(right, x(time));
+      if (x2 > x1) ctx.fillRect(x1, top, x2 - x1, bottom - top);
+      regionStart = null;
+    }
+  }
+  if (regionStart != null) {
+    const x1 = Math.max(left, x(regionStart)), x2 = right;
+    if (x2 > x1) ctx.fillRect(x1, top, x2 - x1, bottom - top);
+  }
+
+  if (stepped) {
+    // Vẽ đồ thị bậc thang (dành cho Label 0 / 1)
+    ctx.lineWidth = 2;
+    ctx.strokeStyle = '#93cdff';
+    ctx.beginPath();
+    let started = false;
+    for (let i = 0; i < series.length; i++) {
+      const [id, time, label, score, marker] = series[i];
+      if (label == null) { started = false; continue; }
+      const px = x(time), py = y(label);
+      if (!started) { ctx.moveTo(px, py); started = true; }
+      else {
+        const prevX = x(series[i - 1][1]);
+        ctx.lineTo(px, y(series[i - 1][2]));
+        ctx.lineTo(px, py);
+      }
+    }
+    ctx.stroke();
+  } else {
+    // Vẽ đồ thị đường cong Bézier mềm mại 60 FPS (dành cho Score tín hiệu)
+    const pts = [];
+    for (let i = 0; i < series.length; i++) {
+      const [id, time, label, score, marker] = series[i];
+      if (score == null) continue;
+      const px = x(time), py = y(score);
+      if (px >= left - 30 && px <= right + 30) {
+        pts.push({ x: px, y: py });
+      }
+    }
+
+    if (pts.length > 1) {
+      // 1. Đổ bóng mờ Gradient (Area Glow) dưới đường sóng
+      const grad = ctx.createLinearGradient(0, top, 0, bottom);
+      grad.addColorStop(0, 'rgba(0, 210, 255, 0.24)');
+      grad.addColorStop(1, 'rgba(0, 210, 255, 0.0)');
+
+      ctx.beginPath();
+      ctx.moveTo(pts[0].x, bottom);
+      ctx.lineTo(pts[0].x, pts[0].y);
+      for (let i = 0; i < pts.length - 1; i++) {
+        const mx = (pts[i].x + pts[i + 1].x) / 2;
+        const my = (pts[i].y + pts[i + 1].y) / 2;
+        ctx.quadraticCurveTo(pts[i].x, pts[i].y, mx, my);
+      }
+      ctx.lineTo(pts[pts.length - 1].x, pts[pts.length - 1].y);
+      ctx.lineTo(pts[pts.length - 1].x, bottom);
+      ctx.closePath();
+      ctx.fillStyle = grad;
+      ctx.fill();
+
+      // 2. Vẽ đường tín hiệu uốn lượn mượt mà
+      ctx.beginPath();
+      ctx.lineWidth = 2.2;
+      ctx.strokeStyle = '#00d2ff';
+      ctx.moveTo(pts[0].x, pts[0].y);
+      for (let i = 0; i < pts.length - 1; i++) {
+        const mx = (pts[i].x + pts[i + 1].x) / 2;
+        const my = (pts[i].y + pts[i + 1].y) / 2;
+        ctx.quadraticCurveTo(pts[i].x, pts[i].y, mx, my);
+      }
+      const lastPt = pts[pts.length - 1];
+      ctx.lineTo(lastPt.x, lastPt.y);
+      ctx.stroke();
+
+      // 3. Chấm phát sáng neon ở đầu sóng mới nhất (Leading Wave Pulse)
+      if (lastPt.x >= left && lastPt.x <= right) {
+        ctx.beginPath();
+        ctx.arc(lastPt.x, lastPt.y, 4, 0, Math.PI * 2);
+        ctx.fillStyle = '#ffffff';
+        ctx.shadowColor = '#00d2ff';
+        ctx.shadowBlur = 8;
+        ctx.fill();
+        ctx.shadowBlur = 0;
+      }
+    }
+  }
+
+  ctx.restore();
+}
+
+function plotCharts() {
+  if ($('liveSignalPlot')) {
+    plot($('liveSignalPlot'), [[0, '0', '#1f3d59'], [0.70, '0.70', '#e3945c'], [1, '1', '#1f3d59']], 'score', false);
+  }
+  if ($('labelPlot')) {
+    plot($('labelPlot'), [[0, '0', '#22384a'], [1, '1', '#22384a']], 'label', true);
+  }
+  if (diagnostics && $('scorePlot')) {
+    plot($('scorePlot'), [[0, '0', '#22384a'], [0.70, '0,70', '#e3945c'], [1, '1', '#22384a']], 'score');
+  }
+}
+
+// Vòng lặp Render 60 FPS liên tục tách biệt với luồng mạng
+let chartAnimId = null;
+function startChartLoop() {
+  if (chartAnimId) return;
+  function step() {
+    plotCharts();
+    chartAnimId = requestAnimationFrame(step);
+  }
+  chartAnimId = requestAnimationFrame(step);
+}
+startChartLoop();
+
+function selectedDeviceIp() {
+  const select = $('device');
+  const option = select.options[select.selectedIndex];
+  return (option && option.dataset.ip) || '';
+}
+
+async function mark() {
+  if (marking || !snapshot?.running) return;
+  marking = true;
+  try {
+    const result = await api('score/mark', {});
+    snapshot.marker_open = result.marker_open;
+    $('markStatus').textContent = result.marker_open ? 'Đã đánh dấu bắt đầu.' : 'Đã đánh dấu vẽ xong.';
+    render();
+  } catch (error) { $('markStatus').textContent = error.message; }
+  finally { marking = false; }
+}
+
+if (diagnostics) {
+  $('mark').onclick = mark;
+  document.addEventListener('keydown', event => {
+    if (event.code !== 'Space' || event.repeat || !snapshot?.running ||
+        event.target.closest('input, select, textarea, button, a, [contenteditable]')) return;
+    event.preventDefault();
+    mark();
+  });
+}
+const reasons = {
+  draw_timeout: 'Bạn vẽ quá thời gian.',
+  down_short: 'Nét xuống quá ngắn.',
+  down_long: 'Nét xuống quá dài.',
+  pause_short: 'Khoảng khựng ở đáy quá ngắn.',
+  valley_timeout: 'Điểm CSI chưa hồi lên sau khi chạm đáy.',
+  pause_long: 'Khoảng khựng ở đáy quá dài.',
+  up_short: 'Nét lên quá ngắn.',
+  up_long: 'Nét lên quá dài.',
+  finish_moved: 'Điện thoại còn chuyển động trong lúc xác nhận.'
+};
+const instructions = {
+  WAIT_READY: 'Giữ yên để chuẩn bị', READY: 'Sẵn sàng', ARMING: 'Sẵn sàng',
+  DOWN: 'Vẽ nét xuống', DOWN_HOLD: 'Vẽ nét xuống', BOTTOM: 'Khựng nhẹ ở đáy',
+  UP_CUE: 'Vẽ nét lên', UP: 'Vẽ nét lên', UP_HOLD: 'Vẽ nét lên',
+  FINISH: 'Giữ yên để xác nhận', PASS: 'Đã nhận diện thành công', FAIL: 'Không nhận diện'
+};
+let audioContext, readySignal = '';
+
+// Âm thanh chúc mừng AI phản hồi (Web Audio API offline)
+let audioCtx = null;
+function playCelebrationSound() {
+  try {
+    const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+    if (!AudioContextClass) return;
+    if (!audioCtx) audioCtx = new AudioContextClass();
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+    const now = audioCtx.currentTime;
+    // Hợp âm chiến thắng tươi vui (C5, E5, G5, C6)
+    const notes = [523.25, 659.25, 783.99, 1046.50];
+    notes.forEach((freq, idx) => {
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(freq, now + idx * 0.1);
+      gain.gain.setValueAtTime(0.001, now + idx * 0.1);
+      gain.gain.exponentialRampToValueAtTime(0.25, now + idx * 0.1 + 0.03);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + idx * 0.1 + 0.38);
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+      osc.start(now + idx * 0.1);
+      osc.stop(now + idx * 0.1 + 0.42);
+    });
+  } catch (e) {
+    console.warn('[AUDIO] Celebration sound error:', e);
+  }
+}
+
+
+function enableSound() {
+  const Audio = window.AudioContext || window.webkitAudioContext;
+  if (!Audio) return;
+  audioContext ||= new Audio();
+  audioContext.resume().catch(() => {});
+}
+
+function beep() {
+  if (audioContext?.state !== 'running') return;
+  const tone = audioContext.createOscillator(), volume = audioContext.createGain();
+  const now = audioContext.currentTime;
+  tone.frequency.value = 660;
+  volume.gain.setValueAtTime(.12, now);
+  volume.gain.exponentialRampToValueAtTime(.001, now + .16);
+  tone.connect(volume).connect(audioContext.destination);
+  tone.start(now);
+  tone.stop(now + .16);
+}
+let snapshot, busy = false, polling = false;
+
+async function api(path, body) {
+  const options = {cache:'no-store'};
+  if (body !== undefined) Object.assign(options, {method:'POST', body:JSON.stringify(body),
+    headers:{'Content-Type':'application/json','X-Wake-Token':snapshot.token}});
+  const response = await fetch('/api/' + path, options);
+  const data = await response.json();
+  if (!response.ok) throw new Error(data.error || 'Lỗi ' + response.status);
+  return data;
+}
+
+// Tên thiết bị lấy từ DHCP qua trang tổng quan (edge_csi_daemon, cổng 5243).
+async function deviceNames() {
+  const names = new Map();
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 1500);
+  try {
+    const response = await fetch(`http://${location.hostname}:5243/api/prober`, {cache:'no-store', signal:controller.signal});
+    const data = await response.json();
+    for (const client of data.clients || []) {
+      const name = String(client.hostname || '').trim();
+      if (client.mac && name && name !== '*') names.set(String(client.mac).toLowerCase(), name);
+    }
+  } catch (error) {
+  } finally { clearTimeout(timer); }
+  return names;
+}
+
+async function devices() {
+  const [list, names] = await Promise.all([api('devices'), deviceNames()]);
+  const previous = $('device').value;
+  const manualIp = $('ip').value.trim() && $('ip').value.trim() !== selectedDeviceIp();
+  $('device').replaceChildren(new Option(list.length ? 'Chọn điện thoại' : 'Chưa thấy điện thoại 5 GHz', ''));
+  for (const {mac, ip} of list) {
+    const name = names.get(String(mac).toLowerCase());
+    const label = [name, ip, mac].filter(Boolean).join(' · ');
+    const item = new Option(label, mac);
+    item.dataset.ip = ip;
+    $('device').append(item);
+  }
+  if (list.some(device => device.mac === previous)) {
+    $('device').value = previous;
+    if (!manualIp) $('ip').value = selectedDeviceIp();
+  } else if (previous) {
+    $('ip').value = '';
+  }
+}
+
+function renderV(s) {
+  const fraction = Math.min(1, Math.max(0, Number(s.stroke_fraction) || 0));
+  const isPass = s.state === 'PASS' || Boolean(passResetTimer);
+  const marks = [
+    ['vDown', 'DOWN', 1],
+    ['vPoint', 'BOTTOM', 2],
+    ['vUp', 'UP', 3]
+  ];
+  $('vShape').dataset.reset = String(!s.stroke_progress && s.state !== 'DOWN' && !isPass);
+  for (const [id, phase, rank] of marks) {
+    const confirmed = isPass || s.stroke_progress >= rank;
+    const preview = !confirmed && !s.stale && (s.fast_preview & (1 << (rank - 1))) !== 0;
+    const fill = confirmed ? 1 : preview ? 1 : s.state === phase ? fraction : 0;
+    const node = $(id);
+    node.style.setProperty('--fraction', fill);
+    node.style.setProperty('--remaining', (100 * (1 - fill)) + '%');
+    node.dataset.confirmed = String(confirmed);
+    node.dataset.preview = String(preview);
+  }
+}
+
+let handledPassSession = -1;
+let passResetTimer = null;
+
+function updateGuideButtons(running, isPass) {
+  const btn = $('btnToggleCapture');
+  if (!btn) return;
+  if (isPass) {
+    btn.textContent = 'Vẽ lượt mới';
+    btn.className = 'btn-guide-primary';
+  } else if (running) {
+    btn.textContent = 'Tạm dừng';
+    btn.className = 'btn-guide-secondary';
+  } else {
+    btn.textContent = 'Bắt đầu thu';
+    btn.className = 'btn-guide-primary';
+  }
+}
+
+function showTechShowcase(show) {}
+
+function updateStepHighlight(state, running) {
+  const s1 = $('stepInvite');
+  const s2 = $('stepSensing');
+  const s3 = $('stepResponse');
+  if (!s1 || !s2 || !s3) return;
+
+  s1.classList.remove('step-active-neon', 'step-success-neon');
+  s2.classList.remove('step-active-neon', 'step-success-neon');
+  s3.classList.remove('step-active-neon', 'step-success-neon');
+
+  if (state === 'PASS') {
+    s3.classList.add('step-success-neon');
+  } else if (running) {
+    s2.classList.add('step-active-neon');
+  } else {
+    s1.classList.add('step-active-neon');
+  }
+}
+
+function updateStepResponse(state, running) {
+  const standby = $('standbyPrompt');
+  const waiting = $('waitingPrompt');
+  const banner = $('successBanner');
+  const sensingCard = $('stepSensing');
+
+  // Khóa bảo vệ: Trong 5s hiển thị thông báo thành công, không cho phép các tick cập nhật nền ghi đè ẩn banner
+  if (passResetTimer && state !== 'PASS' && state !== 'FORCE_RESET') {
+    return;
+  }
+
+  updateStepHighlight(state === 'FORCE_RESET' ? 'STOP' : state, running);
+
+  if (state === 'PASS') {
+    if (standby) standby.hidden = true;
+    if (waiting) waiting.hidden = true;
+    if (banner) banner.hidden = false;
+    if (sensingCard) sensingCard.dataset.active = 'false';
+  } else if (running) {
+    if (standby) standby.hidden = true;
+    if (waiting) waiting.hidden = false;
+    if (banner) banner.hidden = true;
+    if (sensingCard) sensingCard.dataset.active = String(state !== 'READY');
+  } else {
+    if (standby) standby.hidden = false;
+    if (waiting) waiting.hidden = true;
+    if (banner) banner.hidden = true;
+    if (sensingCard) sensingCard.dataset.active = 'false';
+  }
+}
+
+function render() {
+  if (!snapshot) return;
+  const s = snapshot, locked = s.running || busy;
+  for (const id of ['configTitle', 'captureFields', 'timing', 'start'])
+    $(id).hidden = s.running;
+  for (const element of form.elements) element.disabled = locked;
+  $('start').disabled = locked || !$('device').value;
+  $('stop').disabled = !s.running || busy;
+  $('notice').textContent = s.error || '';
+  $('notice').hidden = !s.error;
+  if (diagnostics) {
+    $('mark').disabled = !s.running;
+    $('mark').textContent = s.marker_open ? 'Vẽ xong' : 'Bắt đầu vẽ';
+    $('fastCounts').textContent = 'Hiển thị trước · ' + (s.fast_shown ?? 0) +
+      ' | Đã rút lại · ' + (s.fast_withdrawn ?? 0);
+  }
+  const finished = s.state === 'PASS' || s.state === 'FAIL' || Boolean(passResetTimer);
+  const outcome = passResetTimer ? 'pass' : (finished ? s.state.toLowerCase() : '');
+  $('guide').hidden = !s.running && !embedded && !passResetTimer;
+  $('guide').dataset.outcome = $('vShape').dataset.outcome = outcome;
+  const ready = s.running && !s.stale && (s.state === 'READY' || s.state === 'ARMING');
+  $('guide').dataset.ready = String(ready);
+  if (ready) {
+    const key = [s.token, s.session, s.ready_count].join('/');
+    if (key !== readySignal) { readySignal = key; beep(); }
+  }
+  const rate = s.valid_packets_per_s;
+  const rateText = rate == null ? '— gói/s' : rate.toLocaleString('vi-VN', {maximumFractionDigits: 1}) + ' gói/s';
+  $('signal').value = rate ?? 0;
+  $('packetRate').textContent = rateText;
+  if ($('streamPacketRate')) $('streamPacketRate').textContent = rateText;
+  if ($('streamMotionStatus')) {
+    const motionText = !s.running ? (autoPaused ? 'Tạm dừng thu' : 'Chưa thu thập') :
+      (s.state === 'PASS' ? 'Vẽ cử chỉ thành công' :
+       (s.state === 'DOWN' || s.state === 'UP' || s.state === 'VALLEY') ? 'Đang thực hiện cử chỉ' :
+       (s.state === 'READY' ? 'Sẵn sàng nhận diện' : 'Đang theo dõi sóng'));
+    $('streamMotionStatus').textContent = motionText;
+  }
+  if ($('streamScoreValue')) {
+    const scoreVal = s.score != null ? Number(s.score).toFixed(2) : '—';
+    $('streamScoreValue').textContent = scoreVal;
+    if (s.score != null && s.score >= 0.70) {
+      $('streamScoreValue').style.color = '#10b981';
+    } else {
+      $('streamScoreValue').style.color = 'var(--accent, #00d2ff)';
+    }
+  }
+  if ($('streamLabelNum')) {
+    const lbl = s.label;
+    if (lbl === 1) {
+      $('streamLabelNum').textContent = '1 · Chuyển động';
+      $('streamLabelNum').style.color = '#f59e0b';
+    } else if (lbl === 0) {
+      $('streamLabelNum').textContent = '0 · Đứng yên';
+      $('streamLabelNum').style.color = '#94a3b8';
+    } else {
+      $('streamLabelNum').textContent = '—';
+      $('streamLabelNum').style.color = '#94a3b8';
+    }
+  }
+  $('noise').hidden = !s.noisy;
+  const labelStatus = s.running
+    ? (s.stale || (s.label !== 0 && s.label !== 1) ? 'Đang chờ nhãn CSI' : 'Nhãn hiện tại · ' + s.label)
+    : (series.length ? 'Phiên thu đã dừng' : 'Chưa có nhãn');
+  $('labelStatus').textContent = labelStatus;
+  const instruction = !s.running ? (autoTarget ? (autoPaused ? 'Đã kết nối thiết bị · Bấm Bắt đầu thu để vẽ' : 'Nhấn Bắt đầu thu khi sẵn sàng vẽ') : embedded ? 'Chọn điện thoại rồi bấm Bắt đầu thu' : '')
+    : s.stale && !finished ? 'Đang chờ tín hiệu CSI' : instructions[s.state] || '';
+  if ($('state').textContent !== instruction) $('state').textContent = instruction;
+  renderV(s);
+  updateStepResponse(s.state, s.running);
+  const detail = outcome === 'fail' ? reasons[s.result_reason] || '' : '';
+  $('guideDetail').textContent = detail;
+  $('guideDetail').hidden = !detail;
+
+  if (s.state !== 'PASS') {
+    updateGuideButtons(s.running, false);
+  }
+  notifyParent(s);
+}
+
+// Báo trạng thái phiên cho trang tổng quan 5243
+let parentRunning;
+const parentOrigin = (() => { try { return new URL(document.referrer).origin; } catch (_) { return '*'; } })();
+function notifyParent(s) {
+  if (!embedded || window.parent === window || parentRunning === s.running) return;
+  parentRunning = s.running;
+  try { window.parent.postMessage({type:'WAKE_STATE', running:s.running, state:s.state, ip:s.ip || ''}, parentOrigin); }
+  catch (_) {}
+}
+
+let stream, streaming = false, reconnectAt = 0, chartFrame = 0;
+
+function acceptSnapshot(next) {
+  const restarted = snapshot && next.token !== snapshot.token;
+  if (snapshot && !restarted && next.last_id < cursor) return;
+  const reset = !snapshot || restarted || next.session !== snapshot.session ||
+    (cursor !== 0 && next.first_id > cursor + 1);
+  if (reset) series = [];
+  const points = reset ? (next.points || []) : (next.points || []).filter(row => row[0] > cursor);
+  cursor = next.last_id;
+  const localNow = performance.now();
+  if (points.length) {
+    const lastRouterTime = points.at(-1)[1];
+    const normalizedPoints = points.map(row => {
+      const [id, rTime, label, score, marker] = row;
+      const localTime = localNow - Math.max(0, lastRouterTime - rTime);
+      return [id, localTime, label, score, marker];
+    });
+    const oldest = localNow - chartDurationMs;
+    series = series.concat(normalizedPoints).filter(row => row[1] >= oldest);
+  } else if (next.running && next.score != null) {
+    const oldest = localNow - chartDurationMs;
+    series.push([next.last_id || (series.length ? series.at(-1)[0] + 1 : 1), localNow, next.label ?? 0, next.score, 0]);
+    series = series.filter(row => row[1] >= oldest);
+  }
+  snapshot = next;
+  render();
+
+  // TỰ ĐỘNG TẠM DỪNG VÀ KÍCH HOẠT PHẢN HỒI BƯỚC 3 KHI VẼ THÀNH CÔNG (PASS)
+  if (next.state === 'PASS' && handledPassSession !== next.session) {
+    handledPassSession = next.session;
+    updateStepResponse('PASS', false);
+    playCelebrationSound();
+
+    // Khởi động lại animation thanh đếm lùi 5 giây
+    const timerBar = $('successTimerBar');
+    if (timerBar) {
+      timerBar.style.animation = 'none';
+      void timerBar.offsetWidth; // trigger reflow
+      timerBar.style.animation = 'successCountDown 5s linear forwards';
+    }
+
+    if (passResetTimer) clearTimeout(passResetTimer);
+    passResetTimer = setTimeout(() => {
+      autoPaused = true;
+      if (snapshot?.running) action('stop', {});
+      passResetTimer = null;
+      updateStepResponse('FORCE_RESET', false);
+      updateGuideButtons(false, false);
+    }, 5000);
+  } else if (next.state !== 'PASS') {
+    if (!autoPaused && !passResetTimer) {
+      updateStepResponse(next.state, next.running);
+    }
+  }
+}
+
+async function update() {
+  if (polling || busy) return;
+  polling = true;
+  try {
+    let next = await api('score?after=' + cursor);
+    if (snapshot && next.token !== snapshot.token && cursor) next = await api('score?after=0');
+    acceptSnapshot(next);
+  } catch (error) {
+    if (!streaming) {
+      $('guide').hidden = !embedded;
+      $('labelStatus').textContent = 'Mất kết nối tới 8082';
+      $('notice').textContent = 'Mất kết nối tới 8082. ' + error.message;
+      $('notice').hidden = false;
+    }
+  } finally { polling = false; }
+}
+
+function connectScoreStream() {
+  if (stream || !window.EventSource || !snapshot || performance.now() < reconnectAt) return;
+  const source = new EventSource('/api/score/stream?after=' + cursor);
+  stream = source;
+  const closeStream = () => {
+    if (stream !== source) return;
+    source.close();
+    stream = undefined;
+    streaming = false;
+    reconnectAt = performance.now() + 2000;
+    update();
+  };
+  source.onmessage = event => {
+    if (stream !== source) return;
+    try {
+      const next = JSON.parse(event.data);
+      if (snapshot && next.token !== snapshot.token) {
+        closeStream();
+        return;
+      }
+      streaming = true;
+      acceptSnapshot(next);
+    } catch (_) { closeStream(); }
+  };
+  source.onerror = closeStream;
+}
+
+async function action(path, payload) {
+  if (busy || !snapshot) return;
+  busy = true;
+  $('error').textContent = '';
+  render();
+  try { await api(path, payload); }
+  catch (error) { $('error').textContent = error.message; }
+  finally { busy = false; await update(); render(); }
+}
+
+function startCaptureSession() {
+  if (passResetTimer) {
+    clearTimeout(passResetTimer);
+    passResetTimer = null;
+  }
+  updateStepResponse('READY', true);
+  enableSound();
+  autoPaused = false;
+  updateGuideButtons(true, false);
+  try {
+    if (window.parent && window.parent !== window) {
+      window.parent.postMessage({ type: 'WAKE_USER_START', running: true }, parentOrigin);
+    }
+  } catch (_) {}
+  const settings = autoTarget ? {mac: autoTarget.mac, ip: autoTarget.ip, ...FIXED_CAPTURE} : Object.fromEntries(new FormData(form));
+  action('start', settings);
+}
+
+function pauseCaptureSession() {
+  if (passResetTimer) {
+    clearTimeout(passResetTimer);
+    passResetTimer = null;
+  }
+  updateStepResponse('STOP', false);
+  autoPaused = true;
+  updateGuideButtons(false, false);
+  try {
+    if (window.parent && window.parent !== window) {
+      window.parent.postMessage({ type: 'WAKE_USER_STOP', running: false }, parentOrigin);
+    }
+  } catch (_) {}
+  action('stop', {});
+}
+
+// Bắt đầu hoặc tạm dừng thu qua nút điều khiển nhanh
+$('btnToggleCapture').onclick = () => {
+  if (snapshot?.running) {
+    pauseCaptureSession();
+  } else {
+    startCaptureSession();
+  }
+};
+
+// Nút "Thử lại lượt mới" trong thông báo thành công
+if ($('btnSuccessRetry')) {
+  $('btnSuccessRetry').onclick = () => {
+    if (passResetTimer) {
+      clearTimeout(passResetTimer);
+      passResetTimer = null;
+    }
+    startCaptureSession();
+  };
+}
+
+// Khởi tạo Mã QR góc cố định dẫn tới trang Thông tin kỹ thuật
+let cornerQrRendered = false;
+
+
+const finishInput = $('finishLabels');
+const captureInputs = [$('ping'), $('step'), finishInput];
+if (diagnostics) try {
+  for (const input of captureInputs) {
+    const saved = localStorage.getItem('wake.' + input.id);
+    if (saved && /^[0-9]+$/.test(saved) && Number(saved) >= Number(input.min) && Number(saved) <= Number(input.max))
+      input.value = saved;
+  }
+} catch (_) {}
+function showFinishCount() {
+  $('finishRuleCount').textContent = finishInput.value || '—';
+}
+finishInput.addEventListener('input', showFinishCount);
+showFinishCount();
+form.noValidate = true;
+form.onsubmit = event => {
+  event.preventDefault();
+  if (!$('ip').value.trim()) $('ip').value = selectedDeviceIp();
+  if (!form.reportValidity()) return;
+  startCaptureSession();
+};
+$('stop').onclick = () => pauseCaptureSession();
+$('refresh').onclick = () => devices().then(() => render()).catch(error => { $('error').textContent = error.message; });
+$('device').onchange = () => { $('ip').value = selectedDeviceIp(); render(); };
+devices().catch(error => { $('error').textContent = error.message; }).finally(() => render());
+
+
+
+window.addEventListener('message', event => {
+  try { if (new URL(event.origin).hostname !== location.hostname) return; } catch (_) { return; }
+  const type = event.data && event.data.type;
+  if (type === 'WAKE_STOP') {
+    pauseCaptureSession();
+  } else if (type === 'WAKE_START') {
+    startCaptureSession();
+  }
+});
+
+async function refreshScore() {
+  if (!streaming) await update();
+  connectScoreStream();
+  setTimeout(refreshScore, streaming ? 250 : snapshot?.running ? 40 : 300);
+}
+updateStepHighlight('STOP', false);
+refreshScore();
+</script>
+</html>

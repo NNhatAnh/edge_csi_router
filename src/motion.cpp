@@ -5,7 +5,7 @@
 #include <numeric>
 
 namespace {
-constexpr size_t kMotionWindowSize = 30;
+constexpr size_t kMotionWindowSize = 10; // 10 frames (~100ms tại 100Hz) - phản hồi tức thì bám sát chuyển động tay
 constexpr size_t kStableCandidateSize = 40;
 constexpr size_t kLowMotionFramesToClear = 15;
 constexpr float kMinimumBaselineDeviation = 2.0e-3f;

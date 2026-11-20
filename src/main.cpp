@@ -290,6 +290,8 @@ bool replayFile(const std::string &path, WebServer &server) {
 void followRelayDirectory(const Options &options, WebServer &server, CFRController &cfr_controller) {
     namespace fs = std::filesystem;
     fs::path active_file;
+    fs::path opened_file;
+    std::ifstream relay_stream;
     fs::path writer_fdinfo;
     uintmax_t offset = 0;
     pid_t attached_pid = -1;
@@ -303,7 +305,6 @@ void followRelayDirectory(const Options &options, WebServer &server, CFRControll
               << '\n';
 
     while (!stop_requested) {
-        bool had_data = false;
         // Giảm tải truy vấn trạng thái xuống tối đa 2 lần/giây để không chiếm dụng CPU
         static auto last_status_query = std::chrono::steady_clock::time_point{};
         static CFRCaptureStatus cstat;
@@ -315,6 +316,8 @@ void followRelayDirectory(const Options &options, WebServer &server, CFRControll
         if (!cstat.running && options.replay_file.empty()) {
             if (!active_file.empty() || attached_pid > 0) {
                 active_file.clear();
+                opened_file.clear();
+                relay_stream.close();
                 writer_fdinfo.clear();
                 offset = 0;
                 attached_pid = -1;
@@ -337,9 +340,8 @@ void followRelayDirectory(const Options &options, WebServer &server, CFRControll
                     fdinfo_fail_count = 0;
                     uintmax_t wpos = 0;
                     readWriterPosition(writer_fdinfo, wpos);
-                    // Nếu là file mới (wpos nhỏ < 64KB), đọc từ byte 0 để nhận ngay frame đầu tiên
-                    // Nếu file đã lớn do xoay vòng, lùi tối đa 64KB để bắt nhịp
-                    offset = (wpos > 65536) ? (wpos - 65536) : 0;
+                    // Bắt nhịp ngay tại đỉnh file của writer (tối đa 4KB lùi lại để đón trọn frame hiện tại, độ trễ < 20ms)
+                    offset = (wpos > 4096) ? (wpos - 4096) : 0;
                     parser.reset();
                     std::cerr << "[Relay] Attached directly to live cfr_test_app (PID " << cstat.pid
                               << ") on " << active_file.string() << " from offset " << offset
@@ -396,8 +398,8 @@ void followRelayDirectory(const Options &options, WebServer &server, CFRControll
                 uintmax_t writer_position = 0;
                 if (!writer_fdinfo.empty() &&
                     readWriterPosition(writer_fdinfo, writer_position)) {
-                    // Khởi đầu stream trực tiếp gần vị trí hiện tại của writer để tránh dồn ứ hàng MB dữ liệu cũ
-                    offset = (writer_position > 32768) ? (writer_position - 32768) : 0;
+                    // Khởi đầu stream trực tiếp bám sát vị trí hiện tại của writer (< 20ms lag)
+                    offset = (writer_position > 4096) ? (writer_position - 4096) : 0;
                     std::cerr << "[Relay] Following live cfr_test_app ring "
                               << active_file.string()
                               << " from offset " << offset
@@ -431,7 +433,7 @@ void followRelayDirectory(const Options &options, WebServer &server, CFRControll
                 if (!writer_fdinfo.empty()) {
                     uintmax_t pos = 0;
                     if (readWriterPosition(writer_fdinfo, pos)) {
-                        offset = (pos > 65536) ? (pos - 65536) : 0;
+                        offset = (pos > 4096) ? (pos - 4096) : 0;
                         parser.reset();
                     }
                     std::cerr << "[Relay] Re-attached to live cfr_test_app writer\n";
@@ -442,40 +444,54 @@ void followRelayDirectory(const Options &options, WebServer &server, CFRControll
             const uintmax_t file_size = fs::file_size(active_file, error);
             if (!error) {
                 uintmax_t available_size = file_size;
+                static auto last_fdinfo_read = std::chrono::steady_clock::time_point{};
+                static uintmax_t cached_writer_pos = 0;
+                const auto now_pos = std::chrono::steady_clock::now();
                 if (!writer_fdinfo.empty()) {
-                    uintmax_t current_pos = 0;
-                    if (!readWriterPosition(writer_fdinfo, current_pos)) {
-                        if (++fdinfo_fail_count >= 10) {
-                            std::cerr << "[Relay] Live writer closed; waiting for "
-                                         "file appends\n";
-                            writer_fdinfo.clear();
-                            offset = file_size;
-                            parser.reset();
+                    // Thăm dò vị trí ghi liên tục mỗi 10ms để đọc ngay khi kernel vừa ghi ra đĩa (Zero-Lag < 10ms)
+                    if (now_pos - last_fdinfo_read >= std::chrono::milliseconds(10) || cached_writer_pos < offset) {
+                        last_fdinfo_read = now_pos;
+                        uintmax_t current_pos = 0;
+                        if (!readWriterPosition(writer_fdinfo, current_pos)) {
+                            if (++fdinfo_fail_count >= 10) {
+                                std::cerr << "[Relay] Live writer closed; waiting for "
+                                             "file appends\n";
+                                writer_fdinfo.clear();
+                                offset = file_size;
+                                parser.reset();
+                                fdinfo_fail_count = 0;
+                            }
+                        } else {
                             fdinfo_fail_count = 0;
+                            cached_writer_pos = current_pos;
                         }
-                    } else {
-                        fdinfo_fail_count = 0;
-                        available_size = std::min(current_pos, file_size);
                     }
+                    available_size = std::min(cached_writer_pos, file_size);
                 }
 
                 auto readRange = [&](uintmax_t begin, uintmax_t end) {
                     if (end <= begin)
                         return;
-                    std::ifstream file(active_file, std::ios::binary);
-                    if (!file) {
+                    if (active_file != opened_file || !relay_stream.is_open()) {
+                        relay_stream.close();
+                        relay_stream.clear();
+                        relay_stream.open(active_file, std::ios::binary);
+                        opened_file = active_file;
+                    }
+                    if (!relay_stream) {
                         std::cerr << "[Relay] Cannot read "
                                   << active_file.string() << '\n';
                         return;
                     }
-                    file.seekg(static_cast<std::streamoff>(begin));
+                    relay_stream.clear();
+                    relay_stream.seekg(static_cast<std::streamoff>(begin));
                     uintmax_t remaining = end - begin;
                     while (remaining > 0 && !stop_requested) {
                         const size_t requested = static_cast<size_t>(
                             std::min<uintmax_t>(buffer.size(), remaining));
-                        file.read(reinterpret_cast<char *>(buffer.data()),
-                                  static_cast<std::streamsize>(requested));
-                        const std::streamsize count = file.gcount();
+                        relay_stream.read(reinterpret_cast<char *>(buffer.data()),
+                                          static_cast<std::streamsize>(requested));
+                        const std::streamsize count = relay_stream.gcount();
                         if (count <= 0)
                             break;
                         publishBytes(parser, server, buffer.data(),
@@ -488,7 +504,7 @@ void followRelayDirectory(const Options &options, WebServer &server, CFRControll
                     offset = file_size;
                     parser.reset();
                 } else {
-                    constexpr uintmax_t kMaxBacklog = 32768; // 32 KB (~25 frames) - giới hạn chặt để không nghẽn CPU
+                    constexpr uintmax_t kMaxBacklog = 16384; // 16 KB (~10 frames = 100ms tối đa) - nghiêm cấm tụt hậu quá 100ms
                     uintmax_t backlog = 0;
                     if (available_size >= offset) {
                         backlog = available_size - offset;
@@ -497,39 +513,34 @@ void followRelayDirectory(const Options &options, WebServer &server, CFRControll
                     }
 
                     if (backlog > kMaxBacklog) {
-                        // Tồn đọng quá lớn: bỏ qua frame cũ, nhảy đến vị trí hiện tại để đảm bảo độ trễ real-time < 50ms
+                        // Tồn đọng quá 16KB: lập tức cắt bỏ frame cũ, nhảy thẳng đến vị trí đỉnh để đảm bảo độ trễ real-time < 15ms
                         parser.reset();
-                        offset = (available_size > 16384) ? (available_size - 16384) : 0;
+                        offset = (available_size > 4096) ? (available_size - 4096) : 0;
                     }
 
                     if (available_size < offset) {
                         // Trình ghi đã wrap-around vòng tròn hoặc file bị thu nhỏ:
                         // Reset parser để tránh ghép dính frame dở dang ở ranh giới vòng lặp
                         parser.reset();
-                        offset = (available_size > 16384) ? (available_size - 16384) : 0;
+                        offset = (available_size > 4096) ? (available_size - 4096) : 0;
                         readRange(offset, available_size);
                         offset = available_size;
-                        had_data = true;
                     } else if (available_size > offset) {
                         readRange(offset, available_size);
                         offset = available_size;
-                        had_data = true;
                     }
                 }
             } else {
                 error.clear();
                 active_file.clear();
+                opened_file.clear();
+                relay_stream.close();
                 offset = 0;
                 parser.reset();
             }
         }
-        // Giảm tối đa độ trễ relay: Nếu vừa có dữ liệu mới, yield ngắn (2ms) để gửi ngay lập tức tới web
-        // Nếu không có dữ liệu mới, thăm dò lại sau 10ms (100 Hz)
-        if (had_data) {
-            std::this_thread::sleep_for(std::chrono::milliseconds(2));
-        } else {
-            std::this_thread::sleep_for(std::chrono::milliseconds(10));
-        }
+        // Nhịp thăm dò chuẩn 10ms (100 Hz) đồng bộ với tốc độ khung tin phần cứng ath12k
+        std::this_thread::sleep_for(std::chrono::milliseconds(10));
     }
 }
 } // namespace

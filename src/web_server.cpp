@@ -102,6 +102,9 @@ std::string httpResponse(const std::string &status,
            "Content-Length: " +
            std::to_string(body.size()) +
            "\r\n"
+           "Access-Control-Allow-Origin: *\r\n"
+           "Access-Control-Allow-Methods: GET, POST, OPTIONS, PUT, DELETE\r\n"
+           "Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With, X-Wake-Token\r\n"
            "Cache-Control: no-store\r\n"
            "Connection: close\r\n\r\n" +
            body;
@@ -113,7 +116,7 @@ WebServer::WebServer(int web_port, int ingest_port, std::string web_root,
     : web_port_(web_port), ingest_port_(ingest_port),
       web_root_(std::move(web_root)), prober_(prober),
       cfr_controller_(cfr_controller), web_fd_(-1), ingest_fd_(-1),
-      is_running_(false), v6_engine_(std::make_unique<V6NativeEngine>()) {}
+      is_running_(false) {}
 
 WebServer::~WebServer() { stop(); }
 
@@ -160,9 +163,6 @@ bool WebServer::start() {
 }
 
 void WebServer::stop() {
-    if (v6_engine_) {
-        v6_engine_->stop("WebServer shutdown");
-    }
     {
         std::lock_guard<std::mutex> lock(workers_mutex_);
         if (!is_running_.exchange(false))
@@ -202,9 +202,6 @@ void WebServer::publish(const CSIData &frame) {
     std::lock_guard<std::mutex> lock(data_mutex_);
     latest_frame_ = frame;
     motion_detector_.update(latest_frame_);
-
-    wakeup_detector_.update(latest_frame_);
-
     breath_detector_.update(latest_frame_);
     wave_detector_.update(latest_frame_);
 
@@ -240,8 +237,12 @@ void WebServer::publish(const CSIData &frame) {
     }
 
     // Lấy RSSI trung bình từ driver kernel station dump nếu có để làm neo kiểm chuẩn
-    int fallback_rssi = 0;
-    if (prober_ && cfr_controller_) {
+    // Cache kết quả mỗi 500ms để tránh deep copy vector clients trên từng frame (100 FPS)
+    int fallback_rssi = cached_fallback_rssi_;
+    const auto now_rssi = std::chrono::steady_clock::now();
+    if (prober_ && cfr_controller_ &&
+        std::chrono::duration_cast<std::chrono::milliseconds>(now_rssi - last_rssi_check_time_).count() >= 500) {
+        last_rssi_check_time_ = now_rssi;
         const std::string t_mac = cfr_controller_->getTargetMac();
         if (!t_mac.empty()) {
             ProberStatus pstat = prober_->getStatus(false);
@@ -249,6 +250,7 @@ void WebServer::publish(const CSIData &frame) {
                 if (equalsIgnoreCase(c.mac, t_mac)) {
                     int sig = std::atoi(c.signal_dbm.c_str());
                     if (sig < 0 && sig > -100) {
+                        cached_fallback_rssi_ = sig;
                         fallback_rssi = sig;
                     }
                     break;
@@ -293,7 +295,6 @@ void WebServer::resetMotionCalibration() {
         std::lock_guard<std::mutex> lock(data_mutex_);
         motion_detector_.reset();
         breath_detector_.reset();
-        wakeup_detector_.reset();
         wave_detector_.reset();
         distance_estimator_.reset();
         link_stability_estimator_.reset();
@@ -452,6 +453,20 @@ void WebServer::handleWebClient(int client_fd) {
     if (query_position != std::string::npos)
         path.resize(query_position);
 
+    // Hỗ trợ CORS Preflight (OPTIONS) cho mọi Origin và Method
+    if (method == "OPTIONS") {
+        const std::string cors_response =
+            "HTTP/1.1 204 No Content\r\n"
+            "Access-Control-Allow-Origin: *\r\n"
+            "Access-Control-Allow-Methods: GET, POST, OPTIONS, PUT, DELETE\r\n"
+            "Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With, X-Wake-Token\r\n"
+            "Access-Control-Max-Age: 86400\r\n"
+            "Content-Length: 0\r\n"
+            "Connection: close\r\n\r\n";
+        sendAll(client_fd, cors_response);
+        return;
+    }
+
     if (method == "POST" && path == "/api/calibrate") {
         resetMotionCalibration();
         sendAll(
@@ -523,7 +538,7 @@ void WebServer::handleWebClient(int client_fd) {
         return;
     }
 
-    if (path.rfind("/api/v6", 0) == 0) {
+    if (path.rfind("/api/v6", 0) == 0 || path.rfind("/api/gesture", 0) == 0) {
         const std::string full_request(request, static_cast<size_t>(bytes_read));
         std::string body;
         const size_t header_end = full_request.find("\r\n\r\n");
@@ -603,11 +618,14 @@ void WebServer::handleWebClient(int client_fd) {
     if (path == "/" || path == "/index.html") {
         filepath = web_root_ + "/index.html";
         content_type = "text/html; charset=utf-8";
+    } else if (path == "/gioithieu" || path == "/gioithieu.html") {
+        filepath = web_root_ + "/gioithieu.html";
+        content_type = "text/html; charset=utf-8";
     } else if (path == "/style.css") {
         filepath = web_root_ + "/style.css";
         content_type = "text/css; charset=utf-8";
-    } else if (path == "/script.js") {
-        filepath = web_root_ + "/script.js";
+    } else if (path == "/script.js" || endsWith(path, ".js")) {
+        filepath = web_root_ + path;
         content_type = "application/javascript; charset=utf-8";
     } else if (path == "/Logo-VNPT-Technology.png" || endsWith(path, ".png")) {
         filepath = web_root_ + path;
@@ -852,6 +870,7 @@ void WebServer::handleCfrApi(int client_fd, const std::string &method,
         std::string mac;
         std::string iface;
         std::string ip;
+        // Chu kỳ cố định 10ms (100 Hz) theo chuẩn Model V6 / M5R để đồng bộ toàn hệ thống
         int period = 10;
         int bandwidth = 0;
         int method_id = 0;
@@ -890,16 +909,8 @@ void WebServer::handleCfrApi(int client_fd, const std::string &method,
                 }
             }
         }
-        // Trích xuất "period"
-        pos = body.find("\"period\"");
-        if (pos != std::string::npos) {
-            size_t col = body.find(':', pos);
-            if (col != std::string::npos) {
-                try {
-                    period = std::stoi(body.substr(col + 1, 10));
-                } catch (...) {}
-            }
-        }
+        // Cố định chu kỳ 10ms (100 Hz) theo chuẩn Model V6 / M5R để đồng bộ toàn hệ thống
+        period = 10;
         // Trích xuất "auto_probe": true/false
         pos = body.find("\"auto_probe\"");
         if (pos != std::string::npos) {
@@ -1055,13 +1066,7 @@ void WebServer::handleCfrApi(int client_fd, const std::string &method,
             }
         }
 
-        // 2. Tự động dừng V6 Native Engine nếu đang chạy để nhường relay cho CFR Overview
-        if (v6_engine_ && v6_engine_->isRunning()) {
-            v6_engine_->stop("Stop for CFR Overview capture");
-            std::this_thread::sleep_for(std::chrono::milliseconds(60));
-        }
-
-        // 3. Kích hoạt thu CFR khi trạm đã thức giấc
+        // 2. Kích hoạt thu CFR khi trạm đã thức giấc
         bool started = cfr_controller_->startCapture(mac, iface, ip, period, bandwidth, method_id);
         CFRCaptureStatus status = cfr_controller_->getStatus();
 
@@ -1105,8 +1110,7 @@ void WebServer::handleCfrApi(int client_fd, const std::string &method,
             has_frame_ = false;
             motion_detector_.reset();
             breath_detector_.reset();
-            wakeup_detector_.reset();
-        wave_detector_.reset();
+            wave_detector_.reset();
         }
     }
     std::ostringstream ss;
@@ -1348,17 +1352,8 @@ void WebServer::handleDistanceApi(int client_fd, const std::string &method,
 
 void WebServer::handleV6Api(int client_fd, const std::string &method,
                             const std::string &path, const std::string &body) {
-    if (!v6_engine_) {
-        sendAll(client_fd, httpResponse("500 Internal Server Error", "application/json; charset=utf-8",
-                                        "{\"error\":\"V6 Engine not initialized\"}"));
-        return;
-    }
-
-    if (path == "/api/v6/score" || path == "/api/v6/status") {
-        sendAll(client_fd, httpResponse("200 OK", "application/json; charset=utf-8",
-                                        v6_engine_->getSnapshotJson()));
-        return;
-    }
+    (void)method;
+    (void)body;
 
     if (path == "/api/v6/devices") {
         std::ostringstream ss;
@@ -1370,7 +1365,7 @@ void WebServer::handleV6Api(int client_fd, const std::string &method,
                 if (c.mac.empty()) continue;
                 if (!first) ss << ",";
                 first = false;
-                ss << "{\"mac\":\"" << c.mac << "\",\"ip\":\"" << c.ip << "\"}";
+                ss << "{\"mac\":\"" << c.mac << "\",\"ip\":\"" << c.ip << "\",\"hostname\":\"" << escapeJsonString(c.hostname) << "\"}";
             }
         }
         ss << "]";
@@ -1378,105 +1373,28 @@ void WebServer::handleV6Api(int client_fd, const std::string &method,
         return;
     }
 
-    if (path == "/api/v6/start") {
-        if (method != "POST") {
-            sendAll(client_fd, httpResponse("405 Method Not Allowed", "application/json; charset=utf-8",
-                                            "{\"error\":\"Method not allowed\"}"));
-            return;
-        }
-
-        // 1. Phân giải mac và ip từ body JSON
-        std::string mac;
-        std::string ip;
-        size_t mac_pos = body.find("\"mac\"");
-        if (mac_pos != std::string::npos) {
-            size_t q1 = body.find('\"', mac_pos + 5);
-            if (q1 != std::string::npos) {
-                size_t q2 = body.find('\"', q1 + 1);
-                if (q2 != std::string::npos) {
-                    mac = body.substr(q1 + 1, q2 - q1 - 1);
-                }
-            }
-        }
-        size_t ip_pos = body.find("\"ip\"");
-        if (ip_pos != std::string::npos) {
-            size_t q1 = body.find('\"', ip_pos + 4);
-            if (q1 != std::string::npos) {
-                size_t q2 = body.find('\"', q1 + 1);
-                if (q2 != std::string::npos) {
-                    ip = body.substr(q1 + 1, q2 - q1 - 1);
-                }
-            }
-        }
-
-        // Nếu client không truyền mac/ip, tự lấy từ cfr_controller hoặc prober
-        if (mac.empty() && cfr_controller_) {
-            mac = cfr_controller_->getTargetMac();
-        }
-        if (ip.empty() && prober_) {
-            ProberStatus ps = prober_->getStatus(false);
-            for (const auto &c : ps.clients) {
-                if (!mac.empty() && strcasecmp(c.mac.c_str(), mac.c_str()) == 0) {
-                    ip = c.ip;
-                    break;
-                }
-            }
-        }
-
-        // 2. Dừng capture của daemon nếu đang chạy để nhường relay phần cứng cho V6 Native Engine
-        if (cfr_controller_ && cfr_controller_->isRunning()) {
-            std::cout << "[Web] Stopping CFR capture before launching V6 Native Engine\n";
-            cfr_controller_->stopCapture("Handing over hardware to V6 Native Engine");
-            std::this_thread::sleep_for(std::chrono::milliseconds(80));
-        }
-
-        // 3. Khởi chạy V6 Native Engine
-        std::string err;
-        bool ok = v6_engine_->start(mac, ip, &err);
-        if (ok) {
-            sendAll(client_fd, httpResponse("200 OK", "application/json; charset=utf-8",
-                                            "{\"status\":\"ok\",\"running\":true,\"mac\":\"" + mac + "\",\"ip\":\"" + ip + "\"}"));
-        } else {
-            sendAll(client_fd, httpResponse("500 Internal Server Error", "application/json; charset=utf-8",
-                                            "{\"status\":\"error\",\"error\":\"" + err + "\"}"));
-        }
+    if (path == "/api/v6/score" || path == "/api/v6/status") {
+        std::string target_mac = cfr_controller_ ? cfr_controller_->getTargetMac() : "";
+        std::ostringstream ss;
+        ss << "{"
+           << "\"status\":\"ok\""
+           << ",\"mode\":\"standalone_8082\""
+           << ",\"port\":8082"
+           << ",\"target_mac\":\"" << escapeJsonString(target_mac) << "\""
+           << "}";
+        sendAll(client_fd, httpResponse("200 OK", "application/json; charset=utf-8", ss.str()));
         return;
     }
 
-    if (path == "/api/v6/stop") {
-        v6_engine_->stop("User requested stop");
+    if (path == "/api/v6/start" || path == "/api/v6/stop" || path == "/api/v6/reset") {
         sendAll(client_fd, httpResponse("200 OK", "application/json; charset=utf-8",
-                                        "{\"status\":\"ok\",\"running\":false}"));
+                                        "{\"status\":\"ok\",\"mode\":\"standalone_8082\",\"port\":8082}"));
         return;
     }
 
     if (path == "/api/v6/sensitivity" || path == "/api/v6/config") {
-        if (method == "POST") {
-            double high = 0.80;
-            double low = 0.65;
-            size_t pos_high = body.find("\"threshold_high\"");
-            if (pos_high == std::string::npos) pos_high = body.find("\"high\"");
-            if (pos_high != std::string::npos) {
-                size_t col = body.find(':', pos_high);
-                if (col != std::string::npos) {
-                    try { high = std::stod(body.substr(col + 1, 10)); } catch (...) {}
-                }
-            }
-            size_t pos_low = body.find("\"threshold_low\"");
-            if (pos_low == std::string::npos) pos_low = body.find("\"low\"");
-            if (pos_low != std::string::npos) {
-                size_t col = body.find(':', pos_low);
-                if (col != std::string::npos) {
-                    try { low = std::stod(body.substr(col + 1, 10)); } catch (...) {}
-                }
-            }
-            v6_engine_->setSensitivity(high, low);
-        }
-        std::ostringstream ss;
-        ss << std::fixed << std::setprecision(2);
-        ss << "{\"status\":\"ok\",\"threshold_high\":" << v6_engine_->getThresholdHigh()
-           << ",\"threshold_low\":" << v6_engine_->getThresholdLow() << "}";
-        sendAll(client_fd, httpResponse("200 OK", "application/json; charset=utf-8", ss.str()));
+        sendAll(client_fd, httpResponse("200 OK", "application/json; charset=utf-8",
+                                        "{\"status\":\"ok\",\"mode\":\"standalone_8082\",\"threshold_high\":0.80,\"threshold_low\":0.65}"));
         return;
     }
 
@@ -1527,7 +1445,7 @@ void WebServer::handleEventStream(int client_fd) {
 
     std::cout << "[Web] SSE client stream connected (fd=" << client_fd << ")\n";
 
-    constexpr int64_t kPaceMs = 10; // ~100 FPS (10ms) - chuẩn tốc độ Model V6 100Hz siêu nhạy, không trễ
+    constexpr int64_t kPaceMs = 20; // ~50 FPS (20ms) - nhịp mượt mà, triệt tiêu nghẽn socket TCP và quá tải JSON parse
     uint64_t last_sequence = 0;
     auto last_send_time = std::chrono::steady_clock::now();
 
@@ -1576,7 +1494,7 @@ void WebServer::handleEventStream(int client_fd) {
                 "\n"
                 "event: csi\n"
                 "data: " +
-                frame.toJson(false) + "\n\n";
+                frame.toJson(false, false) + "\n\n";
             if (!sendAll(client_fd, event))
                 break;
         } else if (!sendAll(client_fd, ": keep-alive\n\n")) {

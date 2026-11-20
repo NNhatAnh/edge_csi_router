@@ -108,7 +108,7 @@ size_t CSIData::tonesPerChain() const {
     return chains.empty() ? 0 : chains.front().amplitudes.size();
 }
 
-std::string CSIData::toJson(bool include_raw_iq) const {
+std::string CSIData::toJson(bool include_raw_iq, bool include_subcarriers) const {
     std::ostringstream json;
     json << std::setprecision(7)
          << "{\"has_data\":true,\"timestamp_ns\":" << timestamp_ns
@@ -169,35 +169,6 @@ std::string CSIData::toJson(bool include_raw_iq) const {
          << ",\"temporal_csi_variance\":" << safeFloat(temporal_csi_variance)
          << ",\"is_agc_event\":" << (is_agc_event ? "true" : "false")
          << ",\"deep_fade_warning\":" << (deep_fade_warning ? "true" : "false")
-         << ",\"gesture_model\":\"" << escapeJsonString(wakeup_model) << "\""
-         << ",\"gesture_stage\":\"" << escapeJsonString(wakeup_state) << "\""
-         << ",\"gesture_reason\":\"" << escapeJsonString(wakeup_reason) << "\""
-         << ",\"gesture_event\":\"" << escapeJsonString(wakeup_event) << "\""
-         << ",\"gesture_score\":" << safeFloat(wakeup_score)
-         << ",\"gesture_label\":" << wakeup_label
-         << ",\"gesture_triggered\":" << (wakeup_triggered ? "true" : "false")
-         << ",\"gesture_progress\":" << safeFloat(wakeup_progress)
-         << ",\"gesture_down_duration\":" << safeFloat(gesture_down_duration)
-         << ",\"gesture_pause_duration\":" << safeFloat(gesture_pause_duration)
-         << ",\"gesture_up_duration\":" << safeFloat(gesture_up_duration)
-         << ",\"wakeup_state\":\"" << escapeJsonString(wakeup_state) << "\""
-         << ",\"wakeup_reason\":\"" << escapeJsonString(wakeup_reason) << "\""
-         << ",\"wakeup_event\":\"" << escapeJsonString(wakeup_event) << "\""
-         << ",\"wakeup_score\":" << safeFloat(wakeup_score)
-         << ",\"wakeup_label\":" << wakeup_label
-         << ",\"wakeup_triggered\":" << (wakeup_triggered ? "true" : "false")
-         << ",\"wakeup_progress\":" << safeFloat(wakeup_progress)
-         << ",\"wakeup_ring_size\":" << wakeup_ring_size
-         << ",\"wakeup_ring_capacity\":" << wakeup_ring_capacity
-         << ",\"v6_state\":\"" << escapeJsonString(wakeup_state) << "\""
-         << ",\"v6_progress\":" << safeFloat(wakeup_progress)
-         << ",\"v6_fraction\":" << safeFloat(wakeup_stroke_fraction)
-         << ",\"v6_score\":" << safeFloat(wakeup_score)
-         << ",\"v6_label\":" << wakeup_label
-         << ",\"v6_reason\":\"" << escapeJsonString(wakeup_reason) << "\""
-         << ",\"v6_outcome\":\"" << (wakeup_state == "PASS" ? "pass" : (wakeup_state == "FAIL" ? "fail" : "")) << "\""
-         << ",\"v6_accepted\":" << v6_accepted
-         << ",\"v6_rejected\":" << v6_rejected
          << ",\"ap_mac\":\"" << escapeJsonString(ap_mac) << "\",\"amplitude_gain_ratio\":[";
 
     for (size_t i = 0; i < 5; ++i) {
@@ -223,9 +194,17 @@ std::string CSIData::toJson(bool include_raw_iq) const {
             json << "[]";
         }
         json << ",\"amplitudes\":";
-        appendFloatArray(json, chains[i].amplitudes);
+        if (include_subcarriers) {
+            appendFloatArray(json, chains[i].amplitudes);
+        } else {
+            json << "[]";
+        }
         json << ",\"phases\":";
-        appendFloatArray(json, chains[i].phases);
+        if (include_subcarriers) {
+            appendFloatArray(json, chains[i].phases);
+        } else {
+            json << "[]";
+        }
         json << '}';
     }
     json << "]}";

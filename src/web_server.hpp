@@ -8,9 +8,7 @@
 #include "link_stability_estimator.hpp"
 #include "motion.hpp"
 #include "prober.hpp"
-#include "wakeup_detector.hpp"
 #include "wave_detector.hpp"
-#include "v6_native_engine.hpp"
 
 #include <atomic>
 #include <condition_variable>
@@ -52,11 +50,9 @@ class WebServer {
     std::condition_variable data_changed_;
     MotionDetector motion_detector_;
     BreathDetector breath_detector_;
-    WakeupDetector wakeup_detector_;
     WaveDetector wave_detector_;
     DistanceEstimator distance_estimator_;
     LinkStabilityEstimator link_stability_estimator_;
-    std::unique_ptr<V6NativeEngine> v6_engine_;
     CSIData latest_frame_;
     uint64_t sequence_ = 0;
     bool has_frame_ = false;
@@ -65,6 +61,8 @@ class WebServer {
     std::string last_capture_iface_;
     std::string cached_target_hostname_;
     uint32_t profile_lookup_counter_ = 0;
+    int cached_fallback_rssi_ = 0;
+    std::chrono::steady_clock::time_point last_rssi_check_time_{};
 
     void runWebServer();
     void runIngestServer();

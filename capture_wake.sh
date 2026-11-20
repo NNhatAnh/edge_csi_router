@@ -65,7 +65,17 @@ cleanup() {
 trap cleanup EXIT
 trap 'exit 130' INT TERM HUP
 [ "$(cat "$EN")" = 0 ] || { echo 'CFR is already active; stop current capture first'; exit 1; }
-if pidof cfr_test_app cfr_spool cfr_file_spool wave_native_arm64 tx_motion_native wake_native >/dev/null 2>&1; then echo 'Another CSI reader is active'; exit 1; fi
+busy_readers() {
+  for name in cfr_test_app cfr_spool cfr_file_spool wave_native_arm64 tx_motion_native wake_native; do
+    for p in $(pidof "$name" 2>/dev/null || true); do
+      [ -n "$p" ] && [ -d "/proc/$p" ] || continue
+      state=$(awk '{print $3}' "/proc/$p/stat" 2>/dev/null || true)
+      [ "$state" != "Z" ] && return 0
+    done
+  done
+  return 1
+}
+if busy_readers; then echo 'Another CSI reader is active'; exit 1; fi
 "$BIN" --format "${WAKE_OUTPUT_FORMAT:-json}" --step-packets "$STEP" --model "$FILES" --sta "$STA" --relay "$RELAY" --ready "$READY" & RP=$!
 i=0
 while [ ! -f "$READY" ]; do

@@ -44,7 +44,31 @@ struct ArpPacket {
     uint8_t target_mac[6];
     uint32_t target_ip;
 };
+
+struct IcmpEchoPacket {
+    uint8_t type;        // 8 = ICMP_ECHO
+    uint8_t code;        // 0
+    uint16_t checksum;
+    uint16_t id;
+    uint16_t sequence;
+    char payload[32];
+};
 #pragma pack(pop)
+
+uint16_t calculateIcmpChecksum(const void *data, size_t len) {
+    const uint16_t *buf = static_cast<const uint16_t *>(data);
+    uint32_t sum = 0;
+    while (len > 1) {
+        sum += *buf++;
+        len -= 2;
+    }
+    if (len == 1) {
+        sum += *reinterpret_cast<const uint8_t *>(buf);
+    }
+    sum = (sum >> 16) + (sum & 0xFFFF);
+    sum += (sum >> 16);
+    return static_cast<uint16_t>(~sum);
+}
 
 std::string normalizeMacLower(std::string mac) {
     std::transform(mac.begin(), mac.end(), mac.begin(),
@@ -164,7 +188,7 @@ void ActiveProber::setConfig(bool enabled, const std::string &/*mode*/,
 
 void ActiveProber::triggerBurst(const std::string &ip, const std::string &target_mac_hint, int count) {
     if (ip.empty() || count <= 0) return;
-    if (udp_fd_ < 0 && raw_arp_fd_ < 0) {
+    if (udp_fd_ < 0 && raw_arp_fd_ < 0 && icmp_fd_ < 0) {
         initSockets();
     }
     std::string hint = target_mac_hint;
@@ -174,12 +198,16 @@ void ActiveProber::triggerBurst(const std::string &ip, const std::string &target
     }
     uint64_t sent_count = 0;
     for (int i = 0; i < count; ++i) {
-        bool sent_arp = sendArpProbe(ip, hint);
-        if (sent_arp) {
+        bool sent_icmp = sendIcmpProbe(ip);
+        if (sent_icmp) {
             ++sent_count;
         }
-        // Gửi xen kẽ gói UDP 512 bytes để kích thích thuật toán rate adaptation nâng băng thông lên 80MHz
-        if (udp_fd_ >= 0 && (i % 2 == 1 || !sent_arp)) {
+        bool sent_arp = sendArpProbe(ip, hint);
+        if (sent_arp && !sent_icmp) {
+            ++sent_count;
+        }
+        // Gửi xen kẽ gói UDP 512 bytes nếu cần kích thích hàng đợi QoS
+        if (udp_fd_ >= 0 && (i % 2 == 1 || (!sent_icmp && !sent_arp))) {
             if (sendUdpProbe(ip)) {
                 ++sent_count;
             }
@@ -602,8 +630,29 @@ bool ActiveProber::initSockets() {
     }
 
 #ifdef __linux__
-    raw_arp_fd_ = socket(AF_PACKET, SOCK_RAW, htons(ETH_P_ARP));
+    // 1. Khởi tạo ICMP Raw Socket (IPPROTO_ICMP) để gửi ICMP Echo Request (Ping chuẩn)
+    icmp_fd_ = socket(AF_INET, SOCK_RAW | SOCK_NONBLOCK, IPPROTO_ICMP);
+    if (icmp_fd_ < 0) {
+        // Fallback thử SOCK_DGRAM IPPROTO_ICMP
+        icmp_fd_ = socket(AF_INET, SOCK_DGRAM | SOCK_NONBLOCK, IPPROTO_ICMP);
+    }
+    if (icmp_fd_ >= 0) {
+        struct timeval snd_tv{};
+        snd_tv.tv_sec = 0;
+        snd_tv.tv_usec = 20000; // 20ms timeout
+        setsockopt(icmp_fd_, SOL_SOCKET, SO_SNDTIMEO, (const char *)&snd_tv, sizeof(snd_tv));
+    } else {
+        std::cerr << "[Prober] ICMP raw socket not available: " << std::strerror(errno) << '\n';
+    }
+
+    // 2. Khởi tạo Raw ARP Socket có cờ NONBLOCK và timeout chống nghẽn Send-Q
+    raw_arp_fd_ = socket(AF_PACKET, SOCK_RAW | SOCK_NONBLOCK, htons(ETH_P_ARP));
     if (raw_arp_fd_ >= 0) {
+        struct timeval snd_tv{};
+        snd_tv.tv_sec = 0;
+        snd_tv.tv_usec = 20000;
+        setsockopt(raw_arp_fd_, SOL_SOCKET, SO_SNDTIMEO, (const char *)&snd_tv, sizeof(snd_tv));
+
         struct ifreq ifr {};
         std::strncpy(ifr.ifr_name, interface_name_.c_str(), IFNAMSIZ - 1);
         if (ioctl(raw_arp_fd_, SIOCGIFINDEX, &ifr) == 0) {
@@ -620,14 +669,18 @@ bool ActiveProber::initSockets() {
         }
     } else {
         std::cerr << "[Prober] Raw ARP socket not available: "
-                  << std::strerror(errno) << ", using UDP probing\n";
+                  << std::strerror(errno) << ", using UDP/ICMP probing\n";
     }
 #endif
 
-    return (udp_fd_ >= 0 || raw_arp_fd_ >= 0);
+    return (icmp_fd_ >= 0 || udp_fd_ >= 0 || raw_arp_fd_ >= 0);
 }
 
 void ActiveProber::closeSockets() {
+    if (icmp_fd_ >= 0) {
+        close(icmp_fd_);
+        icmp_fd_ = -1;
+    }
     if (udp_fd_ >= 0) {
         close(udp_fd_);
         udp_fd_ = -1;
@@ -636,6 +689,29 @@ void ActiveProber::closeSockets() {
         close(raw_arp_fd_);
         raw_arp_fd_ = -1;
     }
+}
+
+bool ActiveProber::sendIcmpProbe(const std::string &ip) {
+    if (icmp_fd_ < 0 || ip.empty())
+        return false;
+
+    sockaddr_in target{};
+    target.sin_family = AF_INET;
+    if (inet_pton(AF_INET, ip.c_str(), &target.sin_addr) <= 0)
+        return false;
+
+    IcmpEchoPacket packet{};
+    packet.type = 8; // ICMP_ECHO
+    packet.code = 0;
+    packet.id = htons(static_cast<uint16_t>(getpid() & 0xFFFF));
+    packet.sequence = htons(++icmp_seq_);
+    std::memcpy(packet.payload, "EDGECSI_M5R_WAKE", 16);
+    packet.checksum = 0;
+    packet.checksum = calculateIcmpChecksum(&packet, sizeof(packet));
+
+    ssize_t sent = sendto(icmp_fd_, &packet, sizeof(packet), 0,
+                          reinterpret_cast<sockaddr *>(&target), sizeof(target));
+    return (sent > 0);
 }
 
 bool ActiveProber::sendUdpProbe(const std::string &ip) {
@@ -856,11 +932,21 @@ void ActiveProber::run() {
             uint64_t sent_count = 0;
             for (const auto &target : targets) {
                 bool sent = false;
-                // Ưu tiên thăm dò bằng Unicast ARP chuẩn L2/L3
-                sent = sendArpProbe(target, (targets.size() == 1 ? target_mac_hint : ""));
-                // Chống kickout trạm ngủ sâu (iOS/Android): Cứ mỗi ~1 giây (20 chu kỳ tại 50ms) hoặc khi ARP thất bại,
-                // gửi thêm 1 gói UDP 512 bytes để kích thích hàng đợi QoS Data của driver ath12k, duy trì cờ TIM và ép trạm gửi ACK
-                if (udp_fd_ >= 0 && (probe_cycle % 20 == 0 || !sent)) {
+                // 1. Ưu tiên cao nhất: Gửi gói ICMP Echo Request (Ping chuẩn)
+                // Buộc kernel điện thoại (Android/iOS) phải lập tức trả lời bằng gói tin ICMP Echo Reply (802.11 Data frame) ở tần số 100 Hz
+                if (icmp_fd_ >= 0) {
+                    sent = sendIcmpProbe(target);
+                }
+
+                // 2. Gửi ARP định kỳ (~1 giây / lần) hoặc khi ICMP ping thất bại để duy trì bảng ARP L2
+                if (!sent || probe_cycle % 50 == 0) {
+                    if (sendArpProbe(target, (targets.size() == 1 ? target_mac_hint : ""))) {
+                        sent = true;
+                    }
+                }
+
+                // 3. Dự phòng UDP 512 bytes nếu cần kích thích hàng đợi QoS
+                if (udp_fd_ >= 0 && (!sent || probe_cycle % 100 == 0)) {
                     if (sendUdpProbe(target)) {
                         sent = true;
                     }

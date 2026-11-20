@@ -92,6 +92,8 @@ class ActiveProber {
 
     int udp_fd_ = -1;
     int raw_arp_fd_ = -1;
+    int icmp_fd_ = -1;
+    uint16_t icmp_seq_ = 0;
     int ifindex_ = 0;
     uint8_t src_mac_[6]{};
     uint32_t src_ip_ = 0;
@@ -100,6 +102,7 @@ class ActiveProber {
     bool initSockets();
     void closeSockets();
     std::string findMacForIp(const std::string &ip);
+    bool sendIcmpProbe(const std::string &ip);
     bool sendUdpProbe(const std::string &ip);
     bool sendArpProbe(const std::string &ip, const std::string &hint_mac = "");
     std::vector<std::string> getActiveTargets();
